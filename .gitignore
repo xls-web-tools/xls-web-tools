@@ -1,23 +1,11 @@
 ~$*.xls?
 **/*.lnk
-/**/test_dst/*
-/作業用ファイル
-/投入コンフィグ＆正常性確認コピー/test dir/**/*.bat
-/投入コンフィグ＆正常性確認コピー/test dir/**/02.設定変更作業/*
-!/投入コンフィグ＆正常性確認コピー/test dir/**/.gitkeep
-!/投入コンフィグ＆正常性確認コピー/test dir/**/02.設定変更作業/**/.gitkeep
-/申請書ツール/01.統合DC境界FW
-/申請書ツール/02.開発セグ境界FW
-/申請書ツール/03.DC-DMZ境界FW
-/コンフィグ生成/正常性確認_*
-/コンフィグ生成/投入コンフィグ_*
-/パケットキャプチャー/*.etl
-/パケットキャプチャー/*_capture_*.txt
+
+# Web Driverの実行ファイルやブラウザのプロファイルは追跡しない。
+**/msedgedriver.exe
+**/Driver_Notes/
+**/browser-profile/
 
 # ドキュメントはコードから生成するため、追跡しない。
 **/docs/api-reference/
 **/docs/api-reference.lnk
-**/msedgedriver.exe
-**/Driver_Notes/
-/Web情報取得/bin/
-/Web情報取得/browser-profile/
