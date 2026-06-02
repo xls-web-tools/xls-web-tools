@@ -1,13 +1,12 @@
 ﻿# Issue tracker: GitHub
 
 このリポジトリの issue と PRD は GitHub Issues で管理する。対象リポジトリは `tkmr-akhs/xls-web-tools`。
-現時点では GitHub repository 作成前のため、Issue/PRD 作成や Project 操作は repository 作成後に実行する。
 mattpocock/skills が「issue tracker に publish する」と言う場合は、`gh` CLI で GitHub issue を作成する。
 
 ## Repository
 
 - GitHub remote: `https://github.com/tkmr-akhs/xls-web-tools.git`
-- `gh` は、この clone 内で実行し、対象 repository は remote から推定する。repository 作成前や remote 推定ができない場合は `--repo tkmr-akhs/xls-web-tools` を明示する。
+- `gh` は、この clone 内で実行し、対象 repository は remote から推定する。
 
 ## Conventions
 
@@ -40,6 +39,23 @@ GitHub Issue を作成する。
 
 ## GitHub Projects
 
-この repository の GitHub Projects v2 は現時点で未作成または未確認である。
-Project 操作を求められた場合は、作業前に対象 Project を確認する。Project 作成後は、この節を既存サブリポジトリと同じ形式へ更新する。
-Issue lifecycle のラベル運用は root の `AGENTS.md` に従い、Project `Status` は対象 Project が明示された場合だけ同期する。
+この repository の issue は GitHub Issues と GitHub Projects v2 の両方で管理する。
+Project は `tkmr-akhs` user project #6、`xls-web-tools main project` を使う。
+Project field は `Status` を使い、issue lifecycle と同期する。
+
+| Issue state / label | Project `Status` | Agent action |
+| --- | --- | --- |
+| `ready-for-agent` | `Ready` | Agent が着手できる issue として配置する |
+| 実装中 | `In progress` | Agent が作業中であることを示す |
+| 実装完了 + review 待ち + `ready-for-human` | `In review` | Human が Review 可能な状態として配置する |
+| レビュー通過 + acceptance criteria 検証済み | `Done` | Agent が `ready-for-human` を外し、issue close と Project `Done` 更新を完了した状態として配置する |
+
+Rules:
+
+- `ready-for-agent` label を付けた issue は、Project `Status` を `Ready` にする。
+- 実装を開始した issue は、Project `Status` を `In progress` にする。
+- 実装を完了した issue は、`ready-for-agent` label を外して `ready-for-human` label を付け、Project `Status` を `In review` にする。
+- レビューを通過した issue は、acceptance criteria を検証する。すべて pass した場合、または未達成項目について maintainer から明示的に対象外扱いの指示があった場合は、`ready-for-human` を外し、Issue を close して Project `Status` を `Done` にする。
+- `ready-for-human` は「人間がレビューできる状態」として使う。実装担当待ちの意味だけに限定しない。
+- acceptance criteria に未達成項目があり maintainer の明示指示がない場合は、close / Done へ進めない。
+- `gh api graphql` で Projects v2 を操作する。scope 不足の場合は `gh auth refresh -h github.com -s project` で Projects scope を追加する。

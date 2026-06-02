@@ -1,7 +1,5 @@
 ~$*.xls?
-モジュール抽出.lnk
-モジュール適用.lnk
-ドキュメント生成.lnk
+**/*.lnk
 /**/test_dst/*
 /作業用ファイル
 /投入コンフィグ＆正常性確認コピー/test dir/**/*.bat
@@ -19,3 +17,5 @@
 # ドキュメントはコードから生成するため、追跡しない。
 **/docs/api-reference/
 **/docs/api-reference.lnk
+msedgedriver.exe
+Driver_Notes/
