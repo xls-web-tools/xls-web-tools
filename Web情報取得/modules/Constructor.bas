@@ -81,3 +81,90 @@ Public Function New_OutputSheetWriter(ByVal Settings As IToolSettings) As Output
 
     Set New_OutputSheetWriter = result_value
 End Function
+
+'* WebDriver session client を生成します。
+'*
+'* @param Client WebDriver HTTP API 呼び出しクライアント。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの WebDriver session client。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSessionClient に委譲します。
+Public Function New_WebDriverSessionClient( _
+        ByVal Client As IWebDriverClient, _
+        ByVal Settings As IToolSettings) As WebDriverSessionClient
+
+    Dim result_value As WebDriverSessionClient
+    Set result_value = New WebDriverSessionClient
+    Call result_value.Initialize(Client, Settings)
+
+    Set New_WebDriverSessionClient = result_value
+End Function
+
+'* WebDriver HTTP client を生成します。
+'*
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの WebDriver HTTP client。
+'*
+'* @details
+'* Settings の port と timeout を使って WebDriverClient を初期化します。
+Public Function New_WebDriverClient(ByVal Settings As IToolSettings) As WebDriverClient
+    Dim result_value As WebDriverClient
+    Set result_value = New WebDriverClient
+    Call result_value.Initialize(Settings.WebDriverPort, Settings.TimeoutSeconds)
+
+    Set New_WebDriverClient = result_value
+End Function
+
+'* WebDriver port probe を生成します。
+'*
+'* @return 新しい WebDriver port probe。
+'*
+'* @details
+'* 実 port 使用状況確認の既定実装を生成します。
+Public Function New_WebDriverPortProbe() As WebDriverPortProbe
+    Dim result_value As WebDriverPortProbe
+    Set result_value = New WebDriverPortProbe
+
+    Set New_WebDriverPortProbe = result_value
+End Function
+
+'* WebDriver process 管理を生成します。
+'*
+'* @param FileSystem ファイル存在確認に使うサービス。
+'* @param PortProbe port 使用状況確認に使う probe。
+'* @return 初期化済みの WebDriver process 管理。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverProcess に委譲します。
+Public Function New_WebDriverProcess( _
+        ByVal FileSystem As IFileSystemService, _
+        ByVal PortProbe As IWebDriverPortProbe) As WebDriverProcess
+
+    Dim result_value As WebDriverProcess
+    Set result_value = New WebDriverProcess
+    Call result_value.Initialize(FileSystem, PortProbe)
+
+    Set New_WebDriverProcess = result_value
+End Function
+
+'* WebDriver smoke runner を生成します。
+'*
+'* @param Process WebDriver process 操作。
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの WebDriver smoke runner。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSmokeRunner に委譲します。
+Public Function New_WebDriverSmokeRunner( _
+        ByVal Process As IWebDriverProcess, _
+        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Settings As IToolSettings) As WebDriverSmokeRunner
+
+    Dim result_value As WebDriverSmokeRunner
+    Set result_value = New WebDriverSmokeRunner
+    Call result_value.Initialize(Process, SessionClient, Settings)
+
+    Set New_WebDriverSmokeRunner = result_value
+End Function

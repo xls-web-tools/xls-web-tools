@@ -67,6 +67,13 @@ Public Sub EnsureHeaders()
     Next def_idx
 End Sub
 
+Private Sub pWriteHeader(ByVal ColumnIndex As Long, ByVal HeaderText As String)
+    Call WsSrv.WriteCell( _
+            New_RangeBounds(Row:=C_HEADER_ROW, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
+            HeaderText, _
+            TypeConvert:=False)
+End Sub
+
 '* 既存行を今回の実行で書き込むべきか返します。
 '*
 '* @param ExistingStatus 既存行の取得状態。
@@ -95,13 +102,6 @@ Public Function ShouldWriteExistingRow(ByVal ExistingStatus As String, Optional 
             Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="ExistingRowMode が不正です。(" & pSettings.ExistingRowMode & ")"
     End Select
 End Function
-
-Private Sub pWriteHeader(ByVal ColumnIndex As Long, ByVal HeaderText As String)
-    Call WsSrv.WriteCell( _
-            New_RangeBounds(Row:=C_HEADER_ROW, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
-            HeaderText, _
-            TypeConvert:=False)
-End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
