@@ -17,5 +17,5 @@
 # ドキュメントはコードから生成するため、追跡しない。
 **/docs/api-reference/
 **/docs/api-reference.lnk
-msedgedriver.exe
-Driver_Notes/
+**/msedgedriver.exe
+**/Driver_Notes/
