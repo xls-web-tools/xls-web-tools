@@ -1,0 +1,311 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ToolSettings"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+Option Base 0
+
+Implements IToolSettings
+
+' #############################################################################
+'!
+'! @brief
+'! settings シート由来の Web情報取得設定です。
+'!
+' #############################################################################
+
+Private Const C_PARAM_COL_NAME As Long = 1
+Private Const C_PARAM_COL_VALUE As Long = 2
+Private Const C_PARAM_START_ROW As Long = 2
+Private Const C_TRANSITION_COL_START As Long = 4
+Private Const C_TRANSITION_COL_FINISH As Long = 8
+Private Const C_DETAIL_COL_START As Long = 10
+Private Const C_DETAIL_COL_FINISH As Long = 15
+Private Const C_DEFAULT_WEB_DRIVER_PORT As Long = 9515
+Private Const C_DEFAULT_TIMEOUT_SECONDS As Long = 30
+
+'* Edge WebDriver 実行ファイルのパス。
+Public Property Get WebDriverPath() As String
+    WebDriverPath = pGetOptionalParam("WebDriverPath", pWorkbookRelativePath("bin" & G_FS_PATH_SEP & "msedgedriver.exe"))
+End Property
+Private Property Get IToolSettings_WebDriverPath() As String
+    IToolSettings_WebDriverPath = WebDriverPath
+End Property
+
+'* Edge WebDriver の待ち受け port。
+Public Property Get WebDriverPort() As Long
+    WebDriverPort = pGetOptionalLongParam("WebDriverPort", C_DEFAULT_WEB_DRIVER_PORT)
+End Property
+Private Property Get IToolSettings_WebDriverPort() As Long
+    IToolSettings_WebDriverPort = WebDriverPort
+End Property
+
+'* 専用ブラウザプロファイルのパス。
+Public Property Get BrowserProfilePath() As String
+    BrowserProfilePath = pGetOptionalParam("BrowserProfilePath", pWorkbookRelativePath("browser-profile"))
+End Property
+Private Property Get IToolSettings_BrowserProfilePath() As String
+    IToolSettings_BrowserProfilePath = BrowserProfilePath
+End Property
+
+'* True の場合は不可視ブラウザで起動します。
+Public Property Get Headless() As Boolean
+    Headless = pGetOptionalBooleanParam("Headless", True)
+End Property
+Private Property Get IToolSettings_Headless() As Boolean
+    IToolSettings_Headless = Headless
+End Property
+
+'* 取得開始 URL。
+Public Property Get StartUrl() As String
+    StartUrl = pGetRequiredParam("StartUrl")
+End Property
+Private Property Get IToolSettings_StartUrl() As String
+    IToolSettings_StartUrl = StartUrl
+End Property
+
+'* 取得結果の出力先シート名。
+Public Property Get OutputSheetName() As String
+    OutputSheetName = pGetRequiredParam("OutputSheetName")
+End Property
+Private Property Get IToolSettings_OutputSheetName() As String
+    IToolSettings_OutputSheetName = OutputSheetName
+End Property
+
+'* 既存行の扱い。
+Public Property Get ExistingRowMode() As String
+    ExistingRowMode = pNormalizeExistingRowMode(pGetOptionalParam("ExistingRowMode", G_WEB_ROW_MODE_SKIP_EXISTING))
+End Property
+Private Property Get IToolSettings_ExistingRowMode() As String
+    IToolSettings_ExistingRowMode = ExistingRowMode
+End Property
+
+'* 画面到達や selector 出現を待つ秒数。
+Public Property Get TimeoutSeconds() As Long
+    TimeoutSeconds = pGetOptionalLongParam("TimeoutSeconds", C_DEFAULT_TIMEOUT_SECONDS)
+End Property
+Private Property Get IToolSettings_TimeoutSeconds() As Long
+    IToolSettings_TimeoutSeconds = TimeoutSeconds
+End Property
+
+'* 画面遷移操作定義の一覧。
+Public Property Get TransitionOperations() As ObjectList
+    Set TransitionOperations = pReadTransitionOperations()
+End Property
+Private Property Get IToolSettings_TransitionOperations() As ObjectList
+    Set IToolSettings_TransitionOperations = TransitionOperations
+End Property
+
+'* 詳細ページ列定義の一覧。
+Public Property Get DetailColumnDefinitions() As ObjectList
+    Set DetailColumnDefinitions = pReadDetailColumnDefinitions()
+End Property
+Private Property Get IToolSettings_DetailColumnDefinitions() As ObjectList
+    Set IToolSettings_DetailColumnDefinitions = DetailColumnDefinitions
+End Property
+
+Private Function pGetRequiredParam(ByVal Name As String) As String
+    Dim result_value As String
+    result_value = pGetOptionalParam(Name, "")
+    If Trim$(result_value) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は必須です。"
+    End If
+
+    pGetRequiredParam = result_value
+End Function
+
+Private Function pGetOptionalParam(ByVal Name As String, ByVal DefaultValue As String) As String
+    Dim param_range As WorksheetRangeBounds
+    Set param_range = WsSrv.GetUsedRangeBounds(New_RangeBounds( _
+            Row:=C_PARAM_START_ROW, _
+            Column:=C_PARAM_COL_NAME, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=C_PARAM_COL_NAME, _
+            Sheet:=G_WEB_SETTINGS_SHEET))
+
+    Dim found_cells As ObjectList
+    Set found_cells = WsSrv.Find(Name, param_range)
+    If found_cells.Count = 0 Then
+        pGetOptionalParam = DefaultValue
+        Exit Function
+    End If
+
+    Dim found_bounds As WorksheetRangeBounds
+    Set found_bounds = found_cells.Item(0)
+
+    Dim result_value As String
+    result_value = "" & WsSrv.ReadCell(New_RangeBounds(Row:=found_bounds.Row, Column:=C_PARAM_COL_VALUE, Sheet:=G_WEB_SETTINGS_SHEET))
+    If Trim$(result_value) = "" Then result_value = DefaultValue
+
+    pGetOptionalParam = result_value
+End Function
+
+Private Function pGetOptionalLongParam(ByVal Name As String, ByVal DefaultValue As Long) As Long
+    Dim param_value As String
+    param_value = pGetOptionalParam(Name, CStr(DefaultValue))
+
+    If Trim$(param_value) = "" Or Not IsNumeric(param_value) Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は数値である必要があります。(" & param_value & ")"
+    End If
+
+    Dim result_value As Long
+    result_value = CLng(param_value)
+    If result_value <= 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は 1 以上である必要があります。(" & param_value & ")"
+    End If
+
+    pGetOptionalLongParam = result_value
+End Function
+
+Private Function pGetOptionalBooleanParam(ByVal Name As String, ByVal DefaultValue As Boolean) As Boolean
+    Dim default_text As String
+    If DefaultValue Then
+        default_text = "True"
+    Else
+        default_text = "False"
+    End If
+
+    Dim param_value As String
+    param_value = UCase$(Trim$(pGetOptionalParam(Name, default_text)))
+
+    Select Case param_value
+        Case "TRUE", "1", "YES"
+            pGetOptionalBooleanParam = True
+        Case "FALSE", "0", "NO"
+            pGetOptionalBooleanParam = False
+        Case Else
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は True または False である必要があります。(" & param_value & ")"
+    End Select
+End Function
+
+Private Function pNormalizeExistingRowMode(ByVal ModeText As String) As String
+    Select Case UCase$(Trim$(ModeText))
+        Case UCase$(G_WEB_ROW_MODE_SKIP_EXISTING)
+            pNormalizeExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
+        Case UCase$(G_WEB_ROW_MODE_RETRY_ERROR)
+            pNormalizeExistingRowMode = G_WEB_ROW_MODE_RETRY_ERROR
+        Case UCase$(G_WEB_ROW_MODE_OVERWRITE)
+            pNormalizeExistingRowMode = G_WEB_ROW_MODE_OVERWRITE
+        Case Else
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="ExistingRowMode が不正です。(" & ModeText & ")"
+    End Select
+End Function
+
+Private Function pWorkbookRelativePath(ByVal RelativePath As String) As String
+    Dim base_path As String
+    base_path = WbSrv.GetThisWorkbookDirectoryPath()
+
+    If base_path = "" Then
+        pWorkbookRelativePath = RelativePath
+    Else
+        pWorkbookRelativePath = base_path & G_FS_PATH_SEP & RelativePath
+    End If
+End Function
+
+Private Function pReadTransitionOperations() As ObjectList
+    Dim result_value As ObjectList
+    Set result_value = New_ObjectList("TransitionOperation")
+
+    Dim table_values() As Variant
+    table_values = pReadTableValues(C_TRANSITION_COL_START, C_TRANSITION_COL_FINISH)
+
+    If Not IsEmptyArray(table_values) Then
+        Dim row_idx As Long
+        For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
+            If Not pIsEmptyTableRow(table_values, row_idx, 1, 5) Then
+                Call result_value.Add(New_TransitionOperation( _
+                        OperationName:=CStr(table_values(row_idx, 1)), _
+                        LocatorType:=CStr(table_values(row_idx, 2)), _
+                        LocatorValue:=CStr(table_values(row_idx, 3)), _
+                        Script:=CStr(table_values(row_idx, 4)), _
+                        WaitConditionName:=CStr(table_values(row_idx, 5))))
+            End If
+        Next row_idx
+    End If
+
+    Set pReadTransitionOperations = result_value
+End Function
+
+Private Function pReadDetailColumnDefinitions() As ObjectList
+    Dim result_value As ObjectList
+    Set result_value = New_ObjectList("DetailColumnDefinition")
+
+    Dim table_values() As Variant
+    table_values = pReadTableValues(C_DETAIL_COL_START, C_DETAIL_COL_FINISH)
+
+    If Not IsEmptyArray(table_values) Then
+        Dim row_idx As Long
+        For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
+            If Not pIsEmptyTableRow(table_values, row_idx, 1, 6) Then
+                Call result_value.Add(New_DetailColumnDefinition( _
+                        OutputColumnName:=CStr(table_values(row_idx, 1)), _
+                        Selector:=CStr(table_values(row_idx, 2)), _
+                        ExtractType:=pDefaultIfBlank(CStr(table_values(row_idx, 3)), "InnerText"), _
+                        AttributeName:=CStr(table_values(row_idx, 4)), _
+                        IsRequired:=pParseBoolean(CStr(table_values(row_idx, 5)), False, "IsRequired"), _
+                        BlankMode:=pDefaultIfBlank(CStr(table_values(row_idx, 6)), "AllowBlank")))
+            End If
+        Next row_idx
+    End If
+
+    Set pReadDetailColumnDefinitions = result_value
+End Function
+
+Private Function pReadTableValues(ByVal StartColumn As Long, ByVal FinishColumn As Long) As Variant()
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds( _
+            Row:=C_PARAM_START_ROW, _
+            Column:=StartColumn, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=FinishColumn, _
+            Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = WsSrv.GetUsedRangeBounds(search_bounds)
+
+    pReadTableValues = WsSrv.ReadRange(used_bounds)
+End Function
+
+Private Function pIsEmptyTableRow(ByRef TableValues() As Variant, ByVal RowIndex As Long, ByVal FirstColumnIndex As Long, ByVal LastColumnIndex As Long) As Boolean
+    Dim col_idx As Long
+    For col_idx = FirstColumnIndex To LastColumnIndex
+        If Trim$(CStr(TableValues(RowIndex, col_idx))) <> "" Then
+            pIsEmptyTableRow = False
+            Exit Function
+        End If
+    Next col_idx
+
+    pIsEmptyTableRow = True
+End Function
+
+Private Function pDefaultIfBlank(ByVal TargetText As String, ByVal DefaultValue As String) As String
+    If Trim$(TargetText) = "" Then
+        pDefaultIfBlank = DefaultValue
+    Else
+        pDefaultIfBlank = TargetText
+    End If
+End Function
+
+Private Function pParseBoolean(ByVal TargetText As String, ByVal DefaultValue As Boolean, ByVal SourceName As String) As Boolean
+    Dim normalized_text As String
+    normalized_text = UCase$(Trim$(TargetText))
+
+    If normalized_text = "" Then
+        pParseBoolean = DefaultValue
+        Exit Function
+    End If
+
+    Select Case normalized_text
+        Case "TRUE", "1", "YES"
+            pParseBoolean = True
+        Case "FALSE", "0", "NO"
+            pParseBoolean = False
+        Case Else
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=SourceName & " は True または False である必要があります。(" & TargetText & ")"
+    End Select
+End Function
