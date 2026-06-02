@@ -22,4 +22,4 @@ Engineering skills がこのリポジトリの domain documentation を読むた
 - ファイルが存在しない場合は、欠落を問題として扱わず、そのまま作業を進める。
 - Issue、設計案、テスト名、リファクタリング案では `CONTEXT.md` の用語を優先する。
 - 既存 ADR と矛盾する提案をする場合は、矛盾する ADR を明示する。
-- Web 情報取得、HTTP/API 取得、Excel シートへの出力を扱う場合は、該当ツールの `modules` と TODO / README があれば確認する。
+- Web 情報取得、HTTP/API 取得、Excel シートへの出力を扱う場合は、`docs/product-spec.md`、該当ツールの `modules`、TODO / README があれば確認する。
