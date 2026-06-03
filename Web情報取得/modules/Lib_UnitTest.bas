@@ -1,5 +1,6 @@
 Attribute VB_Name = "Lib_UnitTest"
 Option Explicit
+Option Private Module
 
 ' #############################################################################
 '!

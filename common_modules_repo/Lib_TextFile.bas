@@ -1,6 +1,7 @@
 Attribute VB_Name = "Lib_TextFile"
 Option Explicit
 Option Base 0
+Option Private Module
 
 ' #############################################################################
 '!

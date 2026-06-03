@@ -1,6 +1,7 @@
 Attribute VB_Name = "Lib_IPv4"
 Option Explicit
 Option Base 0
+Option Private Module
 
 ' #############################################################################
 '!
