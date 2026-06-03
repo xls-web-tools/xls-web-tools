@@ -1,6 +1,7 @@
 Attribute VB_Name = "Mod_WebConstants"
 Option Explicit
 Option Base 0
+Option Private Module
 
 ' #############################################################################
 '!
