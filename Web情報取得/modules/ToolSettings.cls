@@ -101,6 +101,30 @@ Private Property Get IToolSettings_ListTransitionOperationName() As String
     IToolSettings_ListTransitionOperationName = ListTransitionOperationName
 End Property
 
+'* 一覧上の対象IDを読み取る selector。
+Public Property Get ListItemTargetIdSelector() As String
+    ListItemTargetIdSelector = pGetRequiredParam("ListItemTargetIdSelector")
+End Property
+Private Property Get IToolSettings_ListItemTargetIdSelector() As String
+    IToolSettings_ListItemTargetIdSelector = ListItemTargetIdSelector
+End Property
+
+'* 詳細ページへの画面遷移操作名。
+Public Property Get DetailTransitionOperationName() As String
+    DetailTransitionOperationName = pGetRequiredParam("DetailTransitionOperationName")
+End Property
+Private Property Get IToolSettings_DetailTransitionOperationName() As String
+    IToolSettings_DetailTransitionOperationName = DetailTransitionOperationName
+End Property
+
+'* 詳細ページ上の対象IDを読み取る selector。
+Public Property Get TargetIdSelector() As String
+    TargetIdSelector = pGetRequiredParam("TargetIdSelector")
+End Property
+Private Property Get IToolSettings_TargetIdSelector() As String
+    IToolSettings_TargetIdSelector = TargetIdSelector
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pNormalizeExistingRowMode(pGetOptionalParam("ExistingRowMode", G_WEB_ROW_MODE_SKIP_EXISTING))

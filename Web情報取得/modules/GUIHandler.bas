@@ -10,10 +10,10 @@ Option Private Module
 '!
 ' #############################################################################
 
-'* 取得開始 URL から一覧画面到達までの診断を実行します。
+'* 取得開始 URL から詳細ページの対象ID取得までの診断を実行します。
 '*
 '* @details
-'* settings の StartUrl、AuthenticatedStartSelector、ListTransitionOperationName、ListPageSelector を使って一覧画面到達までを確認します。
+'* settings の StartUrl、AuthenticatedStartSelector、ListTransitionOperationName、ListPageSelector、ListItemTargetIdSelector、DetailTransitionOperationName、TargetIdSelector を使って詳細ページの対象ID取得までを確認します。
 '* 認証情報は Excel ブック、VBA、settings、ログに保存しません。
 Public Sub RUN_DIAGNOSTIC()
     Call InitializeCommonService(Force:=True)
@@ -41,7 +41,7 @@ Public Sub RUN_DIAGNOSTIC()
 
     Call runner.Run
 
-    Call MsgBoxPage("一覧画面到達診断が完了しました。")
+    Call MsgBoxPage("詳細ページ対象ID取得診断が完了しました。" & vbCrLf & "対象ID: " & runner.TargetId)
 
 ON_EXIT:
     On Error Resume Next

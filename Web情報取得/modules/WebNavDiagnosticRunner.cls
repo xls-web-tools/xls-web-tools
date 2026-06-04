@@ -13,14 +13,28 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! 取得開始 URL から一覧画面到達までの診断を実行します。
+'! 取得開始 URL から詳細ページの対象ID取得までの診断を実行します。
 '!
 ' #############################################################################
 
 Private pProcess As IWebDriverProcess
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
+Private pListItemTargetId As String
+Private pTargetId As String
 Private pIsInitialized As Boolean
+
+'* 一覧上の対象ID。
+Public Property Get ListItemTargetId() As String
+    Call pCheckInit
+    ListItemTargetId = pListItemTargetId
+End Property
+
+'* 詳細ページ上の対象ID。
+Public Property Get TargetId() As String
+    Call pCheckInit
+    TargetId = pTargetId
+End Property
 
 '* WebDriver navigation diagnostic runner を初期化します。
 '*
@@ -48,19 +62,23 @@ Public Sub Initialize( _
     Set pProcess = Process
     Set pSessionClient = SessionClient
     Set pSettings = Settings
+    pListItemTargetId = ""
+    pTargetId = ""
     pIsInitialized = True
 End Sub
 
-'* 一覧画面到達までの診断を実行します。
+'* 詳細ページの対象ID取得までの診断を実行します。
 '*
 '* @return 作成された session id。
 '*
 '* @details
-'* WebDriver process 起動、session 作成、取得開始 URL 遷移、認証後起点 selector 待機、一覧遷移操作、一覧 selector 待機、quit、process 終了を順に実行します。
+'* WebDriver process 起動、session 作成、取得開始 URL 遷移、認証後起点 selector 待機、一覧遷移操作、一覧 selector 待機、詳細遷移操作、対象ID取得、quit、process 終了を順に実行します。
 Public Function Run() As String
     Call pCheckInit
 
     Dim result_value As String
+    pListItemTargetId = ""
+    pTargetId = ""
 
     On Error GoTo ON_ERROR
 
@@ -74,6 +92,7 @@ Public Function Run() As String
     Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+    Call pExtractFirstDetailTargetId
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -112,6 +131,31 @@ Private Sub pCheckInit()
     End If
 End Sub
 
+Private Sub pExtractFirstDetailTargetId()
+    Dim detail_operation_name As String
+    detail_operation_name = pSettings.DetailTransitionOperationName
+    If Trim$(detail_operation_name) = "" Then Exit Sub
+
+    pListItemTargetId = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
+    If pListItemTargetId = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDを取得できません。"
+    End If
+
+    Dim detail_operation As TransitionOperation
+    Set detail_operation = pFindTransitionOperation(detail_operation_name)
+    Call pSessionClient.RunTransitionOperation(detail_operation)
+    Call pSessionClient.WaitForSelector(pSettings.TargetIdSelector)
+
+    pTargetId = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
+    If pTargetId = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="詳細ページ上の対象IDを取得できません。"
+    End If
+
+    If StrComp(pListItemTargetId, pTargetId, vbBinaryCompare) <> 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & pListItemTargetId & " / " & pTargetId & ")"
+    End If
+End Sub
+
 Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
     pShouldKeepBrowserForDiagnostic = ((Not pSettings.Headless) And SessionId <> "")
 End Function
@@ -130,5 +174,5 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
         End If
     Next operation_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧画面への画面遷移操作が見つかりません。(" & OperationName & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
 End Function

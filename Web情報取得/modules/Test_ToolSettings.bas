@@ -25,8 +25,11 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
     Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
-    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 11)
-    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 12)
+    Call pSetSetting(ws_stub, "ListItemTargetIdSelector", "#list-item-target-id", 11)
+    Call pSetSetting(ws_stub, "DetailTransitionOperationName", "OpenDetail", 12)
+    Call pSetSetting(ws_stub, "TargetIdSelector", "#target-id", 13)
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 14)
+    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 15)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -59,6 +62,15 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_list_operation_name As String
     actual_list_operation_name = tool_settings.ListTransitionOperationName
 
+    Dim actual_list_target_selector As String
+    actual_list_target_selector = tool_settings.ListItemTargetIdSelector
+
+    Dim actual_detail_operation_name As String
+    actual_detail_operation_name = tool_settings.DetailTransitionOperationName
+
+    Dim actual_target_selector As String
+    actual_target_selector = tool_settings.TargetIdSelector
+
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
@@ -76,6 +88,9 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "#top-ready", actual_authenticated_selector
     Assert.Equals "#list-ready", actual_list_selector
     Assert.Equals "OpenList", actual_list_operation_name
+    Assert.Equals "#list-item-target-id", actual_list_target_selector
+    Assert.Equals "OpenDetail", actual_detail_operation_name
+    Assert.Equals "#target-id", actual_target_selector
     Assert.Equals G_WEB_ROW_MODE_RETRY_ERROR, actual_existing_mode
     Assert.EqualsNumeric 45, actual_timeout
 End Sub

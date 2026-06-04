@@ -60,6 +60,9 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - `AuthenticatedStartSelector`: 認証後の起点ページ到達を判定する selector。
 - `ListPageSelector`: 一覧画面到達を判定する selector。
 - `ListTransitionOperationName`: 一覧画面へ進む画面遷移操作名。
+- `ListItemTargetIdSelector`: 一覧上の対象IDを読み取る selector。
+- `DetailTransitionOperationName`: 先頭一覧項目から詳細ページへ入る画面遷移操作名。
+- `TargetIdSelector`: 詳細ページ上の対象IDを読み取る selector。
 - `OutputSheetName`: 取得結果の出力先シート名。
 - `ExistingRowMode`: 再実行時の既存行扱い。既定値は `SkipExisting`。
 - `TimeoutSeconds`: 画面到達や selector 出現を待つ秒数。
@@ -72,7 +75,7 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - JavaScript 関数名または script 本文。click が難しい場合だけ使う。
 - 待機条件名。
 
-CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を使う。例えば `iframe[name='right'] >> #list tbody tr:first-child td:nth-child(2)` は、top-level DOM の `iframe[name='right']` に切り替えた後、その frame 内で `#list tbody tr:first-child td:nth-child(2)` を探す。複数段の frame は `親frame >> 子frame >> target` と書く。
+CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を使う。具体的な selector 値は取得対象の環境に依存するため、ドキュメントや配布テンプレートには実サイトの値を残さず、利用者が settings に入力する。settings テンプレートには `OpenList`、`OpenDetail`、`ReturnToList` の操作名だけを用意し、locator 値や selector 値は空欄にする。
 
 詳細ページ列定義の候補:
 
@@ -87,8 +90,8 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 
 固定管理列:
 
-- `詳細ページID`: 一覧画面の JavaScript 呼び出しなどに渡される、画面遷移操作用の識別値。
-- `対象ID`: 詳細ページ上に表示される、出力行の対象を業務上識別する値。
+- `詳細ページID`: 一覧画面の JavaScript 呼び出しなどに渡される、画面遷移操作用の識別値。取得できる場合だけ保持する補助識別子とし、取得できない場合は対象IDを処理基準にする。
+- `対象ID`: 詳細ページ上に表示される、出力行の対象を業務上識別する値。出力行の正となる識別値として扱う。
 - `取得状態`: `OK` または `ERROR`。
 - `エラー内容`: 詳細ページ単位の取得失敗や必須項目欠落の内容。
 
@@ -100,7 +103,7 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 診断モードでは、認証後の起点ページ到達、一覧画面到達、詳細遷移操作、対象ID取得、DOM 抽出、一覧復帰リンクによる復帰を確認する。
 
 診断モードの出力先は本番収集と同じ出力先シートとする。
-診断モードの再実行時は、同じ `詳細ページID` または `対象ID` の既存行を上書きする。
+診断モードの再実行時は、同じ `対象ID` の既存行を上書きする。`詳細ページID` が取得できる場合は補助的に照合または記録する。
 ページングは診断モードでは扱わない。
 
 ## Collection Mode
@@ -110,13 +113,13 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 現在ページの未処理項目がなくなったら、次ページ操作の画面遷移操作を実行し、次ページがなくなるまで繰り返す。
 
 再実行時の既定動作は `SkipExisting` とする。
-`取得状態=OK` の既存 `詳細ページID` はスキップする。
+`取得状態=OK` の既存 `対象ID` はスキップする。`詳細ページID` が取得できる場合は補助的な再開候補として扱う。
 `取得状態=ERROR` は設定により再試行できるようにする。
 
 ## Waiting And Error Handling
 
 画面到達判定は URL より selector を優先する。
-詳細ページ到達判定では、対象ID selector の出現を必須条件とする。
+詳細ページ到達判定では、対象ID selector の出現を必須条件とする。一覧上の対象IDと詳細ページ上の対象IDが両方取れる場合、診断モードでは一致を必須とし、不一致は失敗扱いにする。
 ページング後は一覧画面 selector の出現に加え、可能であればページ番号または一覧先頭の詳細ページID変化を確認する。
 
 詳細ページの必須列が取れない場合は、その件を `ERROR` の出力行として残し、一覧復帰リンクで戻れる場合は次の一覧項目へ進む。

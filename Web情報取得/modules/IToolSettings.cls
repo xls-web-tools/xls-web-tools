@@ -59,6 +59,18 @@ End Property
 Public Property Get ListTransitionOperationName() As String
 End Property
 
+'* 一覧上の対象IDを読み取る selector。
+Public Property Get ListItemTargetIdSelector() As String
+End Property
+
+'* 詳細ページへの画面遷移操作名。
+Public Property Get DetailTransitionOperationName() As String
+End Property
+
+'* 詳細ページ上の対象IDを読み取る selector。
+Public Property Get TargetIdSelector() As String
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
 End Property

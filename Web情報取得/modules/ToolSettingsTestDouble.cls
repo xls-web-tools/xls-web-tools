@@ -28,6 +28,9 @@ Private pOutputSheetName As String
 Private pAuthenticatedStartSelector As String
 Private pListPageSelector As String
 Private pListTransitionOperationName As String
+Private pListItemTargetIdSelector As String
+Private pDetailTransitionOperationName As String
+Private pTargetIdSelector As String
 Private pExistingRowMode As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
@@ -132,6 +135,39 @@ Private Property Get IToolSettings_ListTransitionOperationName() As String
     IToolSettings_ListTransitionOperationName = ListTransitionOperationName
 End Property
 
+'* 一覧上の対象IDを読み取る selector。
+Public Property Get ListItemTargetIdSelector() As String
+    ListItemTargetIdSelector = pListItemTargetIdSelector
+End Property
+Public Property Let ListItemTargetIdSelector(ByVal NewValue As String)
+    pListItemTargetIdSelector = NewValue
+End Property
+Private Property Get IToolSettings_ListItemTargetIdSelector() As String
+    IToolSettings_ListItemTargetIdSelector = ListItemTargetIdSelector
+End Property
+
+'* 詳細ページへの画面遷移操作名。
+Public Property Get DetailTransitionOperationName() As String
+    DetailTransitionOperationName = pDetailTransitionOperationName
+End Property
+Public Property Let DetailTransitionOperationName(ByVal NewValue As String)
+    pDetailTransitionOperationName = NewValue
+End Property
+Private Property Get IToolSettings_DetailTransitionOperationName() As String
+    IToolSettings_DetailTransitionOperationName = DetailTransitionOperationName
+End Property
+
+'* 詳細ページ上の対象IDを読み取る selector。
+Public Property Get TargetIdSelector() As String
+    TargetIdSelector = pTargetIdSelector
+End Property
+Public Property Let TargetIdSelector(ByVal NewValue As String)
+    pTargetIdSelector = NewValue
+End Property
+Private Property Get IToolSettings_TargetIdSelector() As String
+    IToolSettings_TargetIdSelector = TargetIdSelector
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pExistingRowMode
@@ -186,6 +222,9 @@ Private Sub Class_Initialize()
     pAuthenticatedStartSelector = "#authenticated-start"
     pListPageSelector = "#list-page"
     pListTransitionOperationName = "OpenList"
+    pListItemTargetIdSelector = ""
+    pDetailTransitionOperationName = ""
+    pTargetIdSelector = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")

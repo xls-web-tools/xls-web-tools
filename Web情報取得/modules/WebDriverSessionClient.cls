@@ -168,6 +168,37 @@ Public Function WaitForSelector(ByVal Selector As String) As String
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="selector が見つかりません。(" & Selector & ")"
 End Function
 
+'* selector に一致する要素の表示テキストを読み取ります。
+'*
+'* @param Selector CSS selector。
+'* @return 要素の表示テキスト。
+'*
+'* @details
+'* frame chain selector は WaitForSelector と同じ `frame selector >> target selector` 形式を受け付けます。
+'* WebDriver の element text command を使い、URL 直叩きや DOM の直接構築は行いません。
+Public Function ReadElementText(ByVal Selector As String) As String
+    Call pCheckInit
+    Call pRequireSession
+
+    If Trim$(Selector) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Selector は必須です。"
+    End If
+
+    Dim element_id As String
+    element_id = pFindElement("css selector", Selector)
+
+    Dim response_body As String
+    response_body = pClient.Execute("GET", "/session/" & pSessionId & "/element/" & element_id & "/text", "")
+    Call pRaiseIfWebDriverError(response_body)
+
+    Dim result_value As String
+    result_value = pExtractJsonString(response_body, "value")
+
+    Call pSwitchToTopLevelContext
+
+    ReadElementText = result_value
+End Function
+
 Private Function pExtractElementId(ByVal ResponseBody As String) As String
     Dim result_value As String
     result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")
