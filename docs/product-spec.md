@@ -72,6 +72,8 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - JavaScript 関数名または script 本文。click が難しい場合だけ使う。
 - 待機条件名。
 
+CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を使う。例えば `iframe[name='right'] >> #list tbody tr:first-child td:nth-child(2)` は、top-level DOM の `iframe[name='right']` に切り替えた後、その frame 内で `#list tbody tr:first-child td:nth-child(2)` を探す。複数段の frame は `親frame >> 子frame >> target` と書く。
+
 詳細ページ列定義の候補:
 
 - 出力列名。
