@@ -79,10 +79,29 @@ Public Sub Start(ByVal Settings As IToolSettings)
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="WebDriver port が使用中です。他プロセスは終了しません。(" & CStr(Settings.WebDriverPort) & ")"
     End If
 
+    On Error GoTo START_ERROR
+
     Dim shell_obj As Object
     Set shell_obj = CreateObject("WScript.Shell")
     Set pExec = shell_obj.Exec(pBuildCommand(Settings))
     pIsRunning = True
+    Call pWaitUntilReady(Settings)
+
+    On Error GoTo 0
+    Exit Sub
+
+START_ERROR:
+    Dim err_num As Long
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+    err_num = Err.Number
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+
+    Call StopProcess
+    Err.Raise err_num, "Class WebDriverProcess", err_desc, err_help_file, err_help_context
 End Sub
 Private Sub IWebDriverProcess_Start(ByVal Settings As IToolSettings)
     Call Start(Settings)
@@ -97,6 +116,24 @@ End Sub
 Private Function pBuildCommand(ByVal Settings As IToolSettings) As String
     pBuildCommand = pQuoteArgument(Settings.WebDriverPath) & " --port=" & CStr(Settings.WebDriverPort)
 End Function
+
+Private Sub pWaitUntilReady(ByVal Settings As IToolSettings)
+    Dim timeout_seconds As Long
+    timeout_seconds = Settings.TimeoutSeconds
+    If timeout_seconds <= 0 Then timeout_seconds = 1
+
+    Dim deadline_time As Date
+    deadline_time = DateAdd("s", timeout_seconds, Now)
+
+    Do
+        Call pRaiseIfProcessExited
+        If pPortProbe.IsPortInUse(Settings.WebDriverPort) Then Exit Sub
+        DoEvents
+    Loop While Now < deadline_time
+
+    Call pRaiseIfProcessExited
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver が起動待ち時間内に応答しません。port=" & CStr(Settings.WebDriverPort) & ", timeout=" & CStr(timeout_seconds) & " 秒"
+End Sub
 
 '* 起動した Edge WebDriver process を終了します。
 '*
@@ -114,6 +151,30 @@ End Sub
 Private Sub IWebDriverProcess_StopProcess()
     Call StopProcess
 End Sub
+
+Private Sub pRaiseIfProcessExited()
+    If pExec Is Nothing Then Exit Sub
+    If pExec.Status = 0 Then Exit Sub
+
+    pIsRunning = False
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver process が起動直後に終了しました。ExitCode=" & CStr(pExec.ExitCode) & pBuildProcessOutputMessage()
+End Sub
+
+Private Function pBuildProcessOutputMessage() As String
+    On Error Resume Next
+
+    Dim output_text As String
+    output_text = Trim$(CStr(pExec.StdErr.ReadAll))
+    If output_text = "" Then output_text = Trim$(CStr(pExec.StdOut.ReadAll))
+
+    On Error GoTo 0
+
+    If output_text = "" Then
+        pBuildProcessOutputMessage = ""
+    Else
+        pBuildProcessOutputMessage = " Output=" & output_text
+    End If
+End Function
 
 Private Function pQuoteArgument(ByVal ArgumentText As String) As String
     pQuoteArgument = """" & Replace(ArgumentText, """", """""") & """"

@@ -62,10 +62,16 @@ Public Function Execute( _
     Dim request_obj As Object
     Set request_obj = CreateObject("WinHttp.WinHttpRequest.5.1")
 
+    Dim target_url As String
+    target_url = pBuildUrl(EndpointPath)
+
     Dim timeout_ms As Long
     timeout_ms = pTimeoutSeconds * 1000
+
+    On Error GoTo REQUEST_ERROR
+
     request_obj.SetTimeouts timeout_ms, timeout_ms, timeout_ms, timeout_ms
-    request_obj.Open HttpMethod, pBuildUrl(EndpointPath), False
+    request_obj.Open HttpMethod, target_url, False
     request_obj.SetRequestHeader "Content-Type", "application/json; charset=utf-8"
     request_obj.Send RequestBody
 
@@ -74,11 +80,26 @@ Public Function Execute( _
 
     Dim status_code As Long
     status_code = CLng(request_obj.Status)
+
+    On Error GoTo 0
     If status_code < 200 Or 300 <= status_code Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="WebDriver HTTP error " & CStr(status_code) & "B" & response_body
     End If
 
     Execute = response_body
+    Exit Function
+
+REQUEST_ERROR:
+    Dim err_num As Long
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+    err_num = Err.Number
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+
+    Err.Raise err_num, "Class WebDriverClient", "WebDriver HTTP API ‚ÉÚ‘±‚Å‚«‚Ü‚¹‚ñB(" & HttpMethod & " " & target_url & ") " & err_desc, err_help_file, err_help_context
 End Function
 Private Function IWebDriverClient_Execute( _
         ByVal HttpMethod As String, _
