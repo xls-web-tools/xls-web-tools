@@ -287,6 +287,49 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperationでFrame内要素をClic
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", target_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/target-1/click", "{}")
 End Sub
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationで通常Click不能ならScriptClickする(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim find_body As String
+    find_body = "{""using"":""css selector"",""value"":""#open-list""}"
+
+    Dim script_click_body As String
+    script_click_body = "{""script"":""arguments[0].click();"",""args"":[{""element-6066-11e4-a52e-4f735466cecf"":""element-1""}]}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""element-1""}}", "POST", "/session/abc/element", find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""error"":""element not interactable"",""message"":""element not interactable""}}", "POST", "/session/abc/element/element-1/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", script_click_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", find_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-1/click", "{}")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", script_click_body)
+End Sub
 Public Sub Test_WebDriverSessionClient_RunTransitionOperationでScriptOnlyを実行する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

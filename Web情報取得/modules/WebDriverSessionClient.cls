@@ -357,7 +357,11 @@ Private Function pTryClickElement( _
 
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element/" & element_id & "/click", "{}")
-    Call pRaiseIfWebDriverError(response_body)
+    If pIsElementNotInteractable(response_body) Then
+        Call pClickElementByScript(element_id)
+    Else
+        Call pRaiseIfWebDriverError(response_body)
+    End If
 
     pTryClickElement = True
     Exit Function
@@ -375,6 +379,20 @@ End Function
 Private Function pIsRetryableElementLookupError(ByVal ErrorDescription As String) As Boolean
     pIsRetryableElementLookupError = (0 < InStr(1, ErrorDescription, "no such element", vbTextCompare) _
             Or 0 < InStr(1, ErrorDescription, "stale element reference", vbTextCompare))
+End Function
+
+Private Function pIsElementNotInteractable(ByVal ResponseBody As String) As Boolean
+    pIsElementNotInteractable = (LCase$(pExtractJsonString(ResponseBody, "error")) = "element not interactable")
+End Function
+
+Private Sub pClickElementByScript(ByVal ElementId As String)
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", pBuildElementClickScriptBody(ElementId))
+    Call pRaiseIfWebDriverError(response_body)
+End Sub
+
+Private Function pBuildElementClickScriptBody(ByVal ElementId As String) As String
+    pBuildElementClickScriptBody = "{""script"":""arguments[0].click();"",""args"":[{""element-6066-11e4-a52e-4f735466cecf"":""" & pJsonEscape(ElementId) & """}]}"
 End Function
 
 Private Sub pRequireSession()
