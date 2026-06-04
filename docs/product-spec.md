@@ -57,6 +57,9 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - `BrowserProfilePath`: 専用ブラウザプロファイルの上書きパス。空欄の場合は `ThisWorkbook.Path\browser-profile` を使う。
 - `Headless`: `True` の場合は不可視ブラウザ、`False` の場合は可視ブラウザで起動する。既定値は `True`。
 - `StartUrl`: 取得開始 URL。
+- `AuthenticatedStartSelector`: 認証後の起点ページ到達を判定する selector。
+- `ListPageSelector`: 一覧画面到達を判定する selector。
+- `ListTransitionOperationName`: 一覧画面へ進む画面遷移操作名。
 - `OutputSheetName`: 取得結果の出力先シート名。
 - `ExistingRowMode`: 再実行時の既存行扱い。既定値は `SkipExisting`。
 - `TimeoutSeconds`: 画面到達や selector 出現を待つ秒数。

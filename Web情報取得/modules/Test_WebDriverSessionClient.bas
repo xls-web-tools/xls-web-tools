@@ -38,6 +38,7 @@ Public Sub Test_WebDriverSessionClient_HeadlessTrueÇ≈ïsâ¬éãÉuÉâÉEÉUCapabilitiesÇ
     Assert.Equals "abc", actual_session_id
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session", expected_body)
 End Sub
+
 Public Sub Test_WebDriverSessionClient_QuitSessionÇ≈WebDriverSessionÇèIóπÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -70,6 +71,156 @@ Public Sub Test_WebDriverSessionClient_QuitSessionÇ≈WebDriverSessionÇèIóπÇ∑ÇÈ(B
     Assert.Equals "abc", session_id
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+
+Public Sub Test_WebDriverSessionClient_NavigateToStartUrlSendsUrlCommand(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.NavigateToStartUrl
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+End Sub
+
+Public Sub Test_WebDriverSessionClient_WaitForSelectorÇ≈SelectorèoåªÇîªíËÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim find_body As String
+    find_body = "{""using"":""css selector"",""value"":""#top-ready""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""element-1""}}", "POST", "/session/abc/element", find_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Dim actual_element_id As String
+    actual_element_id = session_client.WaitForSelector("#top-ready")
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "element-1", actual_element_id
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", find_body)
+End Sub
+
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈ClickÇóDêÊÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim find_body As String
+    find_body = "{""using"":""css selector"",""value"":""#open-list""}"
+
+    Dim script_body As String
+    script_body = "{""script"":""openList()"",""args"":[]}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""element-1""}}", "POST", "/session/abc/element", find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/element-1/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", script_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenList", "css selector", "#open-list", Script:="openList()", WaitConditionName:="ListReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", find_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-1/click", "{}")
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", script_body)
+End Sub
+
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈ScriptOnlyÇé¿çsÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim script_body As String
+    script_body = "{""script"":""openList()"",""args"":[]}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", script_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenList", "", "", Script:="openList()", WaitConditionName:="ListReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", script_body)
+End Sub
+
 Public Sub Test_WebDriverSessionClient_HeadlessFalseÇ≈â¬éãÉuÉâÉEÉUCapabilitiesÇçÏÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

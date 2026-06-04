@@ -169,3 +169,24 @@ Public Function New_WebDriverSmokeRunner( _
 
     Set New_WebDriverSmokeRunner = result_value
 End Function
+
+'* Web navigation diagnostic runner を生成します。
+'*
+'* @param Process WebDriver process 操作。
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの Web navigation diagnostic runner。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebNavDiagnosticRunner に委譲します。
+Public Function New_WebNavDiagnosticRunner( _
+        ByVal Process As IWebDriverProcess, _
+        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Settings As IToolSettings) As WebNavDiagnosticRunner
+
+    Dim result_value As WebNavDiagnosticRunner
+    Set result_value = New WebNavDiagnosticRunner
+    Call result_value.Initialize(Process, SessionClient, Settings)
+
+    Set New_WebNavDiagnosticRunner = result_value
+End Function

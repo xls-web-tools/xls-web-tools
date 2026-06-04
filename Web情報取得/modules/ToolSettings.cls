@@ -77,6 +77,30 @@ Private Property Get IToolSettings_OutputSheetName() As String
     IToolSettings_OutputSheetName = OutputSheetName
 End Property
 
+'* 認証後の起点ページ到達を判定する selector。
+Public Property Get AuthenticatedStartSelector() As String
+    AuthenticatedStartSelector = pGetRequiredParam("AuthenticatedStartSelector")
+End Property
+Private Property Get IToolSettings_AuthenticatedStartSelector() As String
+    IToolSettings_AuthenticatedStartSelector = AuthenticatedStartSelector
+End Property
+
+'* 一覧画面到達を判定する selector。
+Public Property Get ListPageSelector() As String
+    ListPageSelector = pGetRequiredParam("ListPageSelector")
+End Property
+Private Property Get IToolSettings_ListPageSelector() As String
+    IToolSettings_ListPageSelector = ListPageSelector
+End Property
+
+'* 一覧画面への画面遷移操作名。
+Public Property Get ListTransitionOperationName() As String
+    ListTransitionOperationName = pGetRequiredParam("ListTransitionOperationName")
+End Property
+Private Property Get IToolSettings_ListTransitionOperationName() As String
+    IToolSettings_ListTransitionOperationName = ListTransitionOperationName
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pNormalizeExistingRowMode(pGetOptionalParam("ExistingRowMode", G_WEB_ROW_MODE_SKIP_EXISTING))

@@ -22,8 +22,11 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "Headless", "False", 5)
     Call pSetSetting(ws_stub, "StartUrl", "https://example.test/start", 6)
     Call pSetSetting(ws_stub, "OutputSheetName", "result", 7)
-    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 8)
-    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 9)
+    Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
+    Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
+    Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 11)
+    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 12)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -47,6 +50,15 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_output_sheet As String
     actual_output_sheet = tool_settings.OutputSheetName
 
+    Dim actual_authenticated_selector As String
+    actual_authenticated_selector = tool_settings.AuthenticatedStartSelector
+
+    Dim actual_list_selector As String
+    actual_list_selector = tool_settings.ListPageSelector
+
+    Dim actual_list_operation_name As String
+    actual_list_operation_name = tool_settings.ListTransitionOperationName
+
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
@@ -61,6 +73,9 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.IsFalse actual_headless
     Assert.Equals "https://example.test/start", actual_start_url
     Assert.Equals "result", actual_output_sheet
+    Assert.Equals "#top-ready", actual_authenticated_selector
+    Assert.Equals "#list-ready", actual_list_selector
+    Assert.Equals "OpenList", actual_list_operation_name
     Assert.Equals G_WEB_ROW_MODE_RETRY_ERROR, actual_existing_mode
     Assert.EqualsNumeric 45, actual_timeout
 End Sub
@@ -77,6 +92,9 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetMissingSetting(ws_stub, "Headless")
     Call pSetSetting(ws_stub, "StartUrl", "https://example.test/start", 6)
     Call pSetSetting(ws_stub, "OutputSheetName", "result", 7)
+    Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
+    Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
+    Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
     Call pSetMissingSetting(ws_stub, "ExistingRowMode")
     Call pSetMissingSetting(ws_stub, "TimeoutSeconds")
 

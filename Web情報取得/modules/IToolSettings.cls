@@ -47,6 +47,18 @@ End Property
 Public Property Get OutputSheetName() As String
 End Property
 
+'* 認証後の起点ページ到達を判定する selector。
+Public Property Get AuthenticatedStartSelector() As String
+End Property
+
+'* 一覧画面到達を判定する selector。
+Public Property Get ListPageSelector() As String
+End Property
+
+'* 一覧画面への画面遷移操作名。
+Public Property Get ListTransitionOperationName() As String
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
 End Property

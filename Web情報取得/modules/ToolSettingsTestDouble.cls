@@ -25,6 +25,9 @@ Private pBrowserProfilePath As String
 Private pHeadless As Boolean
 Private pStartUrl As String
 Private pOutputSheetName As String
+Private pAuthenticatedStartSelector As String
+Private pListPageSelector As String
+Private pListTransitionOperationName As String
 Private pExistingRowMode As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
@@ -96,6 +99,39 @@ Private Property Get IToolSettings_OutputSheetName() As String
     IToolSettings_OutputSheetName = OutputSheetName
 End Property
 
+'* 認証後の起点ページ到達を判定する selector。
+Public Property Get AuthenticatedStartSelector() As String
+    AuthenticatedStartSelector = pAuthenticatedStartSelector
+End Property
+Public Property Let AuthenticatedStartSelector(ByVal NewValue As String)
+    pAuthenticatedStartSelector = NewValue
+End Property
+Private Property Get IToolSettings_AuthenticatedStartSelector() As String
+    IToolSettings_AuthenticatedStartSelector = AuthenticatedStartSelector
+End Property
+
+'* 一覧画面到達を判定する selector。
+Public Property Get ListPageSelector() As String
+    ListPageSelector = pListPageSelector
+End Property
+Public Property Let ListPageSelector(ByVal NewValue As String)
+    pListPageSelector = NewValue
+End Property
+Private Property Get IToolSettings_ListPageSelector() As String
+    IToolSettings_ListPageSelector = ListPageSelector
+End Property
+
+'* 一覧画面への画面遷移操作名。
+Public Property Get ListTransitionOperationName() As String
+    ListTransitionOperationName = pListTransitionOperationName
+End Property
+Public Property Let ListTransitionOperationName(ByVal NewValue As String)
+    pListTransitionOperationName = NewValue
+End Property
+Private Property Get IToolSettings_ListTransitionOperationName() As String
+    IToolSettings_ListTransitionOperationName = ListTransitionOperationName
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pExistingRowMode
@@ -147,6 +183,9 @@ Private Sub Class_Initialize()
     pHeadless = True
     pStartUrl = "https://example.test/start"
     pOutputSheetName = "output"
+    pAuthenticatedStartSelector = "#authenticated-start"
+    pListPageSelector = "#list-page"
+    pListTransitionOperationName = "OpenList"
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")
