@@ -94,10 +94,14 @@ ON_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    On Error Resume Next
-    If result_value <> "" Then Call pSessionClient.QuitSession(result_value)
-    Call pProcess.StopProcess
-    On Error GoTo 0
+    If pShouldKeepBrowserForDiagnostic(result_value) Then
+        err_desc = err_desc & vbCrLf & "Headless=False のため、診断用にブラウザを残しました。確認後、ブラウザを閉じてください。"
+    Else
+        On Error Resume Next
+        If result_value <> "" Then Call pSessionClient.QuitSession(result_value)
+        Call pProcess.StopProcess
+        On Error GoTo 0
+    End If
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Function
@@ -107,6 +111,10 @@ Private Sub pCheckInit()
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="初期化されていません。"
     End If
 End Sub
+
+Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
+    pShouldKeepBrowserForDiagnostic = ((Not pSettings.Headless) And SessionId <> "")
+End Function
 
 Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
     Dim operations As ObjectList

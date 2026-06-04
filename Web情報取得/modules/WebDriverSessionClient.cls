@@ -278,6 +278,8 @@ Private Sub pRequireSession()
 End Sub
 
 Private Function pFindElement(ByVal LocatorType As String, ByVal LocatorValue As String) As String
+    On Error GoTo FIND_ERROR
+
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody(LocatorType, LocatorValue))
     Call pRaiseIfWebDriverError(response_body)
@@ -286,6 +288,19 @@ Private Function pFindElement(ByVal LocatorType As String, ByVal LocatorValue As
     If pFindElement = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver element id ÇéÊìæÇ≈Ç´Ç‹ÇπÇÒÅB(" & response_body & ")"
     End If
+    Exit Function
+
+FIND_ERROR:
+    Dim err_num As Long
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+    err_num = Err.Number
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+
+    Err.Raise err_num, "Class WebDriverSessionClient", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
 End Function
 
 Private Sub pCheckInit()

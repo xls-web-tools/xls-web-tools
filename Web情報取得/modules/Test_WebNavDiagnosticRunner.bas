@@ -76,3 +76,48 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrlから一覧画面到達まで診断する(ByVa
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+
+Public Sub Test_WebNavDiagnosticRunner_可視ブラウザ診断中のエラーではブラウザを残す(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = False
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.TimeoutSeconds = 1
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile""]}}}}"
+
+    Dim auth_find_body As String
+    auth_find_body = "{""using"":""css selector"",""value"":""#top-ready""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetError("Execute", vbObjectError + 1, "Class WebDriverClient", "WebDriver HTTP error 404。Not Found", "POST", "/session/abc/element", auth_find_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.IsTrue 0 < InStr(1, Err.Description, "ブラウザを残しました", vbTextCompare)
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("Start")
+    Assert.EqualsNumeric 0, process.Store.GetCallCount("StopProcess")
+    Assert.IsTrue process.IsRunning
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub

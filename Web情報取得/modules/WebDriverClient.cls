@@ -83,7 +83,9 @@ Public Function Execute( _
 
     On Error GoTo 0
     If status_code < 200 Or 300 <= status_code Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="WebDriver HTTP error " & CStr(status_code) & "B" & response_body
+        If Not pIsWebDriverErrorResponse(response_body) Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="WebDriver HTTP error " & CStr(status_code) & "B" & response_body
+        End If
     End If
 
     Execute = response_body
@@ -114,6 +116,10 @@ Private Sub pCheckInit()
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="‰Šú‰»‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
     End If
 End Sub
+
+Private Function pIsWebDriverErrorResponse(ByVal ResponseBody As String) As Boolean
+    pIsWebDriverErrorResponse = (0 < InStr(1, ResponseBody, """error""", vbTextCompare))
+End Function
 
 Private Function pBuildUrl(ByVal EndpointPath As String) As String
     If Left$(EndpointPath, 1) = "/" Then
