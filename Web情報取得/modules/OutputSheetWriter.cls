@@ -18,6 +18,7 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_HEADER_ROW As Long = 1
+Private Const C_DIAGNOSTIC_OUTPUT_ROW As Long = 2
 Private Const C_COL_DETAIL_PAGE_ID As Long = 1
 Private Const C_COL_TARGET_ID As Long = 2
 Private Const C_COL_STATUS As Long = 3
@@ -71,6 +72,86 @@ Private Sub pWriteHeader(ByVal ColumnIndex As Long, ByVal HeaderText As String)
     Call WsSrv.WriteCell( _
             New_RangeBounds(Row:=C_HEADER_ROW, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
             HeaderText, _
+            TypeConvert:=False)
+End Sub
+
+'* 診断用の出力行を書き込みます。
+'*
+'* @param DetailPageId 詳細ページID。
+'* @param TargetId 対象ID。
+'* @param Status 取得状態。
+'* @param ErrorDescription エラー内容。
+'* @param DetailValues 詳細ページ列定義に対応する抽出値。
+'*
+'* @details
+'* TargetId または DetailPageId の既存行があればその行へ上書きし、見つからない場合は 2 行目へ書き込みます。
+Public Sub WriteDiagnosticRow( _
+        ByVal DetailPageId As String, _
+        ByVal TargetId As String, _
+        ByVal Status As String, _
+        ByVal ErrorDescription As String, _
+        ByVal DetailValues As ArrayObject)
+    Call pCheckInit
+
+    If DetailValues Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="DetailValues は必須です。"
+    End If
+
+    Dim output_row As Long
+    output_row = pResolveDiagnosticOutputRow(DetailPageId, TargetId)
+
+    Call pWriteOutputCell(output_row, C_COL_DETAIL_PAGE_ID, DetailPageId)
+    Call pWriteOutputCell(output_row, C_COL_TARGET_ID, TargetId)
+    Call pWriteOutputCell(output_row, C_COL_STATUS, Status)
+    Call pWriteOutputCell(output_row, C_COL_ERROR, ErrorDescription)
+
+    Dim detail_idx As Long
+    For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
+        Call pWriteOutputCell(output_row, C_COL_DETAIL_START + detail_idx, CStr(DetailValues.Item(detail_idx)))
+    Next detail_idx
+End Sub
+
+Private Function pResolveDiagnosticOutputRow(ByVal DetailPageId As String, ByVal TargetId As String) As Long
+    Dim target_row As Long
+    target_row = pFindExistingOutputRow(C_COL_TARGET_ID, TargetId)
+    If target_row <> 0 Then
+        pResolveDiagnosticOutputRow = target_row
+        Exit Function
+    End If
+
+    target_row = pFindExistingOutputRow(C_COL_DETAIL_PAGE_ID, DetailPageId)
+    If target_row <> 0 Then
+        pResolveDiagnosticOutputRow = target_row
+        Exit Function
+    End If
+
+    pResolveDiagnosticOutputRow = C_DIAGNOSTIC_OUTPUT_ROW
+End Function
+
+Private Function pFindExistingOutputRow(ByVal ColumnIndex As Long, ByVal LookupValue As String) As Long
+    If Trim$(LookupValue) = "" Then Exit Function
+
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds( _
+            Row:=C_DIAGNOSTIC_OUTPUT_ROW, _
+            Column:=ColumnIndex, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=ColumnIndex, _
+            Sheet:=pSettings.OutputSheetName)
+
+    Dim found_cells As ObjectList
+    Set found_cells = WsSrv.Find(LookupValue, search_bounds)
+    If found_cells.Count = 0 Then Exit Function
+
+    Dim found_bounds As WorksheetRangeBounds
+    Set found_bounds = found_cells.Item(0)
+    pFindExistingOutputRow = found_bounds.Row
+End Function
+
+Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
+    Call WsSrv.WriteCell( _
+            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
+            CellValue, _
             TypeConvert:=False)
 End Sub
 

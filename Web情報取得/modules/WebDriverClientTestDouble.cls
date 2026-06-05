@@ -43,7 +43,11 @@ Public Function Execute( _
     Call Store.RaiseIfError("Execute", HttpMethod, EndpointPath, RequestBody)
 
     Dim result_value As String
-    result_value = Store.GetReturnOrDefault("Execute", "", HttpMethod, EndpointPath, RequestBody)
+    If Store.HasReturn("Execute", HttpMethod, EndpointPath, RequestBody) Then
+        result_value = Store.GetReturn("Execute", HttpMethod, EndpointPath, RequestBody)
+    Else
+        result_value = Store.GetReturnOrDefault("Execute.AnyRequestBody", "", HttpMethod, EndpointPath)
+    End If
     Call Store.RecordCall("Execute", HttpMethod, EndpointPath, RequestBody)
 
     Execute = result_value

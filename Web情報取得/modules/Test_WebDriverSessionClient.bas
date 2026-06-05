@@ -396,6 +396,46 @@ Public Sub Test_WebDriverSessionClient_HeadlessFalse‚Å‰Â‹ƒuƒ‰ƒEƒUCapabilities‚ğ
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session", expected_body)
 End Sub
 
+Public Sub Test_WebDriverSessionClient_ReadDetailColumnValues‚Å’Šoí•Ê‚²‚Æ‚Ì’l‚ğˆêŠ‡’Šo‚·‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ–¼", "#subject", ExtractType:="TextContent"))
+    Call detail_defs.Add(New_DetailColumnDefinition("ƒŠƒ“ƒN", "iframe[name='right'] >> #link", ExtractType:="Attribute", AttributeName:="href"))
+    Call detail_defs.Add(New_DetailColumnDefinition("’S“–Ò", "#owner", ExtractType:="InnerText"))
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""ˆÄŒA"", ""https://example.test/detail"", ""R“c‘¾˜Y""]}", "POST", "/session/abc/execute/sync")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Dim actual_values As ArrayObject
+    Set actual_values = session_client.ReadDetailColumnValues(detail_defs)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "ˆÄŒA", CStr(actual_values.Item(0))
+    Assert.Equals "https://example.test/detail", CStr(actual_values.Item(1))
+    Assert.Equals "R“c‘¾˜Y", CStr(actual_values.Item(2))
+    Assert.EqualsNumeric 1, pCountExecuteCalls(client_double, "POST", "/session/abc/execute/sync")
+End Sub
+
 Public Sub Test_WebDriverSessionClient_WebDriverErrorResponse‚ğŒ´ˆö•t‚«‚ÅÄ‘—o‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -424,3 +464,26 @@ Public Sub Test_WebDriverSessionClient_WebDriverErrorResponse‚ğŒ´ˆö•t‚«‚ÅÄ‘—o‚
     Assert.IsTrue 0 < InStr(1, Err.Description, "session not created", vbTextCompare)
     Assert.IsTrue 0 < InStr(1, Err.Description, "profile locked", vbTextCompare)
 End Sub
+
+Private Function pCountExecuteCalls( _
+        ByVal ClientDouble As WebDriverClientTestDouble, _
+        ByVal HttpMethod As String, _
+        ByVal EndpointPath As String) As Long
+
+    Dim result_count As Long
+    result_count = 0
+
+    Dim calls As ObjectList
+    Set calls = ClientDouble.Store.GetCallsAll("Execute")
+
+    Dim call_idx As Long
+    For call_idx = 0 To calls.Count - 1
+        Dim call_record As TestDoubleCallRecord
+        Set call_record = calls.Item(call_idx)
+        If CStr(call_record.GetArgument(0)) = HttpMethod And CStr(call_record.GetArgument(1)) = EndpointPath Then
+            result_count = result_count + 1
+        End If
+    Next call_idx
+
+    pCountExecuteCalls = result_count
+End Function

@@ -199,6 +199,156 @@ Public Function ReadElementText(ByVal Selector As String) As String
     ReadElementText = result_value
 End Function
 
+'* 詳細ページ列定義に対応する値を読み取ります。
+'*
+'* @param DetailColumnDefinitions 詳細ページ列定義の一覧。
+'* @return 列定義と同じ順序の抽出値。
+'*
+'* @details
+'* WebDriver の execute/sync で DOM から列定義順の配列を一括抽出します。
+'* frame chain selector、TextContent、InnerText、Attribute の抽出種別を受け付けます。
+Public Function ReadDetailColumnValues(ByVal DetailColumnDefinitions As ObjectList) As ArrayObject
+    Call pCheckInit
+    Call pRequireSession
+
+    If DetailColumnDefinitions Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="DetailColumnDefinitions は必須です。"
+    End If
+
+    Dim response_body As String
+    response_body = pClient.Execute( _
+            "POST", _
+            "/session/" & pSessionId & "/execute/sync", _
+            pBuildDetailExtractionScriptBody(DetailColumnDefinitions))
+    Call pRaiseIfWebDriverError(response_body)
+
+    If response_body <> "" Then
+        Set ReadDetailColumnValues = pExtractJsonStringArray(response_body, "value")
+        Exit Function
+    End If
+
+    Set ReadDetailColumnValues = pReadDetailColumnValuesByElementText(DetailColumnDefinitions)
+End Function
+
+Private Function pReadDetailColumnValuesByElementText(ByVal DetailColumnDefinitions As ObjectList) As ArrayObject
+    Dim result_values As ArrayObject
+    Set result_values = New ArrayObject
+
+    If 0 < DetailColumnDefinitions.Count Then
+        Call result_values.ReDimArray(0, DetailColumnDefinitions.Count - 1)
+    End If
+
+    Dim def_idx As Long
+    For def_idx = 0 To DetailColumnDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = DetailColumnDefinitions.Item(def_idx)
+        Call result_values.Update(def_idx, Trim$(ReadElementText(detail_def.Selector)))
+    Next def_idx
+
+    Set pReadDetailColumnValuesByElementText = result_values
+End Function
+
+Private Function pBuildDetailExtractionScriptBody(ByVal DetailColumnDefinitions As ObjectList) As String
+    pBuildDetailExtractionScriptBody = "{""script"":""" & pJsonEscape(pDetailExtractionScript()) & """,""args"":[" & pBuildDetailDefinitionJson(DetailColumnDefinitions) & "]}"
+End Function
+
+Private Function pDetailExtractionScript() As String
+    Dim script_text As String
+    script_text = "return (function(defs) {"
+    script_text = script_text & "function trimValue(value) { if (value === null || value === undefined) { return ''; } return String(value).replace(/^\s+|\s+$/g, ''); }"
+    script_text = script_text & "function findElement(selector) { var parts = String(selector).split('>>'); var root = document; for (var i = 0; i < parts.length - 1; i++) { var frame = root.querySelector(trimValue(parts[i])); if (!frame || !frame.contentDocument) { return null; } root = frame.contentDocument; } return root.querySelector(trimValue(parts[parts.length - 1])); }"
+    script_text = script_text & "return defs.map(function(def) { var element = findElement(def.selector); if (!element) { if (def.isRequired) { throw new Error('Required selector not found: ' + def.outputColumnName); } return ''; } var extractType = String(def.extractType || 'InnerText').toLowerCase(); var value = ''; if (extractType === 'attribute') { value = element.getAttribute(def.attributeName); } else if (extractType === 'textcontent') { value = element.textContent; } else { value = element.innerText; } value = trimValue(value); if (value === '' && def.isRequired && String(def.blankMode || '').toLowerCase() === 'errorifblank') { throw new Error('Required value is blank: ' + def.outputColumnName); } return value; });"
+    script_text = script_text & "})(arguments[0]);"
+
+    pDetailExtractionScript = script_text
+End Function
+
+Private Function pBuildDetailDefinitionJson(ByVal DetailColumnDefinitions As ObjectList) As String
+    Dim result_text As String
+    result_text = "["
+
+    Dim def_idx As Long
+    For def_idx = 0 To DetailColumnDefinitions.Count - 1
+        If 0 < def_idx Then result_text = result_text & ","
+
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = DetailColumnDefinitions.Item(def_idx)
+
+        result_text = result_text & "{" _
+                & """outputColumnName"":""" & pJsonEscape(detail_def.OutputColumnName) & """," _
+                & """selector"":""" & pJsonEscape(detail_def.Selector) & """," _
+                & """extractType"":""" & pJsonEscape(detail_def.ExtractType) & """," _
+                & """attributeName"":""" & pJsonEscape(detail_def.AttributeName) & """," _
+                & """isRequired"":" & pJsonBoolean(detail_def.IsRequired) & "," _
+                & """blankMode"":""" & pJsonEscape(detail_def.BlankMode) & """}"
+    Next def_idx
+
+    result_text = result_text & "]"
+    pBuildDetailDefinitionJson = result_text
+End Function
+
+Private Function pJsonBoolean(ByVal TargetValue As Boolean) As String
+    If TargetValue Then
+        pJsonBoolean = "true"
+    Else
+        pJsonBoolean = "false"
+    End If
+End Function
+
+Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName As String) As ArrayObject
+    Dim key_idx As Long
+    key_idx = InStr(1, JsonText, """" & KeyName & """", vbBinaryCompare)
+    If key_idx = 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="JSON 配列のキーを取得できません。(" & KeyName & ")"
+    End If
+
+    Dim open_idx As Long
+    open_idx = InStr(key_idx, JsonText, "[", vbBinaryCompare)
+
+    Dim close_idx As Long
+    close_idx = InStrRev(JsonText, "]", -1, vbBinaryCompare)
+    If open_idx = 0 Or close_idx <= open_idx Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="JSON 配列を取得できません。(" & JsonText & ")"
+    End If
+
+    Dim array_text As String
+    array_text = Mid$(JsonText, open_idx + 1, close_idx - open_idx - 1)
+
+    Dim value_re As RegExp
+    Set value_re = New RegExp
+    value_re.Global = True
+    value_re.IgnoreCase = False
+    value_re.Pattern = Chr$(34) & "((\\.|[^" & Chr$(34) & "])*)" & Chr$(34)
+
+    Dim matches As MatchCollection
+    Set matches = value_re.Execute(array_text)
+
+    Dim result_values As ArrayObject
+    Set result_values = New ArrayObject
+    If 0 < matches.Count Then
+        Call result_values.ReDimArray(0, matches.Count - 1)
+    End If
+
+    Dim match_idx As Long
+    For match_idx = 0 To matches.Count - 1
+        Call result_values.Update(match_idx, pJsonUnescape(CStr(matches.Item(match_idx).SubMatches(0))))
+    Next match_idx
+
+    Set pExtractJsonStringArray = result_values
+End Function
+
+Private Function pJsonUnescape(ByVal TargetText As String) As String
+    Dim result_value As String
+    result_value = TargetText
+    result_value = Replace(result_value, "\n", vbLf)
+    result_value = Replace(result_value, "\r", vbCr)
+    result_value = Replace(result_value, "\t", vbTab)
+    result_value = Replace(result_value, "\" & Chr$(34), Chr$(34))
+    result_value = Replace(result_value, "\\", "\")
+
+    pJsonUnescape = result_value
+End Function
+
 Private Function pExtractElementId(ByVal ResponseBody As String) As String
     Dim result_value As String
     result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")

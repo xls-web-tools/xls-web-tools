@@ -93,6 +93,7 @@ Public Function Run() As String
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pExtractFirstDetailTargetId
+    Call pWriteDiagnosticOutputIfConfigured
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -155,6 +156,51 @@ Private Sub pExtractFirstDetailTargetId()
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & pListItemTargetId & " / " & pTargetId & ")"
     End If
 End Sub
+
+Private Sub pWriteDiagnosticOutputIfConfigured()
+    Dim detail_defs As ObjectList
+    Set detail_defs = pSettings.DetailColumnDefinitions
+    If detail_defs.Count = 0 Then Exit Sub
+
+    Dim output_writer As OutputSheetWriter
+    Set output_writer = New_OutputSheetWriter(pSettings)
+    Call output_writer.EnsureHeaders
+
+    On Error GoTo DETAIL_ERROR
+
+    Dim detail_values As ArrayObject
+    Set detail_values = pSessionClient.ReadDetailColumnValues(detail_defs)
+
+    On Error GoTo 0
+
+    Call output_writer.WriteDiagnosticRow("", pTargetId, G_WEB_STATUS_OK, "", detail_values)
+    Exit Sub
+
+DETAIL_ERROR:
+    Dim err_desc As String
+    err_desc = Err.Description
+    Err.Clear
+    On Error GoTo 0
+
+    Set detail_values = pCreateBlankDetailValues(detail_defs)
+    Call output_writer.WriteDiagnosticRow("", pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
+End Sub
+
+Private Function pCreateBlankDetailValues(ByVal DetailDefinitions As ObjectList) As ArrayObject
+    Dim result_values As ArrayObject
+    Set result_values = New ArrayObject
+
+    If 0 < DetailDefinitions.Count Then
+        Call result_values.ReDimArray(0, DetailDefinitions.Count - 1)
+    End If
+
+    Dim def_idx As Long
+    For def_idx = 0 To DetailDefinitions.Count - 1
+        Call result_values.Update(def_idx, "")
+    Next def_idx
+
+    Set pCreateBlankDetailValues = result_values
+End Function
 
 Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
     pShouldKeepBrowserForDiagnostic = ((Not pSettings.Headless) And SessionId <> "")

@@ -48,6 +48,49 @@ Public Sub Test_OutputSheetWriter_固定管理列と詳細列のヘッダーを用意する(ByVal A
     Call pAssertHeader(Assert, ws_stub, 6, "申請者")
 End Sub
 
+Public Sub Test_OutputSheetWriter_診断出力は対象ID一致行を上書きする(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="result")
+
+    Dim found_rows As ObjectList
+    Set found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call found_rows.Add(New_RangeBounds(Row:=5, Column:=2, Sheet:="result"))
+    Call ws_stub.Store.SetReturn("Find", found_rows, "T-001", search_bounds, True, True, True, True)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 0)
+    Call detail_values.Update(0, "案件A")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("", "T-001", G_WEB_STATUS_OK, "", detail_values)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 2, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 3, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "案件A")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="result"))
+End Sub
+
 Public Sub Test_OutputSheetWriter_既存行扱いを判定する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -83,4 +126,22 @@ Private Sub pAssertHeader(ByVal Assert As UnitTestAssert, ByVal WsStub As Worksh
     Set call_record = WsStub.Store.GetLatestCall("WriteCell", target_bounds)
 
     Assert.Equals ExpectedHeader, CStr(call_record.GetArgument(1)), CaseName:="Column " & CStr(ColumnIndex)
+End Sub
+
+Private Sub pAssertWrittenCell( _
+        ByVal Assert As UnitTestAssert, _
+        ByVal WsStub As WorksheetServiceTestDouble, _
+        ByVal RowIndex As Long, _
+        ByVal ColumnIndex As Long, _
+        ByVal ExpectedValue As String)
+
+    Dim target_bounds As WorksheetRangeBounds
+    Set target_bounds = New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:="result")
+
+    Assert.EqualsNumeric 1, WsStub.Store.GetCallCount("WriteCell", target_bounds), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex) & " call count"
+
+    Dim call_record As TestDoubleCallRecord
+    Set call_record = WsStub.Store.GetLatestCall("WriteCell", target_bounds)
+
+    Assert.Equals ExpectedValue, CStr(call_record.GetArgument(1)), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex)
 End Sub
