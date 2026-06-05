@@ -125,6 +125,14 @@ Private Property Get IToolSettings_TargetIdSelector() As String
     IToolSettings_TargetIdSelector = TargetIdSelector
 End Property
 
+'* ˆê——‰æ–Ê‚Ö–ß‚é‰æ–Ê‘JˆÚ‘€ì–¼B
+Public Property Get ReturnToListOperationName() As String
+    ReturnToListOperationName = pGetRequiredParam("ReturnToListOperationName")
+End Property
+Private Property Get IToolSettings_ReturnToListOperationName() As String
+    IToolSettings_ReturnToListOperationName = ReturnToListOperationName
+End Property
+
 '* Šù‘¶s‚Ìˆµ‚¢B
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pNormalizeExistingRowMode(pGetOptionalParam("ExistingRowMode", G_WEB_ROW_MODE_SKIP_EXISTING))

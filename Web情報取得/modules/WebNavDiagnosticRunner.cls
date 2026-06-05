@@ -94,6 +94,7 @@ Public Function Run() As String
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pExtractFirstDetailTargetId
     Call pWriteDiagnosticOutputIfConfigured
+    Call pReturnToListIfConfigured
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -186,6 +187,35 @@ DETAIL_ERROR:
     Call output_writer.WriteDiagnosticRow("", pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
 End Sub
 
+Private Sub pReturnToListIfConfigured()
+    Dim operation_name As String
+    operation_name = pSettings.ReturnToListOperationName
+    If Trim$(operation_name) = "" Then Exit Sub
+
+    On Error GoTo RETURN_ERROR
+
+    Dim return_operation As TransitionOperation
+    Set return_operation = pFindTransitionOperation(operation_name)
+    Call pSessionClient.RunTransitionOperation(return_operation)
+    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+
+    On Error GoTo 0
+    Exit Sub
+
+RETURN_ERROR:
+    Dim err_num As Long
+    Dim err_source As String
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+    err_num = Err.Number
+    err_source = Err.Source
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+
+    Err.Raise err_num, err_source, "àÍóóâÊñ Ç÷ïúãAÇ≈Ç´Ç‹ÇπÇÒÅB" & vbCrLf & err_desc, err_help_file, err_help_context
+End Sub
 Private Function pCreateBlankDetailValues(ByVal DetailDefinitions As ObjectList) As ArrayObject
     Dim result_values As ArrayObject
     Set result_values = New ArrayObject

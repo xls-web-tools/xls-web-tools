@@ -303,11 +303,13 @@ Public Sub Test_WebNavDiagnosticRunner_ïKê{è⁄ç◊óÒÇ™å©Ç¬Ç©ÇÁÇ»Ç¢èÍçáÇÕERRORçsÇèë
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
     Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
     Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -339,6 +341,9 @@ Public Sub Test_WebNavDiagnosticRunner_ïKê{è⁄ç◊óÒÇ™å©Ç¬Ç©ÇÁÇ»Ç¢èÍçáÇÕERRORçsÇèë
     Dim subject_find_body As String
     subject_find_body = "{""using"":""css selector"",""value"":""#subject""}"
 
+    Dim return_list_find_body As String
+    return_list_find_body = "{""using"":""css selector"",""value"":""#return-list""}"
+
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
     Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
@@ -354,6 +359,8 @@ Public Sub Test_WebNavDiagnosticRunner_ïKê{è⁄ç◊óÒÇ™å©Ç¬Ç©ÇÁÇ»Ç¢èÍçáÇÕERRORçsÇèë
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""target-element""}}", "POST", "/session/abc/element", target_find_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/target-element/text", "")
     Call client_double.Store.SetReturn("Execute", "{""value"":{""error"":""no such element"",""message"":""missing subject""}}", "POST", "/session/abc/element", subject_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", return_list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
 
     Dim session_client As WebDriverSessionClient
@@ -373,6 +380,8 @@ Public Sub Test_WebNavDiagnosticRunner_ïKê{è⁄ç◊óÒÇ™å©Ç¬Ç©ÇÁÇ»Ç¢èÍçáÇÕERRORçsÇèë
     Call pAssertWrittenCell(Assert, ws_stub, 2, 2, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 2, 3, G_WEB_STATUS_ERROR)
     Call pAssertWrittenCellContains(Assert, ws_stub, 2, 4, "no such element")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
 End Sub
 
 Public Sub Test_WebNavDiagnosticRunner_àÍóóè„Ç∆è⁄ç◊ÉyÅ[ÉWÇÃëŒè€IDïsàÍívÇÕÉGÉâÅ[(ByVal Assert As UnitTestAssert)
@@ -498,6 +507,174 @@ Public Sub Test_WebNavDiagnosticRunner_â¬éãÉuÉâÉEÉUêfífíÜÇÃÉGÉâÅ[Ç≈ÇÕÉuÉâÉEÉUÇé
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 
+Public Sub Test_WebNavDiagnosticRunner_è⁄ç◊ÉyÅ[ÉWå„Ç…àÍóóïúãAÉäÉìÉNÇ≈ñﬂÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim auth_find_body As String
+    auth_find_body = "{""using"":""css selector"",""value"":""#top-ready""}"
+
+    Dim open_list_find_body As String
+    open_list_find_body = "{""using"":""css selector"",""value"":""#open-list""}"
+
+    Dim list_find_body As String
+    list_find_body = "{""using"":""css selector"",""value"":""#list-ready""}"
+
+    Dim list_target_find_body As String
+    list_target_find_body = "{""using"":""css selector"",""value"":""#list-item-target-id""}"
+
+    Dim open_detail_find_body As String
+    open_detail_find_body = "{""using"":""css selector"",""value"":"".first-detail-link""}"
+
+    Dim target_find_body As String
+    target_find_body = "{""using"":""css selector"",""value"":""#target-id""}"
+
+    Dim return_list_find_body As String
+    return_list_find_body = "{""using"":""css selector"",""value"":""#return-list""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", auth_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", open_list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-target-element""}}", "POST", "/session/abc/element", list_target_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/list-target-element/text", "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", open_detail_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""target-element""}}", "POST", "/session/abc/element", target_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/target-element/text", "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", return_list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub
+Public Sub Test_WebNavDiagnosticRunner_àÍóóïúãAé∏îsÇÕïúãAïsî\ÉGÉâÅ[Ç…Ç∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim auth_find_body As String
+    auth_find_body = "{""using"":""css selector"",""value"":""#top-ready""}"
+
+    Dim open_list_find_body As String
+    open_list_find_body = "{""using"":""css selector"",""value"":""#open-list""}"
+
+    Dim list_find_body As String
+    list_find_body = "{""using"":""css selector"",""value"":""#list-ready""}"
+
+    Dim list_target_find_body As String
+    list_target_find_body = "{""using"":""css selector"",""value"":""#list-item-target-id""}"
+
+    Dim open_detail_find_body As String
+    open_detail_find_body = "{""using"":""css selector"",""value"":"".first-detail-link""}"
+
+    Dim target_find_body As String
+    target_find_body = "{""using"":""css selector"",""value"":""#target-id""}"
+
+    Dim return_list_find_body As String
+    return_list_find_body = "{""using"":""css selector"",""value"":""#return-list""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", auth_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", open_list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-target-element""}}", "POST", "/session/abc/element", list_target_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/list-target-element/text", "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", open_detail_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""target-element""}}", "POST", "/session/abc/element", target_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/target-element/text", "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""error"":""no such element"",""message"":""missing return link""}}", "POST", "/session/abc/element", return_list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.IsTrue 0 < InStr(1, Err.Description, "àÍóóâÊñ Ç÷ïúãAÇ≈Ç´Ç‹ÇπÇÒ", vbTextCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "missing return link", vbTextCompare)
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub
 Private Function pGetWrittenCellValue( _
         ByVal Assert As UnitTestAssert, _
         ByVal WsStub As WorksheetServiceTestDouble, _

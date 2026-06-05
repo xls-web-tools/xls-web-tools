@@ -31,6 +31,7 @@ Private pListTransitionOperationName As String
 Private pListItemTargetIdSelector As String
 Private pDetailTransitionOperationName As String
 Private pTargetIdSelector As String
+Private pReturnToListOperationName As String
 Private pExistingRowMode As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
@@ -168,6 +169,17 @@ Private Property Get IToolSettings_TargetIdSelector() As String
     IToolSettings_TargetIdSelector = TargetIdSelector
 End Property
 
+'* àÍóóâÊñ Ç÷ñﬂÇÈâÊñ ëJà⁄ëÄçÏñºÅB
+Public Property Get ReturnToListOperationName() As String
+    ReturnToListOperationName = pReturnToListOperationName
+End Property
+Public Property Let ReturnToListOperationName(ByVal NewValue As String)
+    pReturnToListOperationName = NewValue
+End Property
+Private Property Get IToolSettings_ReturnToListOperationName() As String
+    IToolSettings_ReturnToListOperationName = ReturnToListOperationName
+End Property
+
 '* ä˘ë∂çsÇÃàµÇ¢ÅB
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pExistingRowMode
@@ -225,6 +237,7 @@ Private Sub Class_Initialize()
     pListItemTargetIdSelector = ""
     pDetailTransitionOperationName = ""
     pTargetIdSelector = ""
+    pReturnToListOperationName = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")

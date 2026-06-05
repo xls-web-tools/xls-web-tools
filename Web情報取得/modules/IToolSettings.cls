@@ -71,6 +71,10 @@ End Property
 Public Property Get TargetIdSelector() As String
 End Property
 
+'* ˆê——‰æ–Ê‚Ö–ß‚é‰æ–Ê‘JˆÚ‘€ì–¼B
+Public Property Get ReturnToListOperationName() As String
+End Property
+
 '* Šù‘¶s‚Ìˆµ‚¢B
 Public Property Get ExistingRowMode() As String
 End Property
