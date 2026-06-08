@@ -30,8 +30,10 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "DetailTransitionOperationName", "OpenDetail", 13)
     Call pSetSetting(ws_stub, "TargetIdSelector", "#target-id", 14)
     Call pSetSetting(ws_stub, "ReturnToListOperationName", "ReturnToList", 15)
-    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 16)
-    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 17)
+    Call pSetSetting(ws_stub, "NextPageOperationName", "NextPage", 16)
+    Call pSetSetting(ws_stub, "NextPageAvailableSelector", "#next-page", 17)
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 18)
+    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 19)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -79,6 +81,12 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_return_operation_name As String
     actual_return_operation_name = tool_settings.ReturnToListOperationName
 
+    Dim actual_next_operation_name As String
+    actual_next_operation_name = tool_settings.NextPageOperationName
+
+    Dim actual_next_available_selector As String
+    actual_next_available_selector = tool_settings.NextPageAvailableSelector
+
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
@@ -101,6 +109,8 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "OpenDetail", actual_detail_operation_name
     Assert.Equals "#target-id", actual_target_selector
     Assert.Equals "ReturnToList", actual_return_operation_name
+    Assert.Equals "NextPage", actual_next_operation_name
+    Assert.Equals "#next-page", actual_next_available_selector
     Assert.Equals G_WEB_ROW_MODE_RETRY_ERROR, actual_existing_mode
     Assert.EqualsNumeric 45, actual_timeout
 End Sub
@@ -121,6 +131,8 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
     Call pSetSetting(ws_stub, "ListItemSelector", "#list tbody tr", 11)
+    Call pSetMissingSetting(ws_stub, "NextPageOperationName")
+    Call pSetMissingSetting(ws_stub, "NextPageAvailableSelector")
     Call pSetMissingSetting(ws_stub, "ExistingRowMode")
     Call pSetMissingSetting(ws_stub, "TimeoutSeconds")
 
@@ -140,6 +152,12 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Dim actual_headless As Boolean
     actual_headless = tool_settings.Headless
 
+    Dim actual_next_operation_name As String
+    actual_next_operation_name = tool_settings.NextPageOperationName
+
+    Dim actual_next_available_selector As String
+    actual_next_available_selector = tool_settings.NextPageAvailableSelector
+
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
@@ -152,6 +170,8 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Assert.EqualsNumeric 9515, actual_port
     Assert.Equals "C:\Workbook\browser-profile", actual_profile_path
     Assert.IsTrue actual_headless
+    Assert.Equals "NextPage", actual_next_operation_name
+    Assert.Equals "", actual_next_available_selector
     Assert.Equals G_WEB_ROW_MODE_SKIP_EXISTING, actual_existing_mode
     Assert.EqualsNumeric 30, actual_timeout
 End Sub

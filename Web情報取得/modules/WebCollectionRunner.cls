@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! 現在ページの一覧項目を詳細ページ経由で収集します。
+'! 一覧項目を詳細ページ経由で収集します。
 '!
 ' #############################################################################
 
@@ -23,6 +23,7 @@ Private pSettings As IToolSettings
 Private pSucceededCount As Long
 Private pSkippedCount As Long
 Private pErrorCount As Long
+Private pPageCount As Long
 Private pIsInitialized As Boolean
 
 '* 正常に出力した件数。
@@ -41,6 +42,12 @@ End Property
 Public Property Get ErrorCount() As Long
     Call pCheckInit
     ErrorCount = pErrorCount
+End Property
+
+'* 処理した一覧ページ数。
+Public Property Get PageCount() As Long
+    Call pCheckInit
+    PageCount = pPageCount
 End Property
 
 '* Web collection runner を初期化します。
@@ -72,17 +79,18 @@ Public Sub Initialize( _
     pSucceededCount = 0
     pSkippedCount = 0
     pErrorCount = 0
+    pPageCount = 0
     pIsInitialized = True
 End Sub
 
-'* 現在ページの本番収集を実行します。
+'* 本番収集を実行します。
 '*
 '* @return 作成された session id。
 '*
 '* @details
-'* 取得開始 URL から一覧画面へ移動し、現在ページの一覧項目だけを表示順に巡回します。
-'* 対象IDは一覧表示時点で snapshot 化し、各項目処理直前に同じ位置の対象IDが変化していないことを確認します。
-'* 既存 OK 行のスキップや ERROR 行の再取得は OutputSheetWriter の ExistingRowMode 判定に委譲します。
+'* 取得開始 URL から一覧画面へ移動し、一覧項目を表示順に巡回します。
+'* 各ページ到達時に対象IDを snapshot 化し、各項目処理直前に同じ位置の対象IDが変化していないことを確認します。
+'* 次ページ操作が有効な場合は、先頭対象IDの変化を確認してから次ページを処理します。
 Public Function Run() As String
     Call pCheckInit
 
@@ -90,6 +98,7 @@ Public Function Run() As String
     pSucceededCount = 0
     pSkippedCount = 0
     pErrorCount = 0
+    pPageCount = 0
 
     On Error GoTo ON_ERROR
 
@@ -103,17 +112,7 @@ Public Function Run() As String
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
-
-    Dim item_count As Long
-    item_count = pSessionClient.CountElements(pSettings.ListItemSelector)
-
-    Dim target_snapshot As ArrayObject
-    Set target_snapshot = pBuildListTargetSnapshot(item_count)
-
-    Dim item_idx As Long
-    For item_idx = 0 To item_count - 1
-        Call pCollectListItem(output_writer, target_snapshot, item_idx)
-    Next item_idx
+    Call pCollectPages(output_writer)
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -147,6 +146,40 @@ Private Sub pOpenListPage()
     Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+End Sub
+
+Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter)
+    Dim first_target_ids As ObjectSet
+    Set first_target_ids = New ObjectSet
+
+    Do
+        pPageCount = pPageCount + 1
+
+        Dim item_count As Long
+        item_count = pSessionClient.CountElements(pSettings.ListItemSelector)
+        If item_count = 0 Then
+            If pPageCount = 1 Then Exit Sub
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後に一覧項目がありません。"
+        End If
+
+        Dim target_snapshot As ArrayObject
+        Set target_snapshot = pBuildListTargetSnapshot(item_count)
+
+        Dim first_target_id As String
+        first_target_id = CStr(target_snapshot.Item(0))
+        If first_target_ids.Exists(first_target_id) Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="ページングが循環しました。(" & first_target_id & ")"
+        End If
+        Call first_target_ids.Add(first_target_id)
+
+        Dim item_idx As Long
+        For item_idx = 0 To item_count - 1
+            Call pCollectListItem(OutputWriter, target_snapshot, item_idx)
+        Next item_idx
+
+        If Not pHasNextPage() Then Exit Do
+        Call pMoveToNextPage(first_target_id)
+    Loop
 End Sub
 
 Private Function pBuildListTargetSnapshot(ByVal ItemCount As Long) As ArrayObject
@@ -264,6 +297,55 @@ Private Sub pRaiseIfListItemChanged( _
     Err.Raise Number:=vbObjectError + 1, _
             Source:="Class WebCollectionRunner", _
             Description:="一覧項目が収集中に変化しました。(index=" & CStr(ItemIndex) & ", expected=" & ExpectedTargetId & ", actual=" & ActualTargetId & ")"
+End Sub
+
+Private Function pHasNextPage() As Boolean
+    If Trim$(pSettings.NextPageAvailableSelector) = "" Then
+        pHasNextPage = False
+        Exit Function
+    End If
+
+    pHasNextPage = (0 < pSessionClient.CountElements(pSettings.NextPageAvailableSelector))
+End Function
+
+Private Sub pMoveToNextPage(ByVal PreviousFirstTargetId As String)
+    Dim next_operation As TransitionOperation
+    Set next_operation = pFindTransitionOperation(pSettings.NextPageOperationName)
+    Call pSessionClient.RunTransitionOperation(next_operation)
+    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+    Call pWaitForFirstTargetChange(PreviousFirstTargetId)
+End Sub
+
+Private Sub pWaitForFirstTargetChange(ByVal PreviousFirstTargetId As String)
+    Dim deadline_time As Date
+    deadline_time = DateAdd("s", pSettings.TimeoutSeconds, Now)
+
+    Dim last_error_description As String
+    Dim has_read_target As Boolean
+    Dim current_target_id As String
+
+    Do
+        On Error Resume Next
+        current_target_id = pReadListItemTargetId(0)
+        If Err.Number = 0 Then
+            has_read_target = True
+            If StrComp(current_target_id, PreviousFirstTargetId, vbBinaryCompare) <> 0 Then
+                On Error GoTo 0
+                Exit Sub
+            End If
+        Else
+            last_error_description = Err.Description
+            Err.Clear
+        End If
+        On Error GoTo 0
+        DoEvents
+    Loop While Now < deadline_time
+
+    If Not has_read_target Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後に先頭対象IDを取得できません。" & vbCrLf & last_error_description
+    End If
+
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後にページが進みません。(" & PreviousFirstTargetId & ")"
 End Sub
 
 Private Function pBuildIndexedTransitionOperation( _

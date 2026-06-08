@@ -43,7 +43,12 @@ Public Function Execute( _
     Call Store.RaiseIfError("Execute", HttpMethod, EndpointPath, RequestBody)
 
     Dim result_value As String
-    If Store.HasReturn("Execute", HttpMethod, EndpointPath, RequestBody) Then
+    Dim call_count As Long
+    call_count = Store.GetCallCount("Execute", HttpMethod, EndpointPath, RequestBody)
+
+    If Store.HasReturn("Execute.Sequence", HttpMethod, EndpointPath, RequestBody, call_count) Then
+        result_value = Store.GetReturn("Execute.Sequence", HttpMethod, EndpointPath, RequestBody, call_count)
+    ElseIf Store.HasReturn("Execute", HttpMethod, EndpointPath, RequestBody) Then
         result_value = Store.GetReturn("Execute", HttpMethod, EndpointPath, RequestBody)
     Else
         result_value = Store.GetReturnOrDefault("Execute.AnyRequestBody", "", HttpMethod, EndpointPath)

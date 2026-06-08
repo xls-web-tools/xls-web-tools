@@ -79,6 +79,14 @@ End Property
 Public Property Get ReturnToListOperationName() As String
 End Property
 
+'* 次ページへ進む画面遷移操作名。
+Public Property Get NextPageOperationName() As String
+End Property
+
+'* 次ページ操作が有効な場合だけ一致する selector。
+Public Property Get NextPageAvailableSelector() As String
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
 End Property

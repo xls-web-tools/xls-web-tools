@@ -15,7 +15,7 @@ Option Private Module
 '* @details
 '* settings の StartUrl、AuthenticatedStartSelector、ListTransitionOperationName、ListPageSelector、ListItemTargetIdSelector、DetailTransitionOperationName、TargetIdSelector、ReturnToListOperationName を使って詳細ページ出力と一覧復帰までを確認します。
 '* 認証情報は Excel ブック、VBA、settings、ログに保存しません。
-Public Sub RUN_DIAGNOSTIC()
+Public Sub RunDiagnostic_Click()
     Call InitializeCommonService(Force:=True)
 
     Dim app_state As ApplicationScreenUpdateManager
@@ -66,12 +66,12 @@ ON_ERROR:
 
     Call MsgBoxPage(err_desc & " (0x" & Hex(err_num) & ") @" & err_source & debug_lines)
 End Sub
-'* 現在ページの一覧項目を対象ID主キーで収集します。
+'* 一覧項目を対象ID主キーで全ページ収集します。
 '*
 '* @details
-'* settings の ListItemSelector と ListItemTargetIdSelector で現在ページの対象IDを snapshot 化し、DetailTransitionOperationName と ReturnToListOperationName で各詳細ページを巡回します。
+'* settings の ListItemSelector と ListItemTargetIdSelector でページごとの対象IDを snapshot 化し、DetailTransitionOperationName、ReturnToListOperationName、NextPageOperationName で各ページを巡回します。
 '* セレクタの実値や認証情報はログへ出力しません。
-Public Sub RUN_COLLECT()
+Public Sub Collect_Click()
     Call InitializeCommonService(Force:=True)
 
     Dim run_state As CommonRunStateManager
@@ -104,7 +104,8 @@ Public Sub RUN_COLLECT()
 
     ' ==== 実処理ここまで ========
 
-    Call MsgBoxPage("現在ページの収集が完了しました。" _
+    Call MsgBoxPage("全ページの収集が完了しました。" _
+            & vbCrLf & "処理ページ数: " & CStr(runner.PageCount) _
             & vbCrLf & "正常: " & CStr(runner.SucceededCount) _
             & vbCrLf & "スキップ: " & CStr(runner.SkippedCount) _
             & vbCrLf & "エラー: " & CStr(runner.ErrorCount))

@@ -33,6 +33,8 @@ Private pListItemTargetIdSelector As String
 Private pDetailTransitionOperationName As String
 Private pTargetIdSelector As String
 Private pReturnToListOperationName As String
+Private pNextPageOperationName As String
+Private pNextPageAvailableSelector As String
 Private pExistingRowMode As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
@@ -191,6 +193,28 @@ Private Property Get IToolSettings_ReturnToListOperationName() As String
     IToolSettings_ReturnToListOperationName = ReturnToListOperationName
 End Property
 
+'* 次ページへ進む画面遷移操作名。
+Public Property Get NextPageOperationName() As String
+    NextPageOperationName = pNextPageOperationName
+End Property
+Public Property Let NextPageOperationName(ByVal NewValue As String)
+    pNextPageOperationName = NewValue
+End Property
+Private Property Get IToolSettings_NextPageOperationName() As String
+    IToolSettings_NextPageOperationName = NextPageOperationName
+End Property
+
+'* 次ページ操作が有効な場合だけ一致する selector。
+Public Property Get NextPageAvailableSelector() As String
+    NextPageAvailableSelector = pNextPageAvailableSelector
+End Property
+Public Property Let NextPageAvailableSelector(ByVal NewValue As String)
+    pNextPageAvailableSelector = NewValue
+End Property
+Private Property Get IToolSettings_NextPageAvailableSelector() As String
+    IToolSettings_NextPageAvailableSelector = NextPageAvailableSelector
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pExistingRowMode
@@ -250,6 +274,8 @@ Private Sub Class_Initialize()
     pDetailTransitionOperationName = ""
     pTargetIdSelector = ""
     pReturnToListOperationName = ""
+    pNextPageOperationName = "NextPage"
+    pNextPageAvailableSelector = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")

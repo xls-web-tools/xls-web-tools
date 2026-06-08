@@ -140,6 +140,22 @@ Private Property Get IToolSettings_ReturnToListOperationName() As String
     IToolSettings_ReturnToListOperationName = ReturnToListOperationName
 End Property
 
+'* 次ページへ進む画面遷移操作名。
+Public Property Get NextPageOperationName() As String
+    NextPageOperationName = pGetOptionalParam("NextPageOperationName", "NextPage")
+End Property
+Private Property Get IToolSettings_NextPageOperationName() As String
+    IToolSettings_NextPageOperationName = NextPageOperationName
+End Property
+
+'* 次ページ操作が有効な場合だけ一致する selector。
+Public Property Get NextPageAvailableSelector() As String
+    NextPageAvailableSelector = pGetOptionalParam("NextPageAvailableSelector", "")
+End Property
+Private Property Get IToolSettings_NextPageAvailableSelector() As String
+    IToolSettings_NextPageAvailableSelector = NextPageAvailableSelector
+End Property
+
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
     ExistingRowMode = pNormalizeExistingRowMode(pGetOptionalParam("ExistingRowMode", G_WEB_ROW_MODE_SKIP_EXISTING))
