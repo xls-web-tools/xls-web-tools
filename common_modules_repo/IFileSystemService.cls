@@ -33,6 +33,26 @@ End Sub
 Public Function GetAbsolutePath(ByVal PathLikeString As String) As String
 End Function
 
+'* OS ユーザー一時フォルダーのパスを取得します。
+'*
+'* @return OS ユーザー一時フォルダーの絶対パス。
+'*
+'* @details
+'* OS が示すユーザー一時フォルダーの絶対 Windows パスを返します。末尾のパス区切り文字は付けません。
+Public Function GetTemporaryDirectoryPath() As String
+End Function
+
+'* OS ユーザー一時フォルダー直下に一時ディレクトリを作成します。
+'*
+'* @param NamePrefix [省略可] 一時ディレクトリ名の前に付ける文字列。
+'* @return 作成した一時ディレクトリの絶対パス。
+'*
+'* @details
+'* OS ユーザー一時フォルダー直下に衝突しにくい名前のディレクトリを作成し、作成した絶対 Windows パスを返します。
+'* NamePrefix は変換しません。無効なフォルダー名になる場合は作成エラーを送出します。
+Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
+End Function
+
 '* 指定されたディレクトリにあるファイルの絶対パス一覧を得ます。
 '*
 '* @param DirectoryPath ディレクトリのパス。

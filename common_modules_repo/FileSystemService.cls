@@ -46,6 +46,79 @@ Private Function IFileSystemService_GetAbsolutePath(ByVal PathLikeString As Stri
     IFileSystemService_GetAbsolutePath = GetAbsolutePath(PathLikeString)
 End Function
 
+'* OS ユーザー一時フォルダーのパスを取得します。
+'*
+'* @return OS ユーザー一時フォルダーの絶対パス。
+'*
+'* @details
+'* OS が示すユーザー一時フォルダーの絶対 Windows パスを返します。末尾のパス区切り文字は付けません。
+Public Function GetTemporaryDirectoryPath() As String
+    Dim result_value As String
+    result_value = pFSO.GetSpecialFolder(TemporaryFolder).Path
+
+    Do While Len(result_value) > Len(GetPathRoot(result_value)) And Right$(result_value, 1) = G_FS_PATH_SEP
+        result_value = Left$(result_value, Len(result_value) - 1)
+    Loop
+
+    GetTemporaryDirectoryPath = result_value
+End Function
+Private Function IFileSystemService_GetTemporaryDirectoryPath() As String
+    IFileSystemService_GetTemporaryDirectoryPath = GetTemporaryDirectoryPath()
+End Function
+
+'* OS ユーザー一時フォルダー直下に一時ディレクトリを作成します。
+'*
+'* @param NamePrefix [省略可] 一時ディレクトリ名の前に付ける文字列。
+'* @return 作成した一時ディレクトリの絶対パス。
+'*
+'* @details
+'* OS ユーザー一時フォルダー直下に衝突しにくい名前のディレクトリを作成し、作成した絶対 Windows パスを返します。
+'* NamePrefix は変換しません。無効なフォルダー名になる場合は作成エラーを送出します。
+Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
+    Const C_MAX_ATTEMPT As Long = 100
+
+    Dim parent_path As String
+    parent_path = GetTemporaryDirectoryPath()
+
+    Dim attempt_idx As Long
+    For attempt_idx = 1 To C_MAX_ATTEMPT
+        Dim dir_path As String
+        dir_path = JoinPath(parent_path, NamePrefix & pFSO.GetTempName())
+
+        If Not PathExists(dir_path) Then
+            On Error Resume Next
+            Call pFSO.CreateFolder(dir_path)
+
+            Dim err_num As Long
+            Dim err_source As String
+            Dim err_desc As String
+            Dim err_help_file As String
+            Dim err_help_context As Long
+            err_num = Err.Number
+            err_source = Err.Source
+            err_desc = Err.Description
+            err_help_file = Err.HelpFile
+            err_help_context = Err.HelpContext
+            Err.Clear
+            On Error GoTo 0
+
+            If err_num = 0 Then
+                CreateTemporaryDirectory = dir_path
+                Exit Function
+            End If
+
+            If Not PathExists(dir_path) Then
+                Err.Raise Number:=err_num, Source:=err_source, Description:=err_desc, HelpFile:=err_help_file, HelpContext:=err_help_context
+            End If
+        End If
+    Next attempt_idx
+
+    Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService", Description:="一時ディレクトリを作成できませんでした。"
+End Function
+Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
+    IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
+End Function
+
 Private Sub pRequireWorkbookService(ByVal MethodName As String)
     If WbSrv Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
@@ -737,4 +810,3 @@ Private Function pNormalizeComparePath(ByVal PathLikeString As String) As String
 
     pNormalizeComparePath = path_value
 End Function
-

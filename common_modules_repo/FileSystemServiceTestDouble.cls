@@ -42,6 +42,34 @@ Private Function IFileSystemService_GetAbsolutePath(ByVal PathLikeString As Stri
     IFileSystemService_GetAbsolutePath = GetAbsolutePath(PathLikeString)
 End Function
 
+'* GetTemporaryDirectoryPath の strict stub です。戻り値は Store に明示登録してください。
+Public Function GetTemporaryDirectoryPath() As String
+    Call Store.RaiseIfError("GetTemporaryDirectoryPath")
+
+    Dim result_value As String
+    result_value = Store.GetReturn("GetTemporaryDirectoryPath")
+    Call Store.RecordCall("GetTemporaryDirectoryPath")
+
+    GetTemporaryDirectoryPath = result_value
+End Function
+Private Function IFileSystemService_GetTemporaryDirectoryPath() As String
+    IFileSystemService_GetTemporaryDirectoryPath = GetTemporaryDirectoryPath()
+End Function
+
+'* CreateTemporaryDirectory の strict stub です。戻り値は Store に明示登録してください。
+Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
+    Call Store.RaiseIfError("CreateTemporaryDirectory", NamePrefix)
+
+    Dim result_value As String
+    result_value = Store.GetReturn("CreateTemporaryDirectory", NamePrefix)
+    Call Store.RecordCall("CreateTemporaryDirectory", NamePrefix)
+
+    CreateTemporaryDirectory = result_value
+End Function
+Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
+    IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
+End Function
+
 '* GetFileList の strict stub です。親ディレクトリの存在前提を持たないため、空配列も Store に明示登録してください。
 Public Function GetFileList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Call Store.RaiseIfError("GetFileList", DirectoryPath, CatchRegExp, IgnoreRegExp, IgnoreCase)
