@@ -100,6 +100,13 @@ End Property
 Private Property Get IToolSettings_ListTransitionOperationName() As String
     IToolSettings_ListTransitionOperationName = ListTransitionOperationName
 End Property
+'* 現在ページの一覧項目を数える selector。
+Public Property Get ListItemSelector() As String
+    ListItemSelector = pGetRequiredParam("ListItemSelector")
+End Property
+Private Property Get IToolSettings_ListItemSelector() As String
+    IToolSettings_ListItemSelector = ListItemSelector
+End Property
 
 '* 一覧上の対象IDを読み取る selector。
 Public Property Get ListItemTargetIdSelector() As String

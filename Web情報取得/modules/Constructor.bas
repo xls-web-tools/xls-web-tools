@@ -190,3 +190,23 @@ Public Function New_WebNavDiagnosticRunner( _
 
     Set New_WebNavDiagnosticRunner = result_value
 End Function
+'* Web collection runner を生成します。
+'*
+'* @param Process WebDriver process 操作。
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの Web collection runner。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebCollectionRunner に委譲します。
+Public Function New_WebCollectionRunner( _
+        ByVal Process As IWebDriverProcess, _
+        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Settings As IToolSettings) As WebCollectionRunner
+
+    Dim result_value As WebCollectionRunner
+    Set result_value = New WebCollectionRunner
+    Call result_value.Initialize(Process, SessionClient, Settings)
+
+    Set New_WebCollectionRunner = result_value
+End Function

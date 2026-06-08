@@ -168,6 +168,29 @@ Public Function WaitForSelector(ByVal Selector As String) As String
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="selector が見つかりません。(" & Selector & ")"
 End Function
 
+'* selector に一致する要素数を数えます。
+'*
+'* @param Selector CSS selector。
+'* @return selector に一致する要素数。
+'*
+'* @details
+'* frame chain selector は WaitForSelector と同じ `frame selector >> target selector` 形式を受け付けます。
+'* 0 件はエラーではなく 0 を返します。戻る前に top-level context へ戻します。
+Public Function CountElements(ByVal Selector As String) As Long
+    Call pCheckInit
+    Call pRequireSession
+
+    If Trim$(Selector) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Selector は必須です。"
+    End If
+
+    Dim response_body As String
+    response_body = pFindElementsResponse("css selector", Selector)
+    Call pRaiseIfWebDriverError(response_body)
+
+    CountElements = pCountElementIds(response_body)
+    Call pSwitchToTopLevelContext
+End Function
 '* selector に一致する要素の表示テキストを読み取ります。
 '*
 '* @param Selector CSS selector。
@@ -349,6 +372,33 @@ Private Function pJsonUnescape(ByVal TargetText As String) As String
     pJsonUnescape = result_value
 End Function
 
+Private Function pCountElementIds(ByVal ResponseBody As String) As Long
+    Dim key_idx As Long
+    key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
+    If key_idx = 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim open_idx As Long
+    open_idx = InStr(key_idx, ResponseBody, "[", vbBinaryCompare)
+
+    Dim close_idx As Long
+    close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
+    If open_idx = 0 Or close_idx < open_idx Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim array_text As String
+    array_text = Mid$(ResponseBody, open_idx + 1, close_idx - open_idx - 1)
+
+    Dim element_re As RegExp
+    Set element_re = New RegExp
+    element_re.Global = True
+    element_re.IgnoreCase = False
+    element_re.Pattern = """(element-6066-11e4-a52e-4f735466cecf|ELEMENT)""\s*:"
+
+    pCountElementIds = element_re.Execute(array_text).Count
+End Function
 Private Function pExtractElementId(ByVal ResponseBody As String) As String
     Dim result_value As String
     result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")
@@ -412,6 +462,52 @@ Private Function pFindElementResponse(ByVal LocatorType As String, ByVal Locator
     pFindElementResponse = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody(target_locator_type, target_locator_value))
 End Function
 
+Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
+    Dim target_locator_type As String
+    target_locator_type = LocatorType
+
+    Dim target_locator_value As String
+    target_locator_value = LocatorValue
+
+    Call pSwitchToTopLevelContext
+
+    If pIsFrameChainLocator(LocatorType, LocatorValue) Then
+        Dim locator_parts As Variant
+        locator_parts = pSplitFrameChain(LocatorValue)
+
+        Dim part_idx As Long
+        For part_idx = LBound(locator_parts) To UBound(locator_parts) - 1
+            Dim frame_selector As String
+            frame_selector = Trim$(CStr(locator_parts(part_idx)))
+            If frame_selector = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
+            End If
+
+            Dim frame_response As String
+            frame_response = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody("css selector", frame_selector))
+            If pIsWebDriverError(frame_response) Then
+                pFindElementsResponse = frame_response
+                Exit Function
+            End If
+
+            Dim frame_element_id As String
+            frame_element_id = pExtractElementId(frame_response)
+            If frame_element_id = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
+            End If
+
+            Call pSwitchToFrame(frame_element_id)
+        Next part_idx
+
+        target_locator_type = "css selector"
+        target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
+        If target_locator_value = "" Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
+        End If
+    End If
+
+    pFindElementsResponse = pClient.Execute("POST", "/session/" & pSessionId & "/elements", pBuildFindElementBody(target_locator_type, target_locator_value))
+End Function
 Private Sub pSwitchToTopLevelContext()
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/frame", "{""id"":null}")

@@ -66,3 +66,69 @@ ON_ERROR:
 
     Call MsgBoxPage(err_desc & " (0x" & Hex(err_num) & ") @" & err_source & debug_lines)
 End Sub
+'* 現在ページの一覧項目を対象ID主キーで収集します。
+'*
+'* @details
+'* settings の ListItemSelector と ListItemTargetIdSelector で現在ページの対象IDを snapshot 化し、DetailTransitionOperationName と ReturnToListOperationName で各詳細ページを巡回します。
+'* セレクタの実値や認証情報はログへ出力しません。
+Public Sub RUN_COLLECT()
+    Call InitializeCommonService(Force:=True)
+
+    Dim run_state As CommonRunStateManager
+    Set run_state = New CommonRunStateManager
+
+    Dim app_state As ApplicationScreenUpdateManager
+    Set app_state = New ApplicationScreenUpdateManager
+    Call app_state.DisableUpdates(StopEvents:=False)
+
+    On Error GoTo ON_ERROR
+
+    ' ==== 実処理 ========
+
+    Dim settings As IToolSettings
+    Set settings = New ToolSettings
+
+    Dim web_driver_client As WebDriverClient
+    Set web_driver_client = New_WebDriverClient(settings)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(web_driver_client, settings)
+
+    Dim process As WebDriverProcess
+    Set process = New_WebDriverProcess(FsSrv, New_WebDriverPortProbe())
+
+    Dim runner As WebCollectionRunner
+    Set runner = New_WebCollectionRunner(process, session_client, settings)
+
+    Call runner.Run
+
+    ' ==== 実処理ここまで ========
+
+    Call MsgBoxPage("現在ページの収集が完了しました。" _
+            & vbCrLf & "正常: " & CStr(runner.SucceededCount) _
+            & vbCrLf & "スキップ: " & CStr(runner.SkippedCount) _
+            & vbCrLf & "エラー: " & CStr(runner.ErrorCount))
+
+ON_EXIT:
+    On Error Resume Next
+    If Not app_state Is Nothing Then Call app_state.Restore
+    On Error GoTo 0
+    Exit Sub
+
+ON_ERROR:
+    Dim err_desc As String
+    Dim err_num As Long
+    Dim err_source As Variant
+    Dim debug_lines As String
+
+    err_desc = Err.Description
+    err_num = Err.Number
+    err_source = Err.Source
+
+    On Error Resume Next
+    If Not app_state Is Nothing Then Call app_state.Restore
+    If Not DbgInfo Is Nothing Then debug_lines = vbCrLf & DbgInfo.BuildMessageLines()
+    On Error GoTo 0
+
+    Call MsgBoxPage(err_desc & " (0x" & Hex(err_num) & ") @" & err_source & debug_lines)
+End Sub

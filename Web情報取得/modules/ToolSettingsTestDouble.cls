@@ -28,6 +28,7 @@ Private pOutputSheetName As String
 Private pAuthenticatedStartSelector As String
 Private pListPageSelector As String
 Private pListTransitionOperationName As String
+Private pListItemSelector As String
 Private pListItemTargetIdSelector As String
 Private pDetailTransitionOperationName As String
 Private pTargetIdSelector As String
@@ -135,6 +136,16 @@ End Property
 Private Property Get IToolSettings_ListTransitionOperationName() As String
     IToolSettings_ListTransitionOperationName = ListTransitionOperationName
 End Property
+'* 現在ページの一覧項目を数える selector。
+Public Property Get ListItemSelector() As String
+    ListItemSelector = pListItemSelector
+End Property
+Public Property Let ListItemSelector(ByVal NewValue As String)
+    pListItemSelector = NewValue
+End Property
+Private Property Get IToolSettings_ListItemSelector() As String
+    IToolSettings_ListItemSelector = ListItemSelector
+End Property
 
 '* 一覧上の対象IDを読み取る selector。
 Public Property Get ListItemTargetIdSelector() As String
@@ -234,6 +245,7 @@ Private Sub Class_Initialize()
     pAuthenticatedStartSelector = "#authenticated-start"
     pListPageSelector = "#list-page"
     pListTransitionOperationName = "OpenList"
+    pListItemSelector = ""
     pListItemTargetIdSelector = ""
     pDetailTransitionOperationName = ""
     pTargetIdSelector = ""

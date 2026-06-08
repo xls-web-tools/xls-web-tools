@@ -25,12 +25,13 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
     Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
-    Call pSetSetting(ws_stub, "ListItemTargetIdSelector", "#list-item-target-id", 11)
-    Call pSetSetting(ws_stub, "DetailTransitionOperationName", "OpenDetail", 12)
-    Call pSetSetting(ws_stub, "TargetIdSelector", "#target-id", 13)
-    Call pSetSetting(ws_stub, "ReturnToListOperationName", "ReturnToList", 14)
-    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 15)
-    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 16)
+    Call pSetSetting(ws_stub, "ListItemSelector", "#list tbody tr", 11)
+    Call pSetSetting(ws_stub, "ListItemTargetIdSelector", "#list-item-target-id", 12)
+    Call pSetSetting(ws_stub, "DetailTransitionOperationName", "OpenDetail", 13)
+    Call pSetSetting(ws_stub, "TargetIdSelector", "#target-id", 14)
+    Call pSetSetting(ws_stub, "ReturnToListOperationName", "ReturnToList", 15)
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 16)
+    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 17)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -63,6 +64,9 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_list_operation_name As String
     actual_list_operation_name = tool_settings.ListTransitionOperationName
 
+    Dim actual_list_item_selector As String
+    actual_list_item_selector = tool_settings.ListItemSelector
+
     Dim actual_list_target_selector As String
     actual_list_target_selector = tool_settings.ListItemTargetIdSelector
 
@@ -92,6 +96,7 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "#top-ready", actual_authenticated_selector
     Assert.Equals "#list-ready", actual_list_selector
     Assert.Equals "OpenList", actual_list_operation_name
+    Assert.Equals "#list tbody tr", actual_list_item_selector
     Assert.Equals "#list-item-target-id", actual_list_target_selector
     Assert.Equals "OpenDetail", actual_detail_operation_name
     Assert.Equals "#target-id", actual_target_selector
@@ -115,6 +120,7 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
     Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
+    Call pSetSetting(ws_stub, "ListItemSelector", "#list tbody tr", 11)
     Call pSetMissingSetting(ws_stub, "ExistingRowMode")
     Call pSetMissingSetting(ws_stub, "TimeoutSeconds")
 

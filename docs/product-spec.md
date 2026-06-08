@@ -60,11 +60,12 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - `AuthenticatedStartSelector`: 認証後の起点ページ到達を判定する selector。
 - `ListPageSelector`: 一覧画面到達を判定する selector。
 - `ListTransitionOperationName`: 一覧画面へ進む画面遷移操作名。
-- `ListItemTargetIdSelector`: 一覧上の対象IDを読み取る selector。
-- `DetailTransitionOperationName`: 先頭一覧項目から詳細ページへ入る画面遷移操作名。
+- `ListItemSelector`: 現在ページの一覧項目を数える selector。
+- `ListItemTargetIdSelector`: 一覧上の対象IDを読み取る selector。本番収集では `{{index}}` と `{{rowNumber}}` の置換トークンを使える。
+- `DetailTransitionOperationName`: 一覧項目から詳細ページへ入る画面遷移操作名。
 - `TargetIdSelector`: 詳細ページ上の対象IDを読み取る selector。
 - `OutputSheetName`: 取得結果の出力先シート名。
-- `ExistingRowMode`: 再実行時の既存行扱い。既定値は `SkipExisting`。
+- `ExistingRowMode`: 再実行時の既存行扱い。既定値は `SkipExisting`。`SkipExisting` は既存 OK 行をスキップし、`RetryError` は既存 ERROR 行だけ再試行し、`Overwrite` は既存状態に関係なく全更新する。
 - `TimeoutSeconds`: 画面到達や selector 出現を待つ秒数。
 
 画面遷移操作定義の候補:
@@ -76,6 +77,8 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 - 待機条件名。
 
 CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を使う。具体的な selector 値は取得対象の環境に依存するため、ドキュメントや配布テンプレートには実サイトの値を残さず、利用者が settings に入力する。settings テンプレートには `OpenList`、`OpenDetail`、`ReturnToList` の操作名だけを用意し、locator 値や selector 値は空欄にする。
+
+本番収集で一覧項目ごとに変わる selector / script には、0-based の `{{index}}` と 1-based の `{{rowNumber}}` を使える。`{{index}}` は `querySelectorAll(...)[{{index}}]` などに使い、`{{rowNumber}}` は CSS の `nth-child({{rowNumber}})` などに使う。
 
 詳細ページ列定義の候補:
 
@@ -110,19 +113,22 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 
 `RUN_COLLECT` は、全件収集を行う。
 一覧画面の表示順に一覧項目を処理し、各詳細ページを 1 行として出力する。
-現在ページの未処理項目がなくなったら、次ページ操作の画面遷移操作を実行し、次ページがなくなるまで繰り返す。
+Issue #8 の slice では現在ページだけを処理し、ページングは扱わない。後続 slice では、現在ページの未処理項目がなくなったら次ページ操作の画面遷移操作を実行し、次ページがなくなるまで繰り返す。
+
+現在ページ到達時に `ListItemSelector` の件数を使って、一覧上の対象IDを表示順に読み取り、現在ページ開始時点の対象ID一覧として保持する。`ListItemSelector` の件数はこの初期一覧を作るための loop bound とし、一覧復帰後のズレ検知には使わない。ページサイズが固定される場合、項目数だけでは新規項目挿入や表示順変化を検知できないため。
 
 再実行時の既定動作は `SkipExisting` とする。
-`取得状態=OK` の既存 `対象ID` はスキップする。`詳細ページID` が取得できる場合は補助的な再開候補として扱う。
-`取得状態=ERROR` は設定により再試行できるようにする。
+`対象ID` を主キーとして既存行を判定し、既存行がある場合はその行を更新し、未登録の場合は末尾へ追加する。
+`取得状態=OK` の既存 `対象ID` は `SkipExisting` ではスキップする。`RetryError` では `取得状態=ERROR` の既存行を再試行し、`Overwrite` では既存状態に関係なく全更新する。`詳細ページID` が取得できる場合は補助的な再開候補として扱う。
 
 ## Waiting And Error Handling
 
 画面到達判定は URL より selector を優先する。
-詳細ページ到達判定では、対象ID selector の出現を必須条件とする。一覧上の対象IDと詳細ページ上の対象IDが両方取れる場合、診断モードでは一致を必須とし、不一致は失敗扱いにする。
+詳細ページ到達判定では、対象ID selector の出現を必須条件とする。一覧上の対象IDと詳細ページ上の対象IDが両方取れる場合、診断モードでは一致を必須とし、不一致は失敗扱いにする。本番収集では不一致を詳細ページ単位の ERROR として出力し、一覧復帰できる場合は次の一覧項目へ進む。
 ページング後は一覧画面 selector の出現に加え、可能であればページ番号または一覧先頭の詳細ページID変化を確認する。
 
-詳細ページの必須列が取れない場合は、その件を `ERROR` の出力行として残し、一覧復帰リンクで戻れる場合は次の一覧項目へ進む。
+詳細ページの必須列が取れない場合は、その件を `ERROR` の出力行として残し、一覧復帰リンクで戻れる場合は次の一覧項目へ進む。ERROR 行の `対象ID` は、詳細ページ上の対象IDを読めた場合はその値を使い、読めない場合は一覧上の対象IDを使う。
+本番収集では、各一覧項目を処理する直前に現在 index の一覧上の対象IDを再評価し、現在ページ開始時点で保持した同じ index の対象IDと一致することを確認する。一致しない場合は、一覧画面が収集中に変化したものとして本番収集を中断する。
 一覧復帰に失敗した場合、WebDriver session が壊れた場合、認証切れで復帰不能な場合は処理を中断する。
 
 ## Implementation Sequence

@@ -59,6 +59,10 @@ End Property
 Public Property Get ListTransitionOperationName() As String
 End Property
 
+'* 現在ページの一覧項目を数える selector。
+Public Property Get ListItemSelector() As String
+End Property
+
 '* 一覧上の対象IDを読み取る selector。
 Public Property Get ListItemTargetIdSelector() As String
 End Property
