@@ -208,8 +208,8 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
-    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject"))
-    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester"))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester", OutputEnabled:=True))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Dim create_body As String

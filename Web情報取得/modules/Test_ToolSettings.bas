@@ -291,6 +291,9 @@ Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Ass
     Dim first_column As DetailColumnDefinition
     Set first_column = detail_columns.Item(0)
 
+    Dim second_column As DetailColumnDefinition
+    Set second_column = detail_columns.Item(1)
+
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.EqualsNumeric 2, operations.Count
@@ -303,6 +306,108 @@ Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Ass
     Assert.Equals "#target-id", first_column.Selector
     Assert.Equals "InnerText", first_column.ExtractType
     Assert.IsTrue first_column.IsRequired
+    Assert.IsTrue first_column.OutputEnabled
+    Assert.IsFalse second_column.OutputEnabled
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_OutputEnabled列なしはFalse扱い(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetDetailColumnTableWithoutOutputEnabled(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    Dim first_column As DetailColumnDefinition
+    Set first_column = detail_columns.Item(0)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, detail_columns.Count
+    Assert.IsFalse first_column.OutputEnabled
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_OutputEnabledの別表記を読み取る(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetDetailColumnTableWithOutputEnabledAliases(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    Dim first_column As DetailColumnDefinition
+    Set first_column = detail_columns.Item(0)
+
+    Dim second_column As DetailColumnDefinition
+    Set second_column = detail_columns.Item(1)
+
+    Dim third_column As DetailColumnDefinition
+    Set third_column = detail_columns.Item(2)
+
+    Dim fourth_column As DetailColumnDefinition
+    Set fourth_column = detail_columns.Item(3)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 4, detail_columns.Count
+    Assert.IsTrue first_column.OutputEnabled
+    Assert.IsTrue second_column.OutputEnabled
+    Assert.IsFalse third_column.OutputEnabled
+    Assert.IsFalse fourth_column.OutputEnabled
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_OutputEnabled不正値はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetDetailColumnTableWithInvalidOutputEnabled(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    ' --- Assert ---
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(0 < InStr(1, Err.Description, "OutputEnabled", vbTextCompare), "OutputEnabled の不正値がエラー説明に含まれる")
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_OutputEnabledだけの行はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetDetailColumnTableOnlyOutputEnabled(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    ' --- Assert ---
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(0 < InStr(1, Err.Description, "OutputColumnName", vbTextCompare), "OutputEnabled だけの行は列定義不足として扱う")
 End Sub
 
 Public Sub Test_ToolSettings_Settingsシート_必須設定不足はエラー(ByVal Assert As UnitTestAssert)
@@ -403,27 +508,111 @@ Private Sub pSetTransitionTable(ByVal WsStub As WorksheetServiceTestDouble)
     Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
 End Sub
 
-Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
+Private Sub pSetDetailColumnTableWithoutOutputEnabled(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=15, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=15, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=15, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
-    ReDim table_values(1 To 2, 1 To 6)
+    ReDim table_values(1 To 1, 1 To 6)
+    table_values(1, 1) = "件名"
+    table_values(1, 2) = "#title"
+    table_values(1, 3) = "InnerText"
+    table_values(1, 4) = ""
+    table_values(1, 5) = "False"
+    table_values(1, 6) = "AllowBlank"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTableWithOutputEnabledAliases(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=5, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 4, 1 To 7)
+    table_values(1, 1) = "列1"
+    table_values(1, 2) = "#col1"
+    table_values(1, 7) = "1"
+    table_values(2, 1) = "列2"
+    table_values(2, 2) = "#col2"
+    table_values(2, 7) = "Yes"
+    table_values(3, 1) = "列3"
+    table_values(3, 2) = "#col3"
+    table_values(3, 7) = "0"
+    table_values(4, 1) = "列4"
+    table_values(4, 2) = "#col4"
+    table_values(4, 7) = "No"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTableWithInvalidOutputEnabled(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 1, 1 To 7)
+    table_values(1, 1) = "件名"
+    table_values(1, 2) = "#title"
+    table_values(1, 3) = "InnerText"
+    table_values(1, 4) = ""
+    table_values(1, 5) = "False"
+    table_values(1, 6) = "AllowBlank"
+    table_values(1, 7) = "maybe"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTableOnlyOutputEnabled(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 1, 1 To 7)
+    table_values(1, 7) = "True"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 2, 1 To 7)
     table_values(1, 1) = "対象ID"
     table_values(1, 2) = "#target-id"
     table_values(1, 3) = "InnerText"
     table_values(1, 4) = ""
     table_values(1, 5) = "True"
     table_values(1, 6) = "ErrorIfBlank"
+    table_values(1, 7) = "True"
     table_values(2, 1) = "件名"
     table_values(2, 2) = "#title"
     table_values(2, 3) = "TextContent"
     table_values(2, 4) = ""
     table_values(2, 5) = "False"
     table_values(2, 6) = "AllowBlank"
+    table_values(2, 7) = "False"
 
     Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
     Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)

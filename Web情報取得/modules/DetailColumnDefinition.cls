@@ -24,6 +24,7 @@ Private pExtractType As String
 Private pAttributeName As String
 Private pIsRequired As Boolean
 Private pBlankMode As String
+Private pOutputEnabled As Boolean
 
 '* 出力列名。
 Public Property Get OutputColumnName() As String
@@ -61,6 +62,12 @@ Public Property Get BlankMode() As String
     BlankMode = pBlankMode
 End Property
 
+'* True の場合は output シートへ出力します。
+Public Property Get OutputEnabled() As Boolean
+    Call pCheckInit
+    OutputEnabled = pOutputEnabled
+End Property
+
 '* 詳細ページ列定義を初期化します。
 '*
 '* @param OutputColumnName 出力列名。
@@ -69,9 +76,10 @@ End Property
 '* @param AttributeName attribute 取得時の属性名。
 '* @param IsRequired True の場合は必須列として扱います。
 '* @param BlankMode 空欄時の扱い。
+'* @param OutputEnabled True の場合は output シートへ出力します。
 '*
 '* @details
-'* OutputColumnName と Selector は必須です。ExtractType、AttributeName、IsRequired、BlankMode は
+'* OutputColumnName と Selector は必須です。ExtractType、AttributeName、IsRequired、BlankMode、OutputEnabled は
 '* DOM 抽出時の列ごとの振る舞いを指定するために保持します。
 Public Sub Initialize( _
         ByVal OutputColumnName As String, _
@@ -79,7 +87,8 @@ Public Sub Initialize( _
         Optional ByVal ExtractType As String = "InnerText", _
         Optional ByVal AttributeName As String = "", _
         Optional ByVal IsRequired As Boolean = False, _
-        Optional ByVal BlankMode As String = "AllowBlank")
+        Optional ByVal BlankMode As String = "AllowBlank", _
+        Optional ByVal OutputEnabled As Boolean = False)
 
     If Trim$(OutputColumnName) = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="OutputColumnName は必須です。"
@@ -94,6 +103,7 @@ Public Sub Initialize( _
     pAttributeName = AttributeName
     pIsRequired = IsRequired
     pBlankMode = BlankMode
+    pOutputEnabled = OutputEnabled
     pIsInitialized = True
 End Sub
 

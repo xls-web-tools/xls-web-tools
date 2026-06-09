@@ -84,6 +84,33 @@ Public Sub Initialize(ByVal Expression As String, ByVal DetailColumnDefinitions 
     pIsInitialized = True
 End Sub
 
+Private Sub pValidateUniqueOutputColumnNames()
+    Dim left_idx As Long
+    For left_idx = 0 To pDetailDefinitions.Count - 1
+        Dim left_def As DetailColumnDefinition
+        Set left_def = pDetailDefinitions.Item(left_idx)
+        Call pValidateReservedOutputColumnName(left_def.OutputColumnName)
+
+        Dim right_idx As Long
+        For right_idx = left_idx + 1 To pDetailDefinitions.Count - 1
+            Dim right_def As DetailColumnDefinition
+            Set right_def = pDetailDefinitions.Item(right_idx)
+            If StrComp(left_def.OutputColumnName, right_def.OutputColumnName, vbBinaryCompare) = 0 Then
+                Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName が重複しています。(" & left_def.OutputColumnName & ")"
+            End If
+        Next right_idx
+    Next left_idx
+End Sub
+
+Private Sub pValidateExpression()
+    pEvalMode = C_EVAL_MODE_VALIDATE
+    Set pEvalValues = Nothing
+    pPosition = 1
+
+    Call pParseOrExpression
+    Call pRequireExpressionEnd
+End Sub
+
 '* 詳細ページ列値に基づき、出力対象か否かを返します。
 Public Function ShouldOutput(ByVal DetailColumnValues As ArrayObject) As Boolean
     Call pCheckInit
@@ -132,30 +159,11 @@ Private Sub pCheckInit()
     End If
 End Sub
 
-Private Sub pValidateUniqueOutputColumnNames()
-    Dim left_idx As Long
-    For left_idx = 0 To pDetailDefinitions.Count - 1
-        Dim left_def As DetailColumnDefinition
-        Set left_def = pDetailDefinitions.Item(left_idx)
-
-        Dim right_idx As Long
-        For right_idx = left_idx + 1 To pDetailDefinitions.Count - 1
-            Dim right_def As DetailColumnDefinition
-            Set right_def = pDetailDefinitions.Item(right_idx)
-            If StrComp(left_def.OutputColumnName, right_def.OutputColumnName, vbBinaryCompare) = 0 Then
-                Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName が重複しています。(" & left_def.OutputColumnName & ")"
-            End If
-        Next right_idx
-    Next left_idx
-End Sub
-
-Private Sub pValidateExpression()
-    pEvalMode = C_EVAL_MODE_VALIDATE
-    Set pEvalValues = Nothing
-    pPosition = 1
-
-    Call pParseOrExpression
-    Call pRequireExpressionEnd
+Private Sub pValidateReservedOutputColumnName(ByVal OutputColumnName As String)
+    Select Case OutputColumnName
+        Case G_WEB_OUTPUT_COL_TARGET_ID, G_WEB_OUTPUT_COL_STATUS, G_WEB_OUTPUT_COL_ERROR, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName が固定管理列と重複しています。(" & OutputColumnName & ")"
+    End Select
 End Sub
 
 Private Function pParseOrExpression() As Boolean

@@ -25,7 +25,7 @@ Private Const C_PARAM_START_ROW As Long = 2
 Private Const C_TRANSITION_COL_START As Long = 4
 Private Const C_TRANSITION_COL_FINISH As Long = 8
 Private Const C_DETAIL_COL_START As Long = 10
-Private Const C_DETAIL_COL_FINISH As Long = 15
+Private Const C_DETAIL_COL_FINISH As Long = 16
 Private Const C_DEFAULT_WEB_DRIVER_PORT As Long = 9515
 Private Const C_DEFAULT_TIMEOUT_SECONDS As Long = 30
 
@@ -367,14 +367,15 @@ Private Function pReadDetailColumnDefinitions() As ObjectList
     If Not IsEmptyArray(table_values) Then
         Dim row_idx As Long
         For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
-            If Not pIsEmptyTableRow(table_values, row_idx, 1, 6) Then
+            If Not pIsEmptyTableRow(table_values, row_idx, 1, 7) Then
                 Call result_value.Add(New_DetailColumnDefinition( _
-                        OutputColumnName:=CStr(table_values(row_idx, 1)), _
-                        Selector:=CStr(table_values(row_idx, 2)), _
-                        ExtractType:=pDefaultIfBlank(CStr(table_values(row_idx, 3)), "InnerText"), _
-                        AttributeName:=CStr(table_values(row_idx, 4)), _
-                        IsRequired:=pParseBoolean(CStr(table_values(row_idx, 5)), False, "IsRequired"), _
-                        BlankMode:=pDefaultIfBlank(CStr(table_values(row_idx, 6)), "AllowBlank")))
+                        OutputColumnName:=pTableText(table_values, row_idx, 1), _
+                        Selector:=pTableText(table_values, row_idx, 2), _
+                        ExtractType:=pDefaultIfBlank(pTableText(table_values, row_idx, 3), "InnerText"), _
+                        AttributeName:=pTableText(table_values, row_idx, 4), _
+                        IsRequired:=pParseBoolean(pTableText(table_values, row_idx, 5), False, "IsRequired"), _
+                        BlankMode:=pDefaultIfBlank(pTableText(table_values, row_idx, 6), "AllowBlank"), _
+                        OutputEnabled:=pParseBoolean(pTableText(table_values, row_idx, 7), False, "OutputEnabled")))
             End If
         Next row_idx
     End If
@@ -398,15 +399,28 @@ Private Function pReadTableValues(ByVal StartColumn As Long, ByVal FinishColumn 
 End Function
 
 Private Function pIsEmptyTableRow(ByRef TableValues() As Variant, ByVal RowIndex As Long, ByVal FirstColumnIndex As Long, ByVal LastColumnIndex As Long) As Boolean
+    Dim last_existing_column As Long
+    last_existing_column = LastColumnIndex
+    If UBound(TableValues, 2) < last_existing_column Then last_existing_column = UBound(TableValues, 2)
+
     Dim col_idx As Long
-    For col_idx = FirstColumnIndex To LastColumnIndex
-        If Trim$(CStr(TableValues(RowIndex, col_idx))) <> "" Then
+    For col_idx = FirstColumnIndex To last_existing_column
+        If Trim$(pTableText(TableValues, RowIndex, col_idx)) <> "" Then
             pIsEmptyTableRow = False
             Exit Function
         End If
     Next col_idx
 
     pIsEmptyTableRow = True
+End Function
+
+Private Function pTableText(ByRef TableValues() As Variant, ByVal RowIndex As Long, ByVal ColumnIndex As Long) As String
+    If ColumnIndex < LBound(TableValues, 2) Or UBound(TableValues, 2) < ColumnIndex Then
+        pTableText = ""
+        Exit Function
+    End If
+
+    pTableText = CStr(TableValues(RowIndex, ColumnIndex))
 End Function
 
 Private Function pDefaultIfBlank(ByVal TargetText As String, ByVal DefaultValue As String) As String
@@ -432,6 +446,6 @@ Private Function pParseBoolean(ByVal TargetText As String, ByVal DefaultValue As
         Case "FALSE", "0", "NO"
             pParseBoolean = False
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=SourceName & " は True または False である必要があります。(" & TargetText & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=SourceName & " は True / False / 1 / 0 / Yes / No のいずれかである必要があります。(" & TargetText & ")"
     End Select
 End Function

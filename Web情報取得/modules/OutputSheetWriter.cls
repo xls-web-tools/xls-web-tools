@@ -47,7 +47,7 @@ End Sub
 '* 固定管理列と詳細ページ列定義のヘッダーを用意します。
 '*
 '* @details
-'* 1 行目に固定管理列を出力し、その右側へ settings の詳細ページ列定義を表示順に出力します。
+'* 1 行目に固定管理列を出力し、その右側へ OutputEnabled=True の詳細ページ列を表示順に出力します。
 '* 実際のワークシート書き込みは WsSrv.WriteCell 経由で行います。
 Public Sub EnsureHeaders()
     Call pCheckInit
@@ -60,11 +60,17 @@ Public Sub EnsureHeaders()
     Dim detail_defs As ObjectList
     Set detail_defs = pSettings.DetailColumnDefinitions
 
+    Dim output_col_offset As Long
+    output_col_offset = 0
+
     Dim def_idx As Long
     For def_idx = 0 To detail_defs.Count - 1
         Dim detail_def As DetailColumnDefinition
         Set detail_def = detail_defs.Item(def_idx)
-        Call pWriteHeader(C_COL_DETAIL_START + def_idx, detail_def.OutputColumnName)
+        If detail_def.OutputEnabled Then
+            Call pWriteHeader(C_COL_DETAIL_START + output_col_offset, detail_def.OutputColumnName)
+            output_col_offset = output_col_offset + 1
+        End If
     Next def_idx
 End Sub
 
@@ -250,15 +256,26 @@ Private Sub pWriteOutputRow( _
     Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
     Call pWriteOutputCell(RowIndex, C_COL_DOWNLOAD_STATUS, DownloadStatus)
 
+    Dim detail_defs As ObjectList
+    Set detail_defs = pSettings.DetailColumnDefinitions
+
+    Dim output_col_offset As Long
+    output_col_offset = 0
+
     Dim detail_idx As Long
     For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
-        Call pWriteOutputCell(RowIndex, C_COL_DETAIL_START + detail_idx, CStr(DetailValues.Item(detail_idx)))
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = detail_defs.Item(detail_idx)
+        If detail_def.OutputEnabled Then
+            Call pWriteOutputCell(RowIndex, C_COL_DETAIL_START + output_col_offset, CStr(DetailValues.Item(detail_idx)))
+            output_col_offset = output_col_offset + 1
+        End If
     Next detail_idx
 End Sub
 
 Private Function pResolveNextOutputRow() As Long
     Dim finish_column As Long
-    finish_column = C_COL_DETAIL_START + pSettings.DetailColumnDefinitions.Count - 1
+    finish_column = C_COL_DETAIL_START + pOutputEnabledColumnCount() - 1
     If finish_column < C_COL_DOWNLOAD_STATUS Then finish_column = C_COL_DOWNLOAD_STATUS
 
     Dim search_bounds As WorksheetRangeBounds
@@ -277,6 +294,23 @@ Private Function pResolveNextOutputRow() As Long
     If result_row < C_DIAGNOSTIC_OUTPUT_ROW Then result_row = C_DIAGNOSTIC_OUTPUT_ROW
 
     pResolveNextOutputRow = result_row
+End Function
+
+Private Function pOutputEnabledColumnCount() As Long
+    Dim result_count As Long
+    result_count = 0
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = pSettings.DetailColumnDefinitions
+
+    Dim def_idx As Long
+    For def_idx = 0 To detail_defs.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = detail_defs.Item(def_idx)
+        If detail_def.OutputEnabled Then result_count = result_count + 1
+    Next def_idx
+
+    pOutputEnabledColumnCount = result_count
 End Function
 
 Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)

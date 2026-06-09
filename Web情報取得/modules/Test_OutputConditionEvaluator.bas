@@ -83,6 +83,21 @@ Public Sub Test_OutputConditionEvaluator_OutputColumnName重複はエラー(ByVal Asse
     Call Assert.IsTrue(0 < InStr(1, Err.Description, "重複", vbTextCompare), "重複した OutputColumnName がエラーになる")
 End Sub
 
+Public Sub Test_OutputConditionEvaluator_OutputColumnName固定管理列重複はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition(G_WEB_OUTPUT_COL_TARGET_ID, "#target-id"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("", detail_defs)
+
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(0 < InStr(1, Err.Description, "固定管理列", vbTextCompare), "固定管理列名と重複した OutputColumnName がエラーになる")
+End Sub
+
 Public Sub Test_OutputConditionEvaluator_文字列リテラルのエスケープを解釈する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

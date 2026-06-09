@@ -65,7 +65,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
-    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject"))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", OutputEnabled:=True))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Call pPrepareExistingOutputRows(ws_stub)
