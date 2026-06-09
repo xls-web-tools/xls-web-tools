@@ -208,8 +208,8 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_A—v‘fHref‚È‚çUrl‘JˆÚ‚Å
     Dim selector_body As String
     selector_body = "{""using"":""css selector"",""value"":""#download""}"
 
-    Dim href_endpoint As String
-    href_endpoint = "/session/abc/element/download-1/attribute/href"
+    Dim href_script_body As String
+    href_script_body = "{""script"":""return arguments[0].href || arguments[0].getAttribute('href') || '';"",""args"": [{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}"
 
     Dim navigate_body As String
     navigate_body = "{""url"":""https://example.test/files/report.pdf""}"
@@ -220,7 +220,7 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_A—v‘fHref‚È‚çUrl‘JˆÚ‚Å
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
     Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", selector_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", selector_body)
-    Call client_double.Store.SetReturn("Execute", "{""value"":""https://example.test/files/report.pdf""}", "GET", href_endpoint, "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":""https://example.test/files/report.pdf""}", "POST", "/session/abc/execute/sync", href_script_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", navigate_body)
 
     Dim session_client As WebDriverSessionClient
@@ -237,7 +237,8 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_A—v‘fHref‚È‚çUrl‘JˆÚ‚Å
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.Equals G_WEB_DOWNLOAD_STATUS_DOWNLOADED, actual_status
     Assert.Equals "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", actual_file_path
-    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "GET", href_endpoint, "")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", href_script_body)
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "GET", "/session/abc/element/download-1/attribute/href", "")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/url", navigate_body)
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/download-1/click", "{}")
 End Sub

@@ -691,7 +691,7 @@ End Sub
 
 Private Function pTryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
     Dim download_href As String
-    download_href = pReadElementAttribute(LocatorType, LocatorValue, "href")
+    download_href = pReadElementHref(LocatorType, LocatorValue)
 
     If Not pIsNavigableDownloadHref(download_href) Then
         pTryNavigateDownloadLink = False
@@ -705,28 +705,27 @@ Private Function pTryNavigateDownloadLink(ByVal LocatorType As String, ByVal Loc
     pTryNavigateDownloadLink = True
 End Function
 
-Private Function pReadElementAttribute( _
-        ByVal LocatorType As String, _
-        ByVal LocatorValue As String, _
-        ByVal AttributeName As String) As String
-
+Private Function pReadElementHref(ByVal LocatorType As String, ByVal LocatorValue As String) As String
     Dim element_id As String
     element_id = pFindElement(LocatorType, LocatorValue)
 
     Dim response_body As String
-    response_body = pClient.Execute("GET", "/session/" & pSessionId & "/element/" & element_id & "/attribute/" & AttributeName, "")
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", pBuildElementHrefScriptBody(element_id))
     Call pRaiseIfWebDriverError(response_body)
 
-    pReadElementAttribute = pExtractJsonString(response_body, "value")
+    pReadElementHref = pExtractJsonString(response_body, "value")
+End Function
+
+Private Function pBuildElementHrefScriptBody(ByVal ElementId As String) As String
+    pBuildElementHrefScriptBody = "{""script"":""return arguments[0].href || arguments[0].getAttribute('href') || '';"",""args"": [{""element-6066-11e4-a52e-4f735466cecf"":""" & pJsonEscape(ElementId) & """}]}"
 End Function
 
 Private Function pIsNavigableDownloadHref(ByVal DownloadHref As String) As Boolean
     Dim normalized_href As String
     normalized_href = LCase$(Trim$(DownloadHref))
 
-    pIsNavigableDownloadHref = (normalized_href <> "" _
-            And normalized_href <> "#" _
-            And Left$(normalized_href, 11) <> "javascript:")
+    pIsNavigableDownloadHref = (Left$(normalized_href, 7) = "http://" _
+            Or Left$(normalized_href, 8) = "https://")
 End Function
 
 Private Sub pClickElement(ByVal LocatorType As String, ByVal LocatorValue As String)
