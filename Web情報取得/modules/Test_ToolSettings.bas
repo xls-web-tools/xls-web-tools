@@ -32,7 +32,7 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "ReturnToListOperationName", "ReturnToList", 15)
     Call pSetSetting(ws_stub, "NextPageOperationName", "NextPage", 16)
     Call pSetSetting(ws_stub, "NextPageAvailableSelector", "#next-page", 17)
-    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 18)
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_OVERWRITE, 18)
     Call pSetSetting(ws_stub, "OutputConditionExpression", "[申請者] != """"", 19)
     Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 20)
 
@@ -115,7 +115,7 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "ReturnToList", actual_return_operation_name
     Assert.Equals "NextPage", actual_next_operation_name
     Assert.Equals "#next-page", actual_next_available_selector
-    Assert.Equals G_WEB_ROW_MODE_RETRY_ERROR, actual_existing_mode
+    Assert.Equals G_WEB_ROW_MODE_OVERWRITE, actual_existing_mode
     Assert.Equals "[申請者] != """"", actual_condition_expression
     Assert.EqualsNumeric 45, actual_timeout
 End Sub

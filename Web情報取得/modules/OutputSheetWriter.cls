@@ -103,6 +103,23 @@ Public Sub WriteDiagnosticRow( _
     Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DetailValues)
 End Sub
 
+Private Function pResolveDiagnosticOutputRow(ByVal DetailPageId As String, ByVal TargetId As String) As Long
+    Dim target_row As Long
+    target_row = pFindExistingOutputRow(C_COL_TARGET_ID, TargetId)
+    If target_row <> 0 Then
+        pResolveDiagnosticOutputRow = target_row
+        Exit Function
+    End If
+
+    target_row = pFindExistingOutputRow(C_COL_DETAIL_PAGE_ID, DetailPageId)
+    If target_row <> 0 Then
+        pResolveDiagnosticOutputRow = target_row
+        Exit Function
+    End If
+
+    pResolveDiagnosticOutputRow = C_DIAGNOSTIC_OUTPUT_ROW
+End Function
+
 '* 本番収集用の出力行を書き込みます。
 '*
 '* @param DetailPageId 詳細ページID。
@@ -131,41 +148,6 @@ Public Sub WriteCollectionRow( _
     Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DetailValues)
 End Sub
 
-Private Sub pWriteOutputRow( _
-        ByVal RowIndex As Long, _
-        ByVal DetailPageId As String, _
-        ByVal TargetId As String, _
-        ByVal Status As String, _
-        ByVal ErrorDescription As String, _
-        ByVal DetailValues As ArrayObject)
-
-    Call pWriteOutputCell(RowIndex, C_COL_DETAIL_PAGE_ID, DetailPageId)
-    Call pWriteOutputCell(RowIndex, C_COL_TARGET_ID, TargetId)
-    Call pWriteOutputCell(RowIndex, C_COL_STATUS, Status)
-    Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
-
-    Dim detail_idx As Long
-    For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
-        Call pWriteOutputCell(RowIndex, C_COL_DETAIL_START + detail_idx, CStr(DetailValues.Item(detail_idx)))
-    Next detail_idx
-End Sub
-Private Function pResolveDiagnosticOutputRow(ByVal DetailPageId As String, ByVal TargetId As String) As Long
-    Dim target_row As Long
-    target_row = pFindExistingOutputRow(C_COL_TARGET_ID, TargetId)
-    If target_row <> 0 Then
-        pResolveDiagnosticOutputRow = target_row
-        Exit Function
-    End If
-
-    target_row = pFindExistingOutputRow(C_COL_DETAIL_PAGE_ID, DetailPageId)
-    If target_row <> 0 Then
-        pResolveDiagnosticOutputRow = target_row
-        Exit Function
-    End If
-
-    pResolveDiagnosticOutputRow = C_DIAGNOSTIC_OUTPUT_ROW
-End Function
-
 Private Function pResolveCollectionOutputRow(ByVal TargetId As String) As Long
     Dim target_row As Long
     target_row = pFindExistingOutputRow(C_COL_TARGET_ID, TargetId)
@@ -176,55 +158,6 @@ Private Function pResolveCollectionOutputRow(ByVal TargetId As String) As Long
 
     pResolveCollectionOutputRow = pResolveNextOutputRow()
 End Function
-
-Private Function pResolveNextOutputRow() As Long
-    Dim finish_column As Long
-    finish_column = C_COL_DETAIL_START + pSettings.DetailColumnDefinitions.Count - 1
-    If finish_column < C_COL_ERROR Then finish_column = C_COL_ERROR
-
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds( _
-            Row:=C_HEADER_ROW, _
-            Column:=C_COL_DETAIL_PAGE_ID, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=finish_column, _
-            Sheet:=pSettings.OutputSheetName)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = WsSrv.GetUsedRangeBounds(search_bounds)
-
-    Dim result_row As Long
-    result_row = used_bounds.FinishRow + 1
-    If result_row < C_DIAGNOSTIC_OUTPUT_ROW Then result_row = C_DIAGNOSTIC_OUTPUT_ROW
-
-    pResolveNextOutputRow = result_row
-End Function
-Private Function pFindExistingOutputRow(ByVal ColumnIndex As Long, ByVal LookupValue As String) As Long
-    If Trim$(LookupValue) = "" Then Exit Function
-
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds( _
-            Row:=C_DIAGNOSTIC_OUTPUT_ROW, _
-            Column:=ColumnIndex, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=ColumnIndex, _
-            Sheet:=pSettings.OutputSheetName)
-
-    Dim found_cells As ObjectList
-    Set found_cells = WsSrv.Find(LookupValue, search_bounds)
-    If found_cells.Count = 0 Then Exit Function
-
-    Dim found_bounds As WorksheetRangeBounds
-    Set found_bounds = found_cells.Item(0)
-    pFindExistingOutputRow = found_bounds.Row
-End Function
-
-Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
-    Call WsSrv.WriteCell( _
-            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
-            CellValue, _
-            TypeConvert:=False)
-End Sub
 
 '* 対象IDを今回の本番収集で取得すべきか返します。
 '*
@@ -253,6 +186,27 @@ Public Function ShouldCollectTarget(ByVal TargetId As String) As Boolean
 
     ShouldCollectTarget = ShouldWriteExistingRow(existing_status)
 End Function
+
+Private Function pFindExistingOutputRow(ByVal ColumnIndex As Long, ByVal LookupValue As String) As Long
+    If Trim$(LookupValue) = "" Then Exit Function
+
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds( _
+            Row:=C_DIAGNOSTIC_OUTPUT_ROW, _
+            Column:=ColumnIndex, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=ColumnIndex, _
+            Sheet:=pSettings.OutputSheetName)
+
+    Dim found_cells As ObjectList
+    Set found_cells = WsSrv.Find(LookupValue, search_bounds)
+    If found_cells.Count = 0 Then Exit Function
+
+    Dim found_bounds As WorksheetRangeBounds
+    Set found_bounds = found_cells.Item(0)
+    pFindExistingOutputRow = found_bounds.Row
+End Function
+
 '* 既存行を今回の実行で書き込むべきか返します。
 '*
 '* @param ExistingStatus 既存行の取得状態。
@@ -261,7 +215,7 @@ End Function
 '*
 '* @details
 '* 診断モードでは既存行を上書きします。本番収集では ExistingRowMode に従い、
-'* SkipExisting、RetryError、Overwrite のいずれかで判定します。
+'* SkipExisting または Overwrite のいずれかで判定します。
 Public Function ShouldWriteExistingRow(ByVal ExistingStatus As String, Optional ByVal IsDiagnosticMode As Boolean = False) As Boolean
     Call pCheckInit
 
@@ -270,10 +224,10 @@ Public Function ShouldWriteExistingRow(ByVal ExistingStatus As String, Optional 
         Exit Function
     End If
 
+    Call pValidateExistingStatus(ExistingStatus)
+
     Select Case pSettings.ExistingRowMode
         Case G_WEB_ROW_MODE_SKIP_EXISTING
-            ShouldWriteExistingRow = False
-        Case G_WEB_ROW_MODE_RETRY_ERROR
             ShouldWriteExistingRow = (ExistingStatus = G_WEB_STATUS_ERROR)
         Case G_WEB_ROW_MODE_OVERWRITE
             ShouldWriteExistingRow = True
@@ -281,6 +235,64 @@ Public Function ShouldWriteExistingRow(ByVal ExistingStatus As String, Optional 
             Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="ExistingRowMode が不正です。(" & pSettings.ExistingRowMode & ")"
     End Select
 End Function
+
+Private Sub pValidateExistingStatus(ByVal ExistingStatus As String)
+    Select Case ExistingStatus
+        Case G_WEB_STATUS_OK, G_WEB_STATUS_ERROR
+            Exit Sub
+        Case Else
+            Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="既存行の取得状態が不正です。(" & ExistingStatus & ")"
+    End Select
+End Sub
+
+Private Sub pWriteOutputRow( _
+        ByVal RowIndex As Long, _
+        ByVal DetailPageId As String, _
+        ByVal TargetId As String, _
+        ByVal Status As String, _
+        ByVal ErrorDescription As String, _
+        ByVal DetailValues As ArrayObject)
+
+    Call pWriteOutputCell(RowIndex, C_COL_DETAIL_PAGE_ID, DetailPageId)
+    Call pWriteOutputCell(RowIndex, C_COL_TARGET_ID, TargetId)
+    Call pWriteOutputCell(RowIndex, C_COL_STATUS, Status)
+    Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
+
+    Dim detail_idx As Long
+    For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
+        Call pWriteOutputCell(RowIndex, C_COL_DETAIL_START + detail_idx, CStr(DetailValues.Item(detail_idx)))
+    Next detail_idx
+End Sub
+
+Private Function pResolveNextOutputRow() As Long
+    Dim finish_column As Long
+    finish_column = C_COL_DETAIL_START + pSettings.DetailColumnDefinitions.Count - 1
+    If finish_column < C_COL_ERROR Then finish_column = C_COL_ERROR
+
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds( _
+            Row:=C_HEADER_ROW, _
+            Column:=C_COL_DETAIL_PAGE_ID, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=finish_column, _
+            Sheet:=pSettings.OutputSheetName)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = WsSrv.GetUsedRangeBounds(search_bounds)
+
+    Dim result_row As Long
+    result_row = used_bounds.FinishRow + 1
+    If result_row < C_DIAGNOSTIC_OUTPUT_ROW Then result_row = C_DIAGNOSTIC_OUTPUT_ROW
+
+    pResolveNextOutputRow = result_row
+End Function
+
+Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
+    Call WsSrv.WriteCell( _
+            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
+            CellValue, _
+            TypeConvert:=False)
+End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then

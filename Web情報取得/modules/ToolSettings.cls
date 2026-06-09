@@ -100,6 +100,7 @@ End Property
 Private Property Get IToolSettings_ListTransitionOperationName() As String
     IToolSettings_ListTransitionOperationName = ListTransitionOperationName
 End Property
+
 '* 現在ページの一覧項目を数える selector。
 Public Property Get ListItemSelector() As String
     ListItemSelector = pGetRequiredParam("ListItemSelector")
@@ -274,12 +275,10 @@ Private Function pNormalizeExistingRowMode(ByVal ModeText As String) As String
     Select Case UCase$(Trim$(ModeText))
         Case UCase$(G_WEB_ROW_MODE_SKIP_EXISTING)
             pNormalizeExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
-        Case UCase$(G_WEB_ROW_MODE_RETRY_ERROR)
-            pNormalizeExistingRowMode = G_WEB_ROW_MODE_RETRY_ERROR
         Case UCase$(G_WEB_ROW_MODE_OVERWRITE)
             pNormalizeExistingRowMode = G_WEB_ROW_MODE_OVERWRITE
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="ExistingRowMode が不正です。(" & ModeText & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="ExistingRowMode が不正です。(値: " & ModeText & "、有効値: " & G_WEB_ROW_MODE_SKIP_EXISTING & ", " & G_WEB_ROW_MODE_OVERWRITE & ")"
     End Select
 End Function
 

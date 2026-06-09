@@ -104,12 +104,13 @@ Public Sub Test_OutputSheetWriter_既存行扱いを判定する(ByVal Assert As UnitTestA
     ' --- Act & Assert ---
     tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     Assert.IsFalse writer.ShouldWriteExistingRow(G_WEB_STATUS_OK)
-    Assert.IsFalse writer.ShouldWriteExistingRow(G_WEB_STATUS_ERROR)
+    Assert.IsTrue writer.ShouldWriteExistingRow(G_WEB_STATUS_ERROR)
     Assert.IsTrue writer.ShouldWriteExistingRow(G_WEB_STATUS_OK, IsDiagnosticMode:=True)
 
-    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_RETRY_ERROR
-    Assert.IsFalse writer.ShouldWriteExistingRow(G_WEB_STATUS_OK)
-    Assert.IsTrue writer.ShouldWriteExistingRow(G_WEB_STATUS_ERROR)
+    Call writer.ShouldWriteExistingRow("UNKNOWN")
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.Equals "既存行の取得状態が不正です。(UNKNOWN)", Err.Description
+    Err.Clear
 
     tool_settings.ExistingRowMode = G_WEB_ROW_MODE_OVERWRITE
     Assert.IsTrue writer.ShouldWriteExistingRow(G_WEB_STATUS_OK)
@@ -158,11 +159,6 @@ Public Sub Test_OutputSheetWriter_本番収集対象判定は対象ID主キーとExistingRowMod
 
     ' --- Act & Assert ---
     tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
-    Assert.IsFalse writer.ShouldCollectTarget("T-OK")
-    Assert.IsFalse writer.ShouldCollectTarget("T-ERROR")
-    Assert.IsTrue writer.ShouldCollectTarget("T-NEW")
-
-    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_RETRY_ERROR
     Assert.IsFalse writer.ShouldCollectTarget("T-OK")
     Assert.IsTrue writer.ShouldCollectTarget("T-ERROR")
     Assert.IsTrue writer.ShouldCollectTarget("T-NEW")

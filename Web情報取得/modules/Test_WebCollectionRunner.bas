@@ -36,7 +36,7 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
     tool_settings.ReturnToListOperationName = "ReturnToList"
-    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_RETRY_ERROR
+    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     tool_settings.TimeoutSeconds = 1
 
     Dim operations As ObjectList
@@ -106,7 +106,7 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="output"))
 End Sub
 
-Public Sub Test_WebCollectionRunner_ğŒ•sˆê’v‚È‚çoutputs‚ğ‘‚©‚¸ERROR‚É‚à‚È‚ç‚È‚¢(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸o—Í‘ÎÛŠO‚É”‚¦‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -154,7 +154,9 @@ Public Sub Test_WebCollectionRunner_ğŒ•sˆê’v‚È‚çoutputs‚ğ‘‚©‚¸ERROR‚É‚à‚È‚ç‚
 
     Dim output_found_rows As ObjectList
     Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call output_found_rows.Add(New_RangeBounds(Row:=6, Column:=2, Sheet:="output"))
     Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=6, Column:=3, Sheet:="output"), False)
 
     Dim create_body As String
     create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
@@ -199,6 +201,7 @@ Public Sub Test_WebCollectionRunner_ğŒ•sˆê’v‚È‚çoutputs‚ğ‘‚©‚¸ERROR‚É‚à‚È‚ç‚
     Assert.EqualsNumeric 1, runner.PageCount
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="output"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=6, Column:=3, Sheet:="output"))
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub

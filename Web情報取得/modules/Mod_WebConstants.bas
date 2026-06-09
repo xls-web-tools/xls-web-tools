@@ -34,9 +34,6 @@ Public Const G_WEB_STATUS_ERROR As String = "ERROR"
 '* 既存行を再取得せずにスキップする既存行モード。
 Public Const G_WEB_ROW_MODE_SKIP_EXISTING As String = "SkipExisting"
 
-'* エラー行だけを再取得する既存行モード。
-Public Const G_WEB_ROW_MODE_RETRY_ERROR As String = "RetryError"
-
 '* 既存行を上書きして再取得する既存行モード。
 Public Const G_WEB_ROW_MODE_OVERWRITE As String = "Overwrite"
 
