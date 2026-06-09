@@ -287,6 +287,285 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "山田太郎")
 End Sub
 
+Public Sub Test_WebNavDiagnosticRunner_詳細列定義なしでも固定管理列だけの診断行を書く(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call pSetTextElement(client_double, "#list-item-target-id", "list-target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", pCssFindBody(".first-detail-link"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 1, 1, G_WEB_OUTPUT_COL_TARGET_ID)
+    Call pAssertWrittenCell(Assert, ws_stub, 1, 2, G_WEB_OUTPUT_COL_STATUS)
+    Call pAssertWrittenCell(Assert, ws_stub, 1, 3, G_WEB_OUTPUT_COL_ERROR)
+    Call pAssertWrittenCell(Assert, ws_stub, 1, 4, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 3, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 4, "")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="output"))
+End Sub
+
+Public Sub Test_WebNavDiagnosticRunner_詳細列定義なしでDownloadRequiredならNO_FILEをERROR行にする(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+    Set FsSrv = fs_stub
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadRequired = True
+    tool_settings.DownloadRootPath = "D:\Root"
+    tool_settings.DownloadLinkSelector = "#download"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call pSetTextElement(client_double, "#list-item-target-id", "list-target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", pCssFindBody(".first-detail-link"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[]}", "POST", "/session/abc/elements", pCssFindBody("#download"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_ERROR)
+    Call pAssertWrittenCellContains(Assert, ws_stub, 2, 3, "ダウンロードリンクがありません")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 4, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/elements", pCssFindBody("#download"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="output"))
+End Sub
+
+Public Sub Test_WebNavDiagnosticRunner_詳細列定義なしでもダウンロード済みファイルを保存する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+
+    Dim crdownload_files() As String
+    crdownload_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
+
+    Dim completed_files(0 To 0) As String
+    completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
+    Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-001", False, True)
+    Set FsSrv = fs_stub
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadRootPath = "D:\Root"
+    tool_settings.DownloadLinkSelector = "#download"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call pSetTextElement(client_double, "#list-item-target-id", "list-target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", pCssFindBody(".first-detail-link"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", pCssFindBody("#download"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", pCssFindBody("#download"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/download-1/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 3, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 4, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/elements", pCssFindBody("#download"))
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("MoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", "D:\Root\T-001\001_report.pdf", False)
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="output"))
+End Sub
+
 Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

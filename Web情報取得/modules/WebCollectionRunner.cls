@@ -114,10 +114,8 @@ Public Function Run() As String
     pPageCount = 0
     pProgressStarted = False
 
-    Dim condition_evaluator As OutputConditionEvaluator
-    Set condition_evaluator = New OutputConditionEvaluator
-    Call condition_evaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
-
+    Dim detail_run As DetailPageRun
+    Set detail_run = New_DetailPageRun(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
     Call pProcess.Start(pSettings)
@@ -130,7 +128,7 @@ Public Function Run() As String
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
-    Call pCollectPages(output_writer, condition_evaluator)
+    Call pCollectPages(output_writer, detail_run)
     Call pMarkProgressComplete
 
     Call pSessionClient.QuitSession(result_value)
@@ -168,7 +166,7 @@ Private Sub pOpenListPage()
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
 End Sub
 
-Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal ConditionEvaluator As OutputConditionEvaluator)
+Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailRun As DetailPageRun)
     Dim first_target_ids As ObjectSet
     Set first_target_ids = New ObjectSet
 
@@ -195,7 +193,7 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal Conditi
 
         Dim item_idx As Long
         For item_idx = 0 To item_count - 1
-            Call pCollectListItem(OutputWriter, target_snapshot, item_idx, ConditionEvaluator)
+            Call pCollectListItem(OutputWriter, target_snapshot, item_idx, DetailRun)
             Call pIncrementProgress
         Next item_idx
 
@@ -263,7 +261,7 @@ Private Sub pCollectListItem( _
         ByVal OutputWriter As OutputSheetWriter, _
         ByVal TargetSnapshot As ArrayObject, _
         ByVal ItemIndex As Long, _
-        ByVal ConditionEvaluator As OutputConditionEvaluator)
+        ByVal DetailRun As DetailPageRun)
 
     Dim expected_target_id As String
     expected_target_id = CStr(TargetSnapshot.Item(ItemIndex))
@@ -277,142 +275,26 @@ Private Sub pCollectListItem( _
         Exit Sub
     End If
 
-    Dim output_target_id As String
-    output_target_id = current_target_id
+    Dim run_result As DetailPageRunResult
+    Set run_result = DetailRun.Run(current_target_id, pSettings.DetailTransitionOperationName, ItemIndex:=ItemIndex)
 
-    Dim needs_return As Boolean
-    needs_return = False
-
-    On Error GoTo ITEM_ERROR
-
-    Dim detail_operation As TransitionOperation
-    Set detail_operation = pBuildIndexedTransitionOperation(pSettings.DetailTransitionOperationName, ItemIndex)
-    Call pSessionClient.RunTransitionOperation(detail_operation)
-    needs_return = True
-
-    Call pSessionClient.WaitForSelector(pSettings.TargetIdSelector)
-
-    Dim detail_target_id As String
-    detail_target_id = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
-    If detail_target_id = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="詳細ページ上の対象IDを取得できません。"
-    End If
-
-    output_target_id = detail_target_id
-    If StrComp(current_target_id, detail_target_id, vbBinaryCompare) <> 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & current_target_id & " / " & detail_target_id & ")"
-    End If
-
-    If Not pShouldOutputByCondition(ConditionEvaluator) Then
+    If run_result.IsOutputExcluded Then
         pOutputExcludedCount = pOutputExcludedCount + 1
-        On Error GoTo 0
-        Call pReturnToList
         Exit Sub
     End If
 
-    Dim detail_values As ArrayObject
-    Set detail_values = pSessionClient.ReadDetailColumnValues(pSettings.DetailColumnDefinitions)
+    Call OutputWriter.WriteCollectionRow( _
+            run_result.TargetId, _
+            run_result.Status, _
+            run_result.ErrorDescription, _
+            run_result.DetailValues, _
+            run_result.DownloadStatus)
 
-    Dim download_error_description As String
-    Dim download_status As String
-    download_status = pDownloadCurrentDetailFile(output_target_id, download_error_description)
-
-    Dim row_status As String
-    row_status = G_WEB_STATUS_OK
-
-    Dim row_error_description As String
-    row_error_description = ""
-    If pDownloadStatusRequiresRowError(download_status) Then
-        row_status = G_WEB_STATUS_ERROR
-        row_error_description = download_error_description
-    End If
-
-    Call OutputWriter.WriteCollectionRow(output_target_id, row_status, row_error_description, detail_values, download_status)
-    If row_status = G_WEB_STATUS_ERROR Then
+    If run_result.Status = G_WEB_STATUS_ERROR Then
         pErrorCount = pErrorCount + 1
     Else
         pSucceededCount = pSucceededCount + 1
     End If
-
-    On Error GoTo 0
-    Call pReturnToList
-    Exit Sub
-
-ITEM_ERROR:
-    Dim err_desc As String
-    err_desc = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    Call pWriteErrorCollectionRow(OutputWriter, output_target_id, err_desc)
-    pErrorCount = pErrorCount + 1
-    If needs_return Then Call pReturnToList
-End Sub
-
-Private Function pDownloadCurrentDetailFile( _
-        ByVal TargetId As String, _
-        ByRef ErrorDescription As String) As String
-
-    ErrorDescription = ""
-    If Not pSettings.DownloadEnabled Then
-        pDownloadCurrentDetailFile = ""
-        Exit Function
-    End If
-
-    On Error GoTo DOWNLOAD_ERROR
-
-    Dim downloaded_file_path As String
-    Dim result_status As String
-    result_status = pSessionClient.DownloadLinkedFile(downloaded_file_path)
-
-    If result_status = G_WEB_DOWNLOAD_STATUS_DOWNLOADED Then
-        Dim file_saver As DownloadedFileSaver
-        Set file_saver = New_DownloadedFileSaver(pSettings, FsSrv)
-        result_status = file_saver.SaveDownloadedFile(downloaded_file_path, TargetId)
-        If result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then ErrorDescription = file_saver.LastErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then
-        ErrorDescription = pSessionClient.LastDownloadErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE Then
-        ErrorDescription = "ダウンロードリンクがありません。"
-    End If
-
-    On Error GoTo 0
-    pDownloadCurrentDetailFile = result_status
-    Exit Function
-
-DOWNLOAD_ERROR:
-    ErrorDescription = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    pDownloadCurrentDetailFile = G_WEB_DOWNLOAD_STATUS_ERROR
-End Function
-
-Private Function pDownloadStatusRequiresRowError(ByVal DownloadStatus As String) As Boolean
-    pDownloadStatusRequiresRowError = (pSettings.DownloadRequired _
-            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
-End Function
-Private Function pShouldOutputByCondition(ByVal ConditionEvaluator As OutputConditionEvaluator) As Boolean
-    If Not ConditionEvaluator.IsEnabled Then
-        pShouldOutputByCondition = True
-        Exit Function
-    End If
-
-    Dim referenced_values As ArrayObject
-    Set referenced_values = pSessionClient.ReadDetailColumnValues(ConditionEvaluator.ReferencedColumnDefinitions)
-
-    pShouldOutputByCondition = ConditionEvaluator.ShouldOutputByReferencedValues(referenced_values)
-End Function
-
-Private Sub pWriteErrorCollectionRow( _
-        ByVal OutputWriter As OutputSheetWriter, _
-        ByVal TargetId As String, _
-        ByVal ErrorDescription As String)
-
-    Dim detail_values As ArrayObject
-    Set detail_values = pCreateBlankDetailValues(pSettings.DetailColumnDefinitions)
-
-    Call OutputWriter.WriteCollectionRow(TargetId, G_WEB_STATUS_ERROR, ErrorDescription, detail_values)
 End Sub
 
 Private Function pReadListItemTargetId(ByVal ItemIndex As Long) As String
@@ -489,21 +371,6 @@ Private Sub pWaitForFirstTargetChange(ByVal PreviousFirstTargetId As String)
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後にページが進みません。(" & PreviousFirstTargetId & ")"
 End Sub
 
-Private Function pBuildIndexedTransitionOperation( _
-        ByVal OperationName As String, _
-        ByVal ItemIndex As Long) As TransitionOperation
-
-    Dim base_operation As TransitionOperation
-    Set base_operation = pFindTransitionOperation(OperationName)
-
-    Set pBuildIndexedTransitionOperation = New_TransitionOperation( _
-            base_operation.OperationName, _
-            base_operation.LocatorType, _
-            pApplyIndexTemplate(base_operation.LocatorValue, ItemIndex), _
-            Script:=pApplyIndexTemplate(base_operation.Script, ItemIndex), _
-            WaitConditionName:=base_operation.WaitConditionName)
-End Function
-
 Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex As Long) As String
     Dim result_value As String
     result_value = TargetText
@@ -511,48 +378,6 @@ Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex
     result_value = Replace(result_value, "{{rowNumber}}", CStr(ItemIndex + 1))
 
     pApplyIndexTemplate = result_value
-End Function
-
-Private Sub pReturnToList()
-    On Error GoTo RETURN_ERROR
-
-    Dim return_operation As TransitionOperation
-    Set return_operation = pFindTransitionOperation(pSettings.ReturnToListOperationName)
-    Call pSessionClient.RunTransitionOperation(return_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
-
-    On Error GoTo 0
-    Exit Sub
-
-RETURN_ERROR:
-    Dim err_num As Long
-    Dim err_source As String
-    Dim err_desc As String
-    Dim err_help_file As String
-    Dim err_help_context As Long
-    err_num = Err.Number
-    err_source = Err.Source
-    err_desc = Err.Description
-    err_help_file = Err.HelpFile
-    err_help_context = Err.HelpContext
-
-    Err.Raise err_num, err_source, "一覧画面へ復帰できません。" & vbCrLf & err_desc, err_help_file, err_help_context
-End Sub
-
-Private Function pCreateBlankDetailValues(ByVal DetailDefinitions As ObjectList) As ArrayObject
-    Dim result_values As ArrayObject
-    Set result_values = New ArrayObject
-
-    If 0 < DetailDefinitions.Count Then
-        Call result_values.ReDimArray(0, DetailDefinitions.Count - 1)
-    End If
-
-    Dim def_idx As Long
-    For def_idx = 0 To DetailDefinitions.Count - 1
-        Call result_values.Update(def_idx, "")
-    Next def_idx
-
-    Set pCreateBlankDetailValues = result_values
 End Function
 
 Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation

@@ -68,6 +68,58 @@ Public Function New_DetailColumnDefinition( _
     Set New_DetailColumnDefinition = result_value
 End Function
 
+'* 詳細ページ処理結果を生成します。
+'*
+'* @param TargetId 対象ID。
+'* @param Status 取得状態。
+'* @param ErrorDescription エラー内容。
+'* @param DetailValues 詳細ページ列定義に対応する抽出値。
+'* @param DownloadStatus ダウンロード状態。
+'* @param IsOutputExcluded 出力対象条件により output シートへ書かなかったか否か。
+'* @return 初期化済みの詳細ページ処理結果。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DetailPageRunResult に委譲します。
+Public Function New_DetailPageRunResult( _
+        ByVal TargetId As String, _
+        ByVal Status As String, _
+        ByVal ErrorDescription As String, _
+        ByVal DetailValues As ArrayObject, _
+        Optional ByVal DownloadStatus As String = "", _
+        Optional ByVal IsOutputExcluded As Boolean = False) As DetailPageRunResult
+
+    Dim result_value As DetailPageRunResult
+    Set result_value = New DetailPageRunResult
+    Call result_value.Initialize( _
+            TargetId, _
+            Status, _
+            ErrorDescription, _
+            DetailValues, _
+            DownloadStatus:=DownloadStatus, _
+            IsOutputExcluded:=IsOutputExcluded)
+
+    Set New_DetailPageRunResult = result_value
+End Function
+
+'* 詳細ページ run を生成します。
+'*
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの詳細ページ run。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DetailPageRun に委譲します。
+Public Function New_DetailPageRun( _
+        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Settings As IToolSettings) As DetailPageRun
+
+    Dim result_value As DetailPageRun
+    Set result_value = New DetailPageRun
+    Call result_value.Initialize(SessionClient, Settings)
+
+    Set New_DetailPageRun = result_value
+End Function
+
 '* 出力先シート書き込みを生成します。
 '*
 '* @param Settings Web情報取得の設定。

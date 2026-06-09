@@ -89,10 +89,8 @@ Public Function Run() As String
     pTargetId = ""
     pIsOutputExcluded = False
 
-    Dim condition_evaluator As OutputConditionEvaluator
-    Set condition_evaluator = New OutputConditionEvaluator
-    Call condition_evaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
-
+    Dim detail_run As DetailPageRun
+    Set detail_run = New_DetailPageRun(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
     Call pProcess.Start(pSettings)
@@ -105,9 +103,7 @@ Public Function Run() As String
     Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
-    Call pExtractFirstDetailTargetId
-    Call pWriteDiagnosticOutputIfConfigured(condition_evaluator)
-    Call pReturnToListIfConfigured
+    Call pRunFirstDetail(detail_run)
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -146,178 +142,43 @@ Private Sub pCheckInit()
     End If
 End Sub
 
-Private Sub pExtractFirstDetailTargetId()
-    Dim detail_operation_name As String
-    detail_operation_name = pSettings.DetailTransitionOperationName
-    If Trim$(detail_operation_name) = "" Then Exit Sub
+Private Sub pRunFirstDetail(ByVal DetailRun As DetailPageRun)
+    If Trim$(pSettings.DetailTransitionOperationName) = "" Then Exit Sub
 
-    pListItemTargetId = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
-    If pListItemTargetId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDを取得できません。"
-    End If
+    pListItemTargetId = pReadFirstListItemTargetId()
 
-    Dim detail_operation As TransitionOperation
-    Set detail_operation = pFindTransitionOperation(detail_operation_name)
-    Call pSessionClient.RunTransitionOperation(detail_operation)
-    Call pSessionClient.WaitForSelector(pSettings.TargetIdSelector)
+    Dim run_result As DetailPageRunResult
+    Set run_result = DetailRun.Run( _
+            pListItemTargetId, _
+            pSettings.DetailTransitionOperationName, _
+            ItemIndex:=0, _
+            IsDiagnosticMode:=True)
 
-    pTargetId = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
-    If pTargetId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="詳細ページ上の対象IDを取得できません。"
-    End If
-
-    If StrComp(pListItemTargetId, pTargetId, vbBinaryCompare) <> 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & pListItemTargetId & " / " & pTargetId & ")"
-    End If
-End Sub
-
-Private Sub pWriteDiagnosticOutputIfConfigured(ByVal ConditionEvaluator As OutputConditionEvaluator)
-    Dim detail_defs As ObjectList
-    Set detail_defs = pSettings.DetailColumnDefinitions
-    If detail_defs.Count = 0 Then Exit Sub
+    pTargetId = run_result.TargetId
+    pIsOutputExcluded = run_result.IsOutputExcluded
 
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
 
-    On Error GoTo DETAIL_ERROR
+    If run_result.IsOutputExcluded Then Exit Sub
 
-    Dim detail_values As ArrayObject
-    If Not pShouldOutputByCondition(ConditionEvaluator) Then
-        pIsOutputExcluded = True
-        On Error GoTo 0
-        Exit Sub
-    End If
-
-    Set detail_values = pSessionClient.ReadDetailColumnValues(detail_defs)
-
-    On Error GoTo 0
-
-    Dim download_error_description As String
-    Dim download_status As String
-    download_status = pDownloadCurrentDetailFile(pTargetId, download_error_description)
-
-    Dim row_status As String
-    row_status = G_WEB_STATUS_OK
-
-    Dim row_error_description As String
-    row_error_description = ""
-    If pDownloadStatusRequiresRowError(download_status) Then
-        row_status = G_WEB_STATUS_ERROR
-        row_error_description = download_error_description
-    End If
-
-    Call output_writer.WriteDiagnosticRow(pTargetId, row_status, row_error_description, detail_values, download_status)
-    Exit Sub
-
-DETAIL_ERROR:
-    Dim err_desc As String
-    err_desc = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    Set detail_values = pCreateBlankDetailValues(detail_defs)
-    Call output_writer.WriteDiagnosticRow(pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
+    Call output_writer.WriteDiagnosticRow( _
+            run_result.TargetId, _
+            run_result.Status, _
+            run_result.ErrorDescription, _
+            run_result.DetailValues, _
+            run_result.DownloadStatus)
 End Sub
 
-Private Function pDownloadCurrentDetailFile( _
-        ByVal TargetId As String, _
-        ByRef ErrorDescription As String) As String
-
-    ErrorDescription = ""
-    If Not pSettings.DownloadEnabled Then
-        pDownloadCurrentDetailFile = ""
-        Exit Function
+Private Function pReadFirstListItemTargetId() As String
+    Dim result_value As String
+    result_value = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
+    If result_value = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDを取得できません。"
     End If
 
-    On Error GoTo DOWNLOAD_ERROR
-
-    Dim downloaded_file_path As String
-    Dim result_status As String
-    result_status = pSessionClient.DownloadLinkedFile(downloaded_file_path)
-
-    If result_status = G_WEB_DOWNLOAD_STATUS_DOWNLOADED Then
-        Dim file_saver As DownloadedFileSaver
-        Set file_saver = New_DownloadedFileSaver(pSettings, FsSrv)
-        result_status = file_saver.SaveDownloadedFile(downloaded_file_path, TargetId)
-        If result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then ErrorDescription = file_saver.LastErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then
-        ErrorDescription = pSessionClient.LastDownloadErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE Then
-        ErrorDescription = "ダウンロードリンクがありません。"
-    End If
-
-    On Error GoTo 0
-    pDownloadCurrentDetailFile = result_status
-    Exit Function
-
-DOWNLOAD_ERROR:
-    ErrorDescription = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    pDownloadCurrentDetailFile = G_WEB_DOWNLOAD_STATUS_ERROR
-End Function
-
-Private Function pDownloadStatusRequiresRowError(ByVal DownloadStatus As String) As Boolean
-    pDownloadStatusRequiresRowError = (pSettings.DownloadRequired _
-            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
-End Function
-Private Function pShouldOutputByCondition(ByVal ConditionEvaluator As OutputConditionEvaluator) As Boolean
-    If Not ConditionEvaluator.IsEnabled Then
-        pShouldOutputByCondition = True
-        Exit Function
-    End If
-
-    Dim referenced_values As ArrayObject
-    Set referenced_values = pSessionClient.ReadDetailColumnValues(ConditionEvaluator.ReferencedColumnDefinitions)
-
-    pShouldOutputByCondition = ConditionEvaluator.ShouldOutputByReferencedValues(referenced_values)
-End Function
-
-Private Sub pReturnToListIfConfigured()
-    Dim operation_name As String
-    operation_name = pSettings.ReturnToListOperationName
-    If Trim$(operation_name) = "" Then Exit Sub
-
-    On Error GoTo RETURN_ERROR
-
-    Dim return_operation As TransitionOperation
-    Set return_operation = pFindTransitionOperation(operation_name)
-    Call pSessionClient.RunTransitionOperation(return_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
-
-    On Error GoTo 0
-    Exit Sub
-
-RETURN_ERROR:
-    Dim err_num As Long
-    Dim err_source As String
-    Dim err_desc As String
-    Dim err_help_file As String
-    Dim err_help_context As Long
-    err_num = Err.Number
-    err_source = Err.Source
-    err_desc = Err.Description
-    err_help_file = Err.HelpFile
-    err_help_context = Err.HelpContext
-
-    Err.Raise err_num, err_source, "一覧画面へ復帰できません。" & vbCrLf & err_desc, err_help_file, err_help_context
-End Sub
-Private Function pCreateBlankDetailValues(ByVal DetailDefinitions As ObjectList) As ArrayObject
-    Dim result_values As ArrayObject
-    Set result_values = New ArrayObject
-
-    If 0 < DetailDefinitions.Count Then
-        Call result_values.ReDimArray(0, DetailDefinitions.Count - 1)
-    End If
-
-    Dim def_idx As Long
-    For def_idx = 0 To DetailDefinitions.Count - 1
-        Call result_values.Update(def_idx, "")
-    Next def_idx
-
-    Set pCreateBlankDetailValues = result_values
+    pReadFirstListItemTargetId = result_value
 End Function
 
 Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
