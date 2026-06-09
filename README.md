@@ -22,10 +22,10 @@
 ## 基本の流れ
 
 1. `settings` シートの `Value` 列へ必要な値を入力します。
-2. 詳細ページから取得したい項目を、`OutputColumnName` から `BlankMode` までの表へ入力します。
+2. 詳細ページから取得したい項目を、`OutputColumnName` から `OutputEnabled` までの表へ入力します。
 3. まず診断実行ボタンを使い、最初の一覧項目から詳細ページへ移動できることを確認します。内部の実行入口名は `RunDiagnostic_Click` です。
 4. 診断が成功したら収集実行ボタンを使い、一覧項目を収集します。内部の実行入口名は `Collect_Click` です。
-5. `output` シートで `取得状態`、`エラー内容`、抽出列を確認します。
+5. `output` シートで `取得状態`、`エラー内容`、出力列を確認します。
 
 実行ボタンの表示名や配置は、配布時のブック表示に従ってください。問題調査時に入口名を確認する場合は、診断が `RunDiagnostic_Click`、本番収集が `Collect_Click` です。
 
@@ -71,16 +71,17 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 ## 詳細ページ列定義
 
-`settings` シート右側の `OutputColumnName` から `BlankMode` までの表に、詳細ページから `output` へ出したい列を入力します。
+`settings` シート右側の `OutputColumnName` から `OutputEnabled` までの表に、詳細ページから抽出したい列を入力します。`output` へ出したい列だけ `OutputEnabled=True` にします。
 
 | 列 | 説明 |
 | --- | --- |
-| `OutputColumnName` | `output` シートへ出す列名。重複しない名前にします。 |
+| `OutputColumnName` | 詳細ページから抽出する列名。重複しない名前にします。 |
 | `Selector` | 詳細ページ上の取得対象 CSS selector。 |
 | `ExtractType` | `InnerText`、`TextContent`、`Attribute` のいずれか。空欄なら `InnerText` です。 |
 | `AttributeName` | `ExtractType` が `Attribute` の場合に読む属性名。 |
 | `IsRequired` | `1` / `True` なら必須項目として扱います。 |
 | `BlankMode` | 必須項目が空欄のときにエラーにする場合は `ErrorIfBlank`、許容する場合は `AllowBlank`。 |
+| `OutputEnabled` | `True` / `1` / `Yes` なら `output` へ出します。空欄なら `False` です。 |
 
 ## 出力対象条件
 
@@ -95,7 +96,7 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 ([列1] == "A" OR [列1] == "B") AND NOT [列2] == "除外"
 ```
 
-列名は、詳細ページ列定義の `OutputColumnName` と完全に一致させます。
+列名は、詳細ページ列定義の `OutputColumnName` と完全に一致させます。`OutputEnabled=False` の列も条件式から参照できます。
 
 ## ダウンロードを使う場合
 
@@ -116,7 +117,6 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 | 列 | 説明 |
 | --- | --- |
-| `詳細ページID` | 現在は通常空欄です。 |
 | `対象ID` | 詳細ページ上で確認した対象ID。収集時の主キーです。 |
 | `取得状態` | `OK` または `ERROR`。 |
 | `エラー内容` | `ERROR` の原因。正常行では空欄です。 |
