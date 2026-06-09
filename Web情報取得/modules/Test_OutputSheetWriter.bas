@@ -85,6 +85,90 @@ Public Sub Test_OutputSheetWriter_診断出力はoutputヘッダーに一致する詳細列へ書き
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=6, Sheet:="result"))
 End Sub
 
+Public Sub Test_OutputSheetWriter_OK行は空白ヘッダー列と未定義ヘッダー列を保持する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "件名", "", "未定義", "申請者")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 1)
+    Call detail_values.Update(0, "案件A")
+    Call detail_values.Update(1, "山田太郎")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 8, "山田太郎")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=6, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=7, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("ClearRange")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteRange")
+End Sub
+
+Public Sub Test_OutputSheetWriter_ERROR行は定義済み出力列だけを空欄化する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "件名", "", "未定義", "申請者")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 1)
+    Call detail_values.Update(0, "古い案件")
+    Call detail_values.Update(1, "古い申請者")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_ERROR, "missing", detail_values, G_WEB_DOWNLOAD_STATUS_ERROR)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 8, "")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=6, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=7, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("ClearRange")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteRange")
+End Sub
+
 Public Sub Test_OutputSheetWriter_既存行扱いを判定する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
