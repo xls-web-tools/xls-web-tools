@@ -19,9 +19,12 @@ Implements IWebDriverProcess
 '!
 ' #############################################################################
 
+Private Const C_MINIMIZED_NO_FOCUS As Long = 7
+Private Const C_HTTP_TIMEOUT_MS As Long = 1000
+
 Private pFileSystem As IFileSystemService
 Private pPortProbe As IWebDriverPortProbe
-Private pExec As Object
+Private pWebDriverPort As Long
 Private pIsInitialized As Boolean
 Private pIsRunning As Boolean
 
@@ -50,7 +53,7 @@ Public Sub Initialize(ByVal FileSystem As IFileSystemService, ByVal PortProbe As
 
     Set pFileSystem = FileSystem
     Set pPortProbe = PortProbe
-    Set pExec = Nothing
+    pWebDriverPort = 0
     pIsRunning = False
     pIsInitialized = True
 End Sub
@@ -83,7 +86,9 @@ Public Sub Start(ByVal Settings As IToolSettings)
 
     Dim shell_obj As Object
     Set shell_obj = CreateObject("WScript.Shell")
-    Set pExec = shell_obj.Exec(pBuildCommand(Settings))
+    Call shell_obj.Run(pBuildCommand(Settings), C_MINIMIZED_NO_FOCUS, False)
+
+    pWebDriverPort = Settings.WebDriverPort
     pIsRunning = True
     Call pWaitUntilReady(Settings)
 
@@ -117,7 +122,6 @@ Private Function pBuildCommand(ByVal Settings As IToolSettings) As String
     pBuildCommand = pQuoteArgument(Settings.WebDriverPath) & " --port=" & CStr(Settings.WebDriverPort)
 End Function
 
-
 Private Sub pWaitUntilReady(ByVal Settings As IToolSettings)
     Dim timeout_seconds As Long
     timeout_seconds = Settings.TimeoutSeconds
@@ -127,25 +131,23 @@ Private Sub pWaitUntilReady(ByVal Settings As IToolSettings)
     deadline_time = DateAdd("s", timeout_seconds, Now)
 
     Do
-        Call pRaiseIfProcessExited
         If pPortProbe.IsPortInUse(Settings.WebDriverPort) Then Exit Sub
         DoEvents
     Loop While Now < deadline_time
 
-    Call pRaiseIfProcessExited
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver が起動待ち時間内に応答しません。port=" & CStr(Settings.WebDriverPort) & ", timeout=" & CStr(timeout_seconds) & " 秒"
 End Sub
 
 '* 起動した Edge WebDriver process を終了します。
 '*
 '* @details
-'* この instance が起動した process だけを終了対象にします。他プロセスは終了しません。
+'* 起動時に記録した port の WebDriver service へ shutdown を要求します。他プロセスは終了しません。
 Public Sub StopProcess()
     On Error Resume Next
-    If Not pExec Is Nothing Then
-        If pExec.Status = 0 Then Call pExec.Terminate
+    If pIsRunning And 0 < pWebDriverPort Then
+        Call pShutdownWebDriverService(pWebDriverPort)
     End If
-    Set pExec = Nothing
+    pWebDriverPort = 0
     pIsRunning = False
     On Error GoTo 0
 End Sub
@@ -153,29 +155,13 @@ Private Sub IWebDriverProcess_StopProcess()
     Call StopProcess
 End Sub
 
-Private Sub pRaiseIfProcessExited()
-    If pExec Is Nothing Then Exit Sub
-    If pExec.Status = 0 Then Exit Sub
-
-    pIsRunning = False
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver process が起動直後に終了しました。ExitCode=" & CStr(pExec.ExitCode) & pBuildProcessOutputMessage()
+Private Sub pShutdownWebDriverService(ByVal WebDriverPort As Long)
+    Dim request As Object
+    Set request = CreateObject("WinHttp.WinHttpRequest.5.1")
+    Call request.SetTimeouts(C_HTTP_TIMEOUT_MS, C_HTTP_TIMEOUT_MS, C_HTTP_TIMEOUT_MS, C_HTTP_TIMEOUT_MS)
+    Call request.Open("GET", "http://127.0.0.1:" & CStr(WebDriverPort) & "/shutdown", False)
+    Call request.Send
 End Sub
-
-Private Function pBuildProcessOutputMessage() As String
-    On Error Resume Next
-
-    Dim output_text As String
-    output_text = Trim$(CStr(pExec.StdErr.ReadAll))
-    If output_text = "" Then output_text = Trim$(CStr(pExec.StdOut.ReadAll))
-
-    On Error GoTo 0
-
-    If output_text = "" Then
-        pBuildProcessOutputMessage = ""
-    Else
-        pBuildProcessOutputMessage = " Output=" & output_text
-    End If
-End Function
 
 Private Function pQuoteArgument(ByVal ArgumentText As String) As String
     pQuoteArgument = """" & Replace(ArgumentText, """", """""") & """"
