@@ -19,12 +19,9 @@ Implements IWebDriverProcess
 '!
 ' #############################################################################
 
-Private Const C_SW_HIDE As Long = 0
-
 Private pFileSystem As IFileSystemService
 Private pPortProbe As IWebDriverPortProbe
-Private pWmiService As Object
-Private pProcessId As Long
+Private pExec As Object
 Private pIsInitialized As Boolean
 Private pIsRunning As Boolean
 
@@ -53,8 +50,7 @@ Public Sub Initialize(ByVal FileSystem As IFileSystemService, ByVal PortProbe As
 
     Set pFileSystem = FileSystem
     Set pPortProbe = PortProbe
-    Set pWmiService = Nothing
-    pProcessId = 0
+    Set pExec = Nothing
     pIsRunning = False
     pIsInitialized = True
 End Sub
@@ -85,7 +81,9 @@ Public Sub Start(ByVal Settings As IToolSettings)
 
     On Error GoTo START_ERROR
 
-    pProcessId = pStartHiddenProcess(pBuildCommand(Settings))
+    Dim shell_obj As Object
+    Set shell_obj = CreateObject("WScript.Shell")
+    Set pExec = shell_obj.Exec(pBuildCommand(Settings))
     pIsRunning = True
     Call pWaitUntilReady(Settings)
 
@@ -119,34 +117,6 @@ Private Function pBuildCommand(ByVal Settings As IToolSettings) As String
     pBuildCommand = pQuoteArgument(Settings.WebDriverPath) & " --port=" & CStr(Settings.WebDriverPort)
 End Function
 
-Private Function pStartHiddenProcess(ByVal CommandLine As String) As Long
-    Dim startup_class As Object
-    Set startup_class = pGetWmiService.Get("Win32_ProcessStartup")
-
-    Dim startup_info As Object
-    Set startup_info = startup_class.SpawnInstance_
-    startup_info.ShowWindow = C_SW_HIDE
-
-    Dim process_class As Object
-    Set process_class = pGetWmiService.Get("Win32_Process")
-
-    Dim created_process_id As Variant
-    Dim result_code As Variant
-    result_code = process_class.Create(CommandLine, Null, startup_info, created_process_id)
-    If CLng(result_code) <> 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver process を起動できません。WMI result=" & CStr(result_code)
-    End If
-
-    pStartHiddenProcess = CLng(created_process_id)
-End Function
-
-Private Function pGetWmiService() As Object
-    If pWmiService Is Nothing Then
-        Set pWmiService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\cimv2")
-    End If
-
-    Set pGetWmiService = pWmiService
-End Function
 
 Private Sub pWaitUntilReady(ByVal Settings As IToolSettings)
     Dim timeout_seconds As Long
@@ -172,9 +142,10 @@ End Sub
 '* この instance が起動した process だけを終了対象にします。他プロセスは終了しません。
 Public Sub StopProcess()
     On Error Resume Next
-    If pProcessId <> 0 Then Call pTerminateProcessById(pProcessId)
-    pProcessId = 0
-    Set pWmiService = Nothing
+    If Not pExec Is Nothing Then
+        If pExec.Status = 0 Then Call pExec.Terminate
+    End If
+    Set pExec = Nothing
     pIsRunning = False
     On Error GoTo 0
 End Sub
@@ -183,29 +154,27 @@ Private Sub IWebDriverProcess_StopProcess()
 End Sub
 
 Private Sub pRaiseIfProcessExited()
-    If pProcessId = 0 Then Exit Sub
-    If pIsProcessAlive(pProcessId) Then Exit Sub
+    If pExec Is Nothing Then Exit Sub
+    If pExec.Status = 0 Then Exit Sub
 
     pIsRunning = False
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver process が起動直後に終了しました。ProcessId=" & CStr(pProcessId)
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver process が起動直後に終了しました。ExitCode=" & CStr(pExec.ExitCode) & pBuildProcessOutputMessage()
 End Sub
 
-Private Function pIsProcessAlive(ByVal ProcessId As Long) As Boolean
-    pIsProcessAlive = (0 < pGetProcessSetById(ProcessId).Count)
-End Function
+Private Function pBuildProcessOutputMessage() As String
+    On Error Resume Next
 
-Private Sub pTerminateProcessById(ByVal ProcessId As Long)
-    Dim process_set As Object
-    Set process_set = pGetProcessSetById(ProcessId)
+    Dim output_text As String
+    output_text = Trim$(CStr(pExec.StdErr.ReadAll))
+    If output_text = "" Then output_text = Trim$(CStr(pExec.StdOut.ReadAll))
 
-    Dim target_process As Object
-    For Each target_process In process_set
-        Call target_process.Terminate
-    Next target_process
-End Sub
+    On Error GoTo 0
 
-Private Function pGetProcessSetById(ByVal ProcessId As Long) As Object
-    Set pGetProcessSetById = pGetWmiService.ExecQuery("SELECT * FROM Win32_Process WHERE ProcessId = " & CStr(ProcessId))
+    If output_text = "" Then
+        pBuildProcessOutputMessage = ""
+    Else
+        pBuildProcessOutputMessage = " Output=" & output_text
+    End If
 End Function
 
 Private Function pQuoteArgument(ByVal ArgumentText As String) As String
