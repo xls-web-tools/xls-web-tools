@@ -209,8 +209,8 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
-    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", OutputEnabled:=True))
-    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester"))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Dim create_body As String
@@ -485,7 +485,7 @@ Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書
     Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_ERROR)
     Call pAssertWrittenCellContains(Assert, ws_stub, 2, 3, "no such element")
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="output"))
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, "")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
 End Sub
@@ -782,12 +782,18 @@ Public Sub Test_WebNavDiagnosticRunner_一覧復帰失敗は復帰不能エラーにする(ByVal 
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 Private Sub pPrepareEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim used_search_bounds As WorksheetRangeBounds
-    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=G_COL_MAX, Sheet:="output")
+    Dim header_search_bounds As WorksheetRangeBounds
+    Set header_search_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=G_COL_MAX, Sheet:="output")
 
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="output")
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, used_search_bounds, True, True, True, False)
+    Dim header_used_bounds As WorksheetRangeBounds
+    Set header_used_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=6, Sheet:="output")
+
+    Dim header_values(1 To 1, 1 To 2) As Variant
+    header_values(1, 1) = "件名"
+    header_values(1, 2) = "申請者"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", header_used_bounds, header_search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", header_values, header_used_bounds)
 End Sub
 
 Private Function pCssFindBody(ByVal Selector As String) As String

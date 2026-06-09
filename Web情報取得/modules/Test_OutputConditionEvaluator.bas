@@ -52,15 +52,12 @@ Public Sub Test_OutputConditionEvaluator_条件不一致はFalseを返す(ByVal Assert As
     Call Assert.IsFalse(actual, "条件に一致しない詳細値は出力対象外になる")
 End Sub
 
-Public Sub Test_OutputConditionEvaluator_OutputEnabledFalse列も条件参照できる(ByVal Assert As UnitTestAssert)
+Public Sub Test_OutputConditionEvaluator_output未指定の抽出列も条件参照できる(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
     Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
-
-    Dim condition_def As DetailColumnDefinition
-    Set condition_def = detail_defs.Item(0)
 
     Dim evaluator As OutputConditionEvaluator
     Set evaluator = New OutputConditionEvaluator
@@ -75,8 +72,7 @@ Public Sub Test_OutputConditionEvaluator_OutputEnabledFalse列も条件参照できる(By
     actual = evaluator.ShouldOutput(detail_values)
 
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Call Assert.IsFalse(condition_def.OutputEnabled, "OutputEnabled=False の抽出列を条件参照に使う")
-    Call Assert.IsTrue(actual, "非出力列の条件一致で出力対象になる")
+    Call Assert.IsTrue(actual, "output ヘッダーにない抽出列の条件一致で出力対象になる")
 End Sub
 
 Public Sub Test_OutputConditionEvaluator_未定義列参照はエラー(ByVal Assert As UnitTestAssert)

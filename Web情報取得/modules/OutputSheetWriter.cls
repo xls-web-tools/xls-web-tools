@@ -24,6 +24,7 @@ Private Const C_COL_STATUS As Long = 2
 Private Const C_COL_ERROR As Long = 3
 Private Const C_COL_DOWNLOAD_STATUS As Long = 4
 Private Const C_COL_DETAIL_START As Long = 5
+Private Const C_NOT_FOUND As Long = -1
 
 Private pIsInitialized As Boolean
 Private pSettings As IToolSettings
@@ -44,117 +45,19 @@ Public Sub Initialize(ByVal Settings As IToolSettings)
     pIsInitialized = True
 End Sub
 
-'* 固定管理列と詳細ページ列定義のヘッダーを現行スキーマへ正規化します。
+'* 固定管理列のヘッダーを用意します。
 '*
 '* @details
-'* 1 行目を固定管理列と OutputEnabled=True の詳細ページ列へ正規化します。
-'* 既存値はヘッダー名で現行列へ写し替え、現行ではない列は管理対象範囲から除外します。
+'* A:D はツール管理列として固定順で書き込みます。E 列以降は利用者が output シート 1 行目に
+'* OutputColumnName を指定して管理するため、この処理では作成も削除もしません。
 Public Sub EnsureHeaders()
     Call pCheckInit
 
-    Dim current_headers() As String
-    current_headers = pBuildCurrentHeaders()
-
-    Dim used_search_bounds As WorksheetRangeBounds
-    Set used_search_bounds = pOutputUsedSearchBounds()
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = WsSrv.GetUsedRangeBounds(used_search_bounds)
-
-    Dim normalized_values As Variant
-    If used_bounds.IsEmpty Then
-        normalized_values = pBuildHeaderOnlyValues(current_headers)
-    Else
-        Dim existing_values As Variant
-        existing_values = WsSrv.ReadRange(used_bounds)
-
-        normalized_values = pBuildNormalizedValues(current_headers, existing_values)
-        Call WsSrv.ClearRange(used_bounds)
-    End If
-
-    Call WsSrv.WriteRange( _
-            New_RangeBounds(Row:=C_HEADER_ROW, Column:=C_COL_TARGET_ID, Sheet:=pSettings.OutputSheetName), _
-            normalized_values)
+    Call pWriteOutputCell(C_HEADER_ROW, C_COL_TARGET_ID, G_WEB_OUTPUT_COL_TARGET_ID)
+    Call pWriteOutputCell(C_HEADER_ROW, C_COL_STATUS, G_WEB_OUTPUT_COL_STATUS)
+    Call pWriteOutputCell(C_HEADER_ROW, C_COL_ERROR, G_WEB_OUTPUT_COL_ERROR)
+    Call pWriteOutputCell(C_HEADER_ROW, C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
 End Sub
-
-Private Function pBuildCurrentHeaders() As String()
-    Dim result_headers() As String
-    ReDim result_headers(1 To C_COL_DOWNLOAD_STATUS + pOutputEnabledColumnCount())
-
-    result_headers(C_COL_TARGET_ID) = G_WEB_OUTPUT_COL_TARGET_ID
-    result_headers(C_COL_STATUS) = G_WEB_OUTPUT_COL_STATUS
-    result_headers(C_COL_ERROR) = G_WEB_OUTPUT_COL_ERROR
-    result_headers(C_COL_DOWNLOAD_STATUS) = G_WEB_OUTPUT_COL_DOWNLOAD_STATUS
-
-    Dim detail_defs As ObjectList
-    Set detail_defs = pSettings.DetailColumnDefinitions
-
-    Dim output_col_idx As Long
-    output_col_idx = C_COL_DETAIL_START
-
-    Dim def_idx As Long
-    For def_idx = 0 To detail_defs.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = detail_defs.Item(def_idx)
-        If detail_def.OutputEnabled Then
-            result_headers(output_col_idx) = detail_def.OutputColumnName
-            output_col_idx = output_col_idx + 1
-        End If
-    Next def_idx
-
-    pBuildCurrentHeaders = result_headers
-End Function
-
-Private Function pOutputUsedSearchBounds() As WorksheetRangeBounds
-    Set pOutputUsedSearchBounds = New_RangeBounds( _
-            Row:=C_HEADER_ROW, _
-            Column:=C_COL_TARGET_ID, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=G_COL_MAX, _
-            Sheet:=pSettings.OutputSheetName)
-End Function
-
-Private Function pBuildHeaderOnlyValues(ByRef CurrentHeaders() As String) As Variant()
-    Dim result_values() As Variant
-    ReDim result_values(1 To 1, LBound(CurrentHeaders) To UBound(CurrentHeaders))
-
-    Dim current_col_idx As Long
-    For current_col_idx = LBound(CurrentHeaders) To UBound(CurrentHeaders)
-        result_values(1, current_col_idx) = CurrentHeaders(current_col_idx)
-    Next current_col_idx
-
-    pBuildHeaderOnlyValues = result_values
-End Function
-
-Private Function pBuildNormalizedValues(ByRef CurrentHeaders() As String, ByRef ExistingValues As Variant) As Variant()
-    Dim existing_col_by_current() As Long
-    existing_col_by_current = pMapExistingColumns(CurrentHeaders, ExistingValues)
-
-    Dim row_count As Long
-    row_count = UBound(ExistingValues, 1) - LBound(ExistingValues, 1) + 1
-
-    Dim result_values() As Variant
-    ReDim result_values(1 To row_count, LBound(CurrentHeaders) To UBound(CurrentHeaders))
-
-    Dim current_col_idx As Long
-    For current_col_idx = LBound(CurrentHeaders) To UBound(CurrentHeaders)
-        result_values(1, current_col_idx) = CurrentHeaders(current_col_idx)
-
-        Dim existing_col_idx As Long
-        existing_col_idx = existing_col_by_current(current_col_idx)
-
-        Dim result_row_idx As Long
-        For result_row_idx = 2 To row_count
-            If existing_col_idx <> 0 Then
-                result_values(result_row_idx, current_col_idx) = ExistingValues(LBound(ExistingValues, 1) + result_row_idx - 1, existing_col_idx)
-            Else
-                result_values(result_row_idx, current_col_idx) = ""
-            End If
-        Next result_row_idx
-    Next current_col_idx
-
-    pBuildNormalizedValues = result_values
-End Function
 
 '* 診断用の出力行を書き込みます。
 '*
@@ -318,51 +221,6 @@ Private Sub pValidateExistingStatus(ByVal ExistingStatus As String)
     End Select
 End Sub
 
-Private Function pMapExistingColumns(ByRef CurrentHeaders() As String, ByRef ExistingValues As Variant) As Long()
-    Dim result_cols() As Long
-    ReDim result_cols(LBound(CurrentHeaders) To UBound(CurrentHeaders))
-
-    Dim header_row_idx As Long
-    header_row_idx = LBound(ExistingValues, 1)
-
-    Dim existing_col_idx As Long
-    For existing_col_idx = LBound(ExistingValues, 2) To UBound(ExistingValues, 2)
-        Dim header_text As String
-        header_text = pCellText(ExistingValues(header_row_idx, existing_col_idx))
-
-        Dim current_col_idx As Long
-        current_col_idx = pFindCurrentHeaderIndex(CurrentHeaders, header_text)
-        If current_col_idx <> 0 Then
-            If result_cols(current_col_idx) <> 0 Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="出力シート不整合: 現行ヘッダーが重複しています。(" & header_text & ")"
-            End If
-            result_cols(current_col_idx) = existing_col_idx
-        End If
-    Next existing_col_idx
-
-    pMapExistingColumns = result_cols
-End Function
-
-Private Function pFindCurrentHeaderIndex(ByRef CurrentHeaders() As String, ByVal HeaderText As String) As Long
-    Dim current_col_idx As Long
-    For current_col_idx = LBound(CurrentHeaders) To UBound(CurrentHeaders)
-        If StrComp(CurrentHeaders(current_col_idx), HeaderText, vbTextCompare) = 0 Then
-            pFindCurrentHeaderIndex = current_col_idx
-            Exit Function
-        End If
-    Next current_col_idx
-
-    pFindCurrentHeaderIndex = 0
-End Function
-
-Private Function pCellText(ByVal CellValue As Variant) As String
-    If IsError(CellValue) Or IsNull(CellValue) Or IsEmpty(CellValue) Then
-        pCellText = ""
-    Else
-        pCellText = CStr(CellValue)
-    End If
-End Function
-
 Private Sub pWriteOutputRow( _
         ByVal RowIndex As Long, _
         ByVal TargetId As String, _
@@ -375,35 +233,87 @@ Private Sub pWriteOutputRow( _
     Call pWriteOutputCell(RowIndex, C_COL_STATUS, Status)
     Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
     Call pWriteOutputCell(RowIndex, C_COL_DOWNLOAD_STATUS, DownloadStatus)
-
-    Dim detail_defs As ObjectList
-    Set detail_defs = pSettings.DetailColumnDefinitions
-
-    Dim output_col_offset As Long
-    output_col_offset = 0
-
-    Dim detail_idx As Long
-    For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = detail_defs.Item(detail_idx)
-        If detail_def.OutputEnabled Then
-            Call pWriteOutputCell(RowIndex, C_COL_DETAIL_START + output_col_offset, CStr(DetailValues.Item(detail_idx)))
-            output_col_offset = output_col_offset + 1
-        End If
-    Next detail_idx
+    Call pWriteDetailOutputCells(RowIndex, DetailValues, BlankValues:=(Status <> G_WEB_STATUS_OK))
 End Sub
 
-Private Function pResolveNextOutputRow() As Long
-    Dim finish_column As Long
-    finish_column = C_COL_DETAIL_START + pOutputEnabledColumnCount() - 1
-    If finish_column < C_COL_DOWNLOAD_STATUS Then finish_column = C_COL_DOWNLOAD_STATUS
+Private Sub pWriteDetailOutputCells(ByVal RowIndex As Long, ByVal DetailValues As ArrayObject, Optional ByVal BlankValues As Boolean = False)
+    Dim detail_defs As ObjectList
+    Set detail_defs = pSettings.DetailColumnDefinitions
+    If detail_defs.Count = 0 Then Exit Sub
 
+    Dim header_bounds As WorksheetRangeBounds
+    Set header_bounds = pOutputHeaderUsedBounds()
+    If header_bounds.IsEmpty Then Exit Sub
+
+    Dim header_values As Variant
+    header_values = WsSrv.ReadRange(header_bounds)
+
+    Dim header_col_idx As Long
+    For header_col_idx = LBound(header_values, 2) To UBound(header_values, 2)
+        Dim header_text As String
+        header_text = Trim$(pCellText(header_values(LBound(header_values, 1), header_col_idx)))
+
+        If header_text <> "" Then
+            Dim detail_idx As Long
+            detail_idx = pFindDetailDefinitionIndex(detail_defs, header_text)
+            If detail_idx <> C_NOT_FOUND Then
+                Dim output_col_idx As Long
+                output_col_idx = header_bounds.Column + header_col_idx - LBound(header_values, 2)
+
+                Dim output_value As String
+                If BlankValues Then
+                    output_value = ""
+                Else
+                    output_value = CStr(DetailValues.Item(detail_idx))
+                End If
+
+                Call pWriteOutputCell(RowIndex, output_col_idx, output_value)
+            End If
+        End If
+    Next header_col_idx
+End Sub
+
+Private Function pOutputHeaderUsedBounds() As WorksheetRangeBounds
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds( _
+            Row:=C_HEADER_ROW, _
+            Column:=C_COL_DETAIL_START, _
+            FinishRow:=C_HEADER_ROW, _
+            FinishColumn:=G_COL_MAX, _
+            Sheet:=pSettings.OutputSheetName)
+
+    Set pOutputHeaderUsedBounds = WsSrv.GetUsedRangeBounds(search_bounds)
+End Function
+
+Private Function pFindDetailDefinitionIndex(ByVal DetailDefinitions As ObjectList, ByVal HeaderText As String) As Long
+    Dim def_idx As Long
+    For def_idx = 0 To DetailDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = DetailDefinitions.Item(def_idx)
+        If StrComp(detail_def.OutputColumnName, HeaderText, vbTextCompare) = 0 Then
+            pFindDetailDefinitionIndex = def_idx
+            Exit Function
+        End If
+    Next def_idx
+
+    pFindDetailDefinitionIndex = C_NOT_FOUND
+End Function
+
+Private Function pCellText(ByVal CellValue As Variant) As String
+    If IsError(CellValue) Or IsNull(CellValue) Or IsEmpty(CellValue) Then
+        pCellText = ""
+    Else
+        pCellText = CStr(CellValue)
+    End If
+End Function
+
+Private Function pResolveNextOutputRow() As Long
     Dim search_bounds As WorksheetRangeBounds
     Set search_bounds = New_RangeBounds( _
             Row:=C_HEADER_ROW, _
             Column:=C_COL_TARGET_ID, _
             FinishRow:=G_ROW_MAX, _
-            FinishColumn:=finish_column, _
+            FinishColumn:=C_COL_DOWNLOAD_STATUS, _
             Sheet:=pSettings.OutputSheetName)
 
     Dim used_bounds As WorksheetRangeBounds
@@ -414,23 +324,6 @@ Private Function pResolveNextOutputRow() As Long
     If result_row < C_DIAGNOSTIC_OUTPUT_ROW Then result_row = C_DIAGNOSTIC_OUTPUT_ROW
 
     pResolveNextOutputRow = result_row
-End Function
-
-Private Function pOutputEnabledColumnCount() As Long
-    Dim result_count As Long
-    result_count = 0
-
-    Dim detail_defs As ObjectList
-    Set detail_defs = pSettings.DetailColumnDefinitions
-
-    Dim def_idx As Long
-    For def_idx = 0 To detail_defs.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = detail_defs.Item(def_idx)
-        If detail_def.OutputEnabled Then result_count = result_count + 1
-    Next def_idx
-
-    pOutputEnabledColumnCount = result_count
 End Function
 
 Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)

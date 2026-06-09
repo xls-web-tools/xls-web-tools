@@ -22,7 +22,7 @@
 ## 基本の流れ
 
 1. `settings` シートの `Value` 列へ必要な値を入力します。
-2. 詳細ページから取得したい項目を、`OutputColumnName` から `OutputEnabled` までの表へ入力します。
+2. 詳細ページから取得したい項目を、`OutputColumnName` から `BlankMode` までの表へ入力します。
 3. まず診断実行ボタンを使い、最初の一覧項目から詳細ページへ移動できることを確認します。内部の実行入口名は `RunDiagnostic_Click` です。
 4. 診断が成功したら収集実行ボタンを使い、一覧項目を収集します。内部の実行入口名は `Collect_Click` です。
 5. `output` シートで `取得状態`、`エラー内容`、出力列を確認します。
@@ -71,7 +71,7 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 ## 詳細ページ列定義
 
-`settings` シート右側の `OutputColumnName` から `OutputEnabled` までの表に、詳細ページから抽出したい列を入力します。`output` へ出したい列だけ `OutputEnabled=True` にします。
+`settings` シート右側の `OutputColumnName` から `BlankMode` までの表に、詳細ページから抽出したい列を入力します。`output` へ出したい列は、`output` シート 1 行目の E 列以降に `OutputColumnName` と一致するヘッダーとして入力します。
 
 | 列 | 説明 |
 | --- | --- |
@@ -81,7 +81,6 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 | `AttributeName` | `ExtractType` が `Attribute` の場合に読む属性名。 |
 | `IsRequired` | `1` / `True` なら必須項目として扱います。 |
 | `BlankMode` | 必須項目が空欄のときにエラーにする場合は `ErrorIfBlank`、許容する場合は `AllowBlank`。 |
-| `OutputEnabled` | `True` / `1` / `Yes` なら `output` へ出します。空欄なら `False` です。 |
 
 ## 出力対象条件
 
@@ -96,7 +95,7 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 ([列1] == "A" OR [列1] == "B") AND NOT [列2] == "除外"
 ```
 
-列名は、詳細ページ列定義の `OutputColumnName` と完全に一致させます。`OutputEnabled=False` の列も条件式から参照できます。
+列名は、詳細ページ列定義の `OutputColumnName` と完全に一致させます。`output` シートの出力列として指定していない抽出列も条件式から参照できます。
 
 ## ダウンロードを使う場合
 
@@ -113,7 +112,7 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 ## output の見方
 
-`output` シートには、固定管理列の後ろに、詳細ページ列定義で指定した列が並びます。
+`output` シートでは、A:D がツール管理の固定管理列です。E 列以降は、1 行目に `settings` の `OutputColumnName` と一致する非空ヘッダーを置いた列だけへ抽出値を書き込みます。空白ヘッダー列と未定義ヘッダー列は変更しません。
 
 | 列 | 説明 |
 | --- | --- |

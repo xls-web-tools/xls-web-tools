@@ -43,7 +43,6 @@ End Function
 '* @param AttributeName attribute 取得時の属性名。
 '* @param IsRequired True の場合は必須列として扱います。
 '* @param BlankMode 空欄時の扱い。
-'* @param OutputEnabled True の場合は output シートへ出力します。
 '* @return 初期化済みの詳細ページ列定義。
 '*
 '* @details
@@ -54,8 +53,7 @@ Public Function New_DetailColumnDefinition( _
         Optional ByVal ExtractType As String = "InnerText", _
         Optional ByVal AttributeName As String = "", _
         Optional ByVal IsRequired As Boolean = False, _
-        Optional ByVal BlankMode As String = "AllowBlank", _
-        Optional ByVal OutputEnabled As Boolean = False) As DetailColumnDefinition
+        Optional ByVal BlankMode As String = "AllowBlank") As DetailColumnDefinition
 
     Dim result_value As DetailColumnDefinition
     Set result_value = New DetailColumnDefinition
@@ -65,8 +63,7 @@ Public Function New_DetailColumnDefinition( _
             ExtractType:=ExtractType, _
             AttributeName:=AttributeName, _
             IsRequired:=IsRequired, _
-            BlankMode:=BlankMode, _
-            OutputEnabled:=OutputEnabled)
+            BlankMode:=BlankMode)
 
     Set New_DetailColumnDefinition = result_value
 End Function

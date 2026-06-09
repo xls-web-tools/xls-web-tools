@@ -66,7 +66,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
-    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject"))
     Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
@@ -512,12 +512,24 @@ Public Sub Test_WebCollectionRunner_次ページ操作後に先頭対象IDが変わらなければ中
 End Sub
 
 Private Sub pPrepareEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim used_search_bounds As WorksheetRangeBounds
-    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=G_COL_MAX, Sheet:="output")
+    Dim managed_search_bounds As WorksheetRangeBounds
+    Set managed_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=4, Sheet:="output")
 
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="output")
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, used_search_bounds, True, True, True, False)
+    Dim managed_used_bounds As WorksheetRangeBounds
+    Set managed_used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="output")
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", managed_used_bounds, managed_search_bounds, True, True, True, False)
+
+    Dim header_search_bounds As WorksheetRangeBounds
+    Set header_search_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=G_COL_MAX, Sheet:="output")
+
+    Dim header_used_bounds As WorksheetRangeBounds
+    Set header_used_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=5, Sheet:="output")
+
+    Dim header_values(1 To 1, 1 To 1) As Variant
+    header_values(1, 1) = "件名"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", header_used_bounds, header_search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", header_values, header_used_bounds)
 End Sub
 
 Private Sub pPrepareExistingOutputRows(ByVal WsStub As WorksheetServiceTestDouble)
