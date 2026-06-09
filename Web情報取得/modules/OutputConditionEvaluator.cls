@@ -47,12 +47,13 @@ Public Property Get ReferencedColumnDefinitions() As ObjectList
     For def_idx = 0 To pReferencedDefinitions.Count - 1
         Dim src_def As DetailColumnDefinition
         Set src_def = pReferencedDefinitions.Item(def_idx)
+        ' 条件判定用の先読みでは、参照列が読めない場合も空文字列として評価します。
         Call result_value.Add(New_DetailColumnDefinition( _
                 src_def.OutputColumnName, _
                 src_def.Selector, _
                 ExtractType:=src_def.ExtractType, _
                 AttributeName:=src_def.AttributeName, _
-                IsRequired:=True, _
+                IsRequired:=False, _
                 BlankMode:="AllowBlank"))
     Next def_idx
 
