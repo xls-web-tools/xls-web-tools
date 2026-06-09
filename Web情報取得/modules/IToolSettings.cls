@@ -91,6 +91,10 @@ End Property
 Public Property Get ExistingRowMode() As String
 End Property
 
+'* 出力対象条件式。
+Public Property Get OutputConditionExpression() As String
+End Property
+
 '* 画面到達や selector 出現を待つ秒数。
 Public Property Get TimeoutSeconds() As Long
 End Property

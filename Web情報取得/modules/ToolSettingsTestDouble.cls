@@ -36,6 +36,7 @@ Private pReturnToListOperationName As String
 Private pNextPageOperationName As String
 Private pNextPageAvailableSelector As String
 Private pExistingRowMode As String
+Private pOutputConditionExpression As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
 Private pDetailColumnDefinitions As ObjectList
@@ -226,6 +227,17 @@ Private Property Get IToolSettings_ExistingRowMode() As String
     IToolSettings_ExistingRowMode = ExistingRowMode
 End Property
 
+'* 出力対象条件式。
+Public Property Get OutputConditionExpression() As String
+    OutputConditionExpression = pOutputConditionExpression
+End Property
+Public Property Let OutputConditionExpression(ByVal NewValue As String)
+    pOutputConditionExpression = NewValue
+End Property
+Private Property Get IToolSettings_OutputConditionExpression() As String
+    IToolSettings_OutputConditionExpression = OutputConditionExpression
+End Property
+
 '* 画面到達や selector 出現を待つ秒数。
 Public Property Get TimeoutSeconds() As Long
     TimeoutSeconds = pTimeoutSeconds
@@ -277,6 +289,7 @@ Private Sub Class_Initialize()
     pNextPageOperationName = "NextPage"
     pNextPageAvailableSelector = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
+    pOutputConditionExpression = ""
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")
     Set pDetailColumnDefinitions = New_ObjectList("DetailColumnDefinition")

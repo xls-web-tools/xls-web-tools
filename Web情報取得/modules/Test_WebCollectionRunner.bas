@@ -106,6 +106,103 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="output"))
 End Sub
 
+Public Sub Test_WebCollectionRunner_条件不一致ならoutput行を書かずERRORにもならない(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemSelector = "#list tbody tr"
+    tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
+    tool_settings.OutputConditionExpression = "[判定] == ""対象"""
+    tool_settings.TimeoutSeconds = 1
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", IsRequired:=True, BlankMode:="ErrorIfBlank"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"": [{""element-6066-11e4-a52e-4f735466cecf"":""row-1""}]}", "POST", "/session/abc/elements", pCssFindBody("#list tbody tr"))
+    Call pSetTextElement(client_double, "#list tbody tr:nth-child(1) td.id", "list-target-1", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", "{""script"":""openDetail(0)"",""args"":[]}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""対象外""]}", "POST", "/session/abc/execute/sync")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebCollectionRunner
+    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = runner.Run()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "abc", actual_session_id
+    Assert.EqualsNumeric 0, runner.SucceededCount
+    Assert.EqualsNumeric 0, runner.SkippedCount
+    Assert.EqualsNumeric 1, runner.OutputExcludedCount
+    Assert.EqualsNumeric 0, runner.ErrorCount
+    Assert.EqualsNumeric 1, runner.PageCount
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="output"))
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub
+
 Public Sub Test_WebCollectionRunner_次ページがあれば全ページを巡回する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

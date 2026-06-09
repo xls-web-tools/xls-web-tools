@@ -41,7 +41,11 @@ Public Sub RunDiagnostic_Click()
 
     Call runner.Run
 
-    Call MsgBoxPage("詳細ページ対象ID取得診断が完了しました。" & vbCrLf & "対象ID: " & runner.TargetId)
+    If runner.IsOutputExcluded Then
+        Call MsgBoxPage("詳細ページ対象ID取得診断が完了しました。" & vbCrLf & "対象ID: " & runner.TargetId & vbCrLf & "出力対象外のため output シートへ行を書き込みませんでした。")
+    Else
+        Call MsgBoxPage("詳細ページ対象ID取得診断が完了しました。" & vbCrLf & "対象ID: " & runner.TargetId)
+    End If
 
 ON_EXIT:
     On Error Resume Next
@@ -108,6 +112,7 @@ Public Sub Collect_Click()
             & vbCrLf & "処理ページ数: " & CStr(runner.PageCount) _
             & vbCrLf & "正常: " & CStr(runner.SucceededCount) _
             & vbCrLf & "スキップ: " & CStr(runner.SkippedCount) _
+            & vbCrLf & "出力対象外: " & CStr(runner.OutputExcludedCount) _
             & vbCrLf & "エラー: " & CStr(runner.ErrorCount))
 
 ON_EXIT:

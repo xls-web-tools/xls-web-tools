@@ -22,6 +22,7 @@ Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pListItemTargetId As String
 Private pTargetId As String
+Private pIsOutputExcluded As Boolean
 Private pIsInitialized As Boolean
 
 '* 一覧上の対象ID。
@@ -34,6 +35,12 @@ End Property
 Public Property Get TargetId() As String
     Call pCheckInit
     TargetId = pTargetId
+End Property
+
+'* 出力対象条件により output シートへ書かなかったか否か。
+Public Property Get IsOutputExcluded() As Boolean
+    Call pCheckInit
+    IsOutputExcluded = pIsOutputExcluded
 End Property
 
 '* WebDriver navigation diagnostic runner を初期化します。
@@ -64,6 +71,7 @@ Public Sub Initialize( _
     Set pSettings = Settings
     pListItemTargetId = ""
     pTargetId = ""
+    pIsOutputExcluded = False
     pIsInitialized = True
 End Sub
 
@@ -79,6 +87,11 @@ Public Function Run() As String
     Dim result_value As String
     pListItemTargetId = ""
     pTargetId = ""
+    pIsOutputExcluded = False
+
+    Dim condition_evaluator As OutputConditionEvaluator
+    Set condition_evaluator = New OutputConditionEvaluator
+    Call condition_evaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
 
     On Error GoTo ON_ERROR
 
@@ -93,7 +106,7 @@ Public Function Run() As String
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pExtractFirstDetailTargetId
-    Call pWriteDiagnosticOutputIfConfigured
+    Call pWriteDiagnosticOutputIfConfigured(condition_evaluator)
     Call pReturnToListIfConfigured
 
     Call pSessionClient.QuitSession(result_value)
@@ -158,7 +171,7 @@ Private Sub pExtractFirstDetailTargetId()
     End If
 End Sub
 
-Private Sub pWriteDiagnosticOutputIfConfigured()
+Private Sub pWriteDiagnosticOutputIfConfigured(ByVal ConditionEvaluator As OutputConditionEvaluator)
     Dim detail_defs As ObjectList
     Set detail_defs = pSettings.DetailColumnDefinitions
     If detail_defs.Count = 0 Then Exit Sub
@@ -170,6 +183,12 @@ Private Sub pWriteDiagnosticOutputIfConfigured()
     On Error GoTo DETAIL_ERROR
 
     Dim detail_values As ArrayObject
+    If Not pShouldOutputByCondition(ConditionEvaluator) Then
+        pIsOutputExcluded = True
+        On Error GoTo 0
+        Exit Sub
+    End If
+
     Set detail_values = pSessionClient.ReadDetailColumnValues(detail_defs)
 
     On Error GoTo 0
@@ -186,6 +205,18 @@ DETAIL_ERROR:
     Set detail_values = pCreateBlankDetailValues(detail_defs)
     Call output_writer.WriteDiagnosticRow("", pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
 End Sub
+
+Private Function pShouldOutputByCondition(ByVal ConditionEvaluator As OutputConditionEvaluator) As Boolean
+    If Not ConditionEvaluator.IsEnabled Then
+        pShouldOutputByCondition = True
+        Exit Function
+    End If
+
+    Dim referenced_values As ArrayObject
+    Set referenced_values = pSessionClient.ReadDetailColumnValues(ConditionEvaluator.ReferencedColumnDefinitions)
+
+    pShouldOutputByCondition = ConditionEvaluator.ShouldOutputByReferencedValues(referenced_values)
+End Function
 
 Private Sub pReturnToListIfConfigured()
     Dim operation_name As String

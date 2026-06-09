@@ -22,6 +22,7 @@ Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pSucceededCount As Long
 Private pSkippedCount As Long
+Private pOutputExcludedCount As Long
 Private pErrorCount As Long
 Private pPageCount As Long
 Private pIsInitialized As Boolean
@@ -36,6 +37,12 @@ End Property
 Public Property Get SkippedCount() As Long
     Call pCheckInit
     SkippedCount = pSkippedCount
+End Property
+
+'* 出力対象条件により output シートへ書かなかった件数。
+Public Property Get OutputExcludedCount() As Long
+    Call pCheckInit
+    OutputExcludedCount = pOutputExcludedCount
 End Property
 
 '* ERROR 行として出力した件数。
@@ -78,6 +85,7 @@ Public Sub Initialize( _
     Set pSettings = Settings
     pSucceededCount = 0
     pSkippedCount = 0
+    pOutputExcludedCount = 0
     pErrorCount = 0
     pPageCount = 0
     pIsInitialized = True
@@ -97,8 +105,13 @@ Public Function Run() As String
     Dim result_value As String
     pSucceededCount = 0
     pSkippedCount = 0
+    pOutputExcludedCount = 0
     pErrorCount = 0
     pPageCount = 0
+
+    Dim condition_evaluator As OutputConditionEvaluator
+    Set condition_evaluator = New OutputConditionEvaluator
+    Call condition_evaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
 
     On Error GoTo ON_ERROR
 
@@ -112,7 +125,7 @@ Public Function Run() As String
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
-    Call pCollectPages(output_writer)
+    Call pCollectPages(output_writer, condition_evaluator)
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -148,7 +161,7 @@ Private Sub pOpenListPage()
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
 End Sub
 
-Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter)
+Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal ConditionEvaluator As OutputConditionEvaluator)
     Dim first_target_ids As ObjectSet
     Set first_target_ids = New ObjectSet
 
@@ -174,7 +187,7 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter)
 
         Dim item_idx As Long
         For item_idx = 0 To item_count - 1
-            Call pCollectListItem(OutputWriter, target_snapshot, item_idx)
+            Call pCollectListItem(OutputWriter, target_snapshot, item_idx, ConditionEvaluator)
         Next item_idx
 
         If Not pHasNextPage() Then Exit Do
@@ -203,7 +216,8 @@ End Function
 Private Sub pCollectListItem( _
         ByVal OutputWriter As OutputSheetWriter, _
         ByVal TargetSnapshot As ArrayObject, _
-        ByVal ItemIndex As Long)
+        ByVal ItemIndex As Long, _
+        ByVal ConditionEvaluator As OutputConditionEvaluator)
 
     Dim expected_target_id As String
     expected_target_id = CStr(TargetSnapshot.Item(ItemIndex))
@@ -243,6 +257,13 @@ Private Sub pCollectListItem( _
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & current_target_id & " / " & detail_target_id & ")"
     End If
 
+    If Not pShouldOutputByCondition(ConditionEvaluator) Then
+        pOutputExcludedCount = pOutputExcludedCount + 1
+        On Error GoTo 0
+        Call pReturnToList
+        Exit Sub
+    End If
+
     Dim detail_values As ArrayObject
     Set detail_values = pSessionClient.ReadDetailColumnValues(pSettings.DetailColumnDefinitions)
     Call OutputWriter.WriteCollectionRow("", output_target_id, G_WEB_STATUS_OK, "", detail_values)
@@ -262,6 +283,18 @@ ITEM_ERROR:
     pErrorCount = pErrorCount + 1
     If needs_return Then Call pReturnToList
 End Sub
+
+Private Function pShouldOutputByCondition(ByVal ConditionEvaluator As OutputConditionEvaluator) As Boolean
+    If Not ConditionEvaluator.IsEnabled Then
+        pShouldOutputByCondition = True
+        Exit Function
+    End If
+
+    Dim referenced_values As ArrayObject
+    Set referenced_values = pSessionClient.ReadDetailColumnValues(ConditionEvaluator.ReferencedColumnDefinitions)
+
+    pShouldOutputByCondition = ConditionEvaluator.ShouldOutputByReferencedValues(referenced_values)
+End Function
 
 Private Sub pWriteErrorCollectionRow( _
         ByVal OutputWriter As OutputSheetWriter, _

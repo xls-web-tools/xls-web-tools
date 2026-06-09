@@ -273,6 +273,95 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "山田太郎")
 End Sub
 
+Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+    tool_settings.OutputConditionExpression = "[判定] == ""対象"""
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", IsRequired:=True, BlankMode:="ErrorIfBlank"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call pSetTextElement(client_double, "#list-item-target-id", "list-target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", pCssFindBody(".first-detail-link"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""対象外""]}", "POST", "/session/abc/execute/sync")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = runner.Run()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "abc", actual_session_id
+    Assert.IsTrue runner.IsOutputExcluded
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="output"))
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub
 Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書く(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -675,6 +764,25 @@ Public Sub Test_WebNavDiagnosticRunner_一覧復帰失敗は復帰不能エラーにする(ByVal 
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+Private Function pCssFindBody(ByVal Selector As String) As String
+    pCssFindBody = "{""using"":""css selector"",""value"":""" & Selector & """}"
+End Function
+
+Private Sub pSetTextElement( _
+        ByVal ClientDouble As WebDriverClientTestDouble, _
+        ByVal Selector As String, _
+        ByVal ElementId As String, _
+        ByVal ElementText As String)
+
+    Call ClientDouble.Store.SetReturn( _
+            "Execute", _
+            "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""" & ElementId & """}}", _
+            "POST", _
+            "/session/abc/element", _
+            pCssFindBody(Selector))
+    Call ClientDouble.Store.SetReturn("Execute", "{""value"":""" & ElementText & """}", "GET", "/session/abc/element/" & ElementId & "/text", "")
+End Sub
+
 Private Function pGetWrittenCellValue( _
         ByVal Assert As UnitTestAssert, _
         ByVal WsStub As WorksheetServiceTestDouble, _

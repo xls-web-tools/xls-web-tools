@@ -33,7 +33,8 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "NextPageOperationName", "NextPage", 16)
     Call pSetSetting(ws_stub, "NextPageAvailableSelector", "#next-page", 17)
     Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_RETRY_ERROR, 18)
-    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 19)
+    Call pSetSetting(ws_stub, "OutputConditionExpression", "[申請者] != """"", 19)
+    Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 20)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -90,6 +91,9 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
+    Dim actual_condition_expression As String
+    actual_condition_expression = tool_settings.OutputConditionExpression
+
     Dim actual_timeout As Long
     actual_timeout = tool_settings.TimeoutSeconds
 
@@ -112,6 +116,7 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "NextPage", actual_next_operation_name
     Assert.Equals "#next-page", actual_next_available_selector
     Assert.Equals G_WEB_ROW_MODE_RETRY_ERROR, actual_existing_mode
+    Assert.Equals "[申請者] != """"", actual_condition_expression
     Assert.EqualsNumeric 45, actual_timeout
 End Sub
 
@@ -134,6 +139,7 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetMissingSetting(ws_stub, "NextPageOperationName")
     Call pSetMissingSetting(ws_stub, "NextPageAvailableSelector")
     Call pSetMissingSetting(ws_stub, "ExistingRowMode")
+    Call pSetMissingSetting(ws_stub, "OutputConditionExpression")
     Call pSetMissingSetting(ws_stub, "TimeoutSeconds")
 
     Dim tool_settings As IToolSettings
@@ -161,6 +167,9 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Dim actual_existing_mode As String
     actual_existing_mode = tool_settings.ExistingRowMode
 
+    Dim actual_condition_expression As String
+    actual_condition_expression = tool_settings.OutputConditionExpression
+
     Dim actual_timeout As Long
     actual_timeout = tool_settings.TimeoutSeconds
 
@@ -173,6 +182,7 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Assert.Equals "NextPage", actual_next_operation_name
     Assert.Equals "", actual_next_available_selector
     Assert.Equals G_WEB_ROW_MODE_SKIP_EXISTING, actual_existing_mode
+    Assert.Equals "", actual_condition_expression
     Assert.EqualsNumeric 30, actual_timeout
 End Sub
 
