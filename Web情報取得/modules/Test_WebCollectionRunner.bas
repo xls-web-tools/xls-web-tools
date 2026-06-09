@@ -66,6 +66,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
     Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Call pPrepareExistingOutputRows(ws_stub)
@@ -86,7 +87,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call pSetTextElement(client_double, "#list tbody tr:nth-child(2) td.id", "list-target-2", "T-002")
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", "{""script"":""openDetail(1)"",""args"":[]}")
     Call pSetTextElement(client_double, "#target-id", "target-element", "T-002")
-    Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""案件B""]}", "POST", "/session/abc/execute/sync")
+    Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""案件B"", ""対象""]}", "POST", "/session/abc/execute/sync")
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
     Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", pCssFindBody("#download"))
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", pCssFindBody("#download"))
@@ -127,6 +128,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call pAssertWrittenCell(Assert, ws_stub, 6, 3, "")
     Call pAssertWrittenCell(Assert, ws_stub, 6, 4, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
     Call pAssertWrittenCell(Assert, ws_stub, 6, 5, "案件B")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=6, Column:=6, Sheet:="output"))
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("MoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", "D:\Root\T-002\002_report.pdf", False)
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=2, Sheet:="output"))
     Assert.IsNothing ProgStat

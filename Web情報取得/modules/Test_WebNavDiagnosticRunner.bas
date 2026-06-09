@@ -482,6 +482,7 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
     Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_ERROR)
     Call pAssertWrittenCellContains(Assert, ws_stub, 2, 3, "no such element")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="output"))
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
 End Sub
