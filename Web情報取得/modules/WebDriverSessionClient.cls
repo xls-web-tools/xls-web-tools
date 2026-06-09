@@ -250,8 +250,12 @@ Public Function DownloadLinkedFile(ByRef DownloadedFilePath As String) As String
      Case 0
         result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE
      Case 1
-        Call pClickElement("css selector", pSettings.DownloadLinkSelector)
-        result_status = pWaitForDownloadedFile(DownloadedFilePath)
+        If pTryNavigateDownloadLink("css selector", pSettings.DownloadLinkSelector) Then
+            result_status = pWaitForDownloadedFile(DownloadedFilePath)
+        Else
+            Call pClickElement("css selector", pSettings.DownloadLinkSelector)
+            result_status = pWaitForDownloadedFile(DownloadedFilePath)
+        End If
      Case Else
         pLastDownloadErrorDescription = "ダウンロードリンクが複数あります。(" & CStr(link_count) & ")"
         result_status = G_WEB_DOWNLOAD_STATUS_ERROR
@@ -684,6 +688,46 @@ CLICK_ERROR:
     On Error GoTo 0
     Call pExecuteScript(Operation.Script)
 End Sub
+
+Private Function pTryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
+    Dim download_href As String
+    download_href = pReadElementAttribute(LocatorType, LocatorValue, "href")
+
+    If Not pIsNavigableDownloadHref(download_href) Then
+        pTryNavigateDownloadLink = False
+        Exit Function
+    End If
+
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/url", "{""url"":""" & pJsonEscape(download_href) & """}")
+    Call pRaiseIfWebDriverError(response_body)
+
+    pTryNavigateDownloadLink = True
+End Function
+
+Private Function pReadElementAttribute( _
+        ByVal LocatorType As String, _
+        ByVal LocatorValue As String, _
+        ByVal AttributeName As String) As String
+
+    Dim element_id As String
+    element_id = pFindElement(LocatorType, LocatorValue)
+
+    Dim response_body As String
+    response_body = pClient.Execute("GET", "/session/" & pSessionId & "/element/" & element_id & "/attribute/" & AttributeName, "")
+    Call pRaiseIfWebDriverError(response_body)
+
+    pReadElementAttribute = pExtractJsonString(response_body, "value")
+End Function
+
+Private Function pIsNavigableDownloadHref(ByVal DownloadHref As String) As Boolean
+    Dim normalized_href As String
+    normalized_href = LCase$(Trim$(DownloadHref))
+
+    pIsNavigableDownloadHref = (normalized_href <> "" _
+            And normalized_href <> "#" _
+            And Left$(normalized_href, 11) <> "javascript:")
+End Function
 
 Private Sub pClickElement(ByVal LocatorType As String, ByVal LocatorValue As String)
     Dim deadline_time As Date

@@ -123,7 +123,7 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 
 ## Download File Handling
 
-`DownloadEnabled=True` の場合、Web情報取得は詳細ページ 1 件につき 0 または 1 つのダウンロード対象ファイルを扱う。ダウンロードリンクは `DownloadLinkSelector` で特定し、URL を VBA 側で組み立てず、認証済み Edge session 上のクリックとして実行する。selector が 0 件の場合は `ダウンロード状態=NO_FILE` とする。selector が 2 件以上に一致した場合は設定誤りまたはページ構造の想定外として `ダウンロード状態=ERROR` とする。
+`DownloadEnabled=True` の場合、Web情報取得は詳細ページ 1 件につき 0 または 1 つのダウンロード対象ファイルを扱う。ダウンロードリンクは `DownloadLinkSelector` で特定し、URL を VBA 側で組み立てない。A 要素などで `href` が取得できる場合は認証済み Edge session 上でその `href` へ遷移してダウンロードを開始し、`href` が空または `javascript:` の場合は認証済み Edge session 上のクリックとして実行する。selector が 0 件の場合は `ダウンロード状態=NO_FILE` とする。selector が 2 件以上に一致した場合は設定誤りまたはページ構造の想定外として `ダウンロード状態=ERROR` とする。
 
 Edge の実ダウンロード先は、`FileSystemService` が返す OS のユーザー一時フォルダー配下に実行ごとの一時ダウンロード領域を作って指定する。利用者が settings で指定するのは最終保存先の `DownloadRootPath` だけとする。一時フォルダー場所取得は `xls-common-devtools` 側の `FileSystemService` API を前提とする。
 

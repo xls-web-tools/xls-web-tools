@@ -177,6 +177,71 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_ÉäÉìÉN1åèÇ»ÇÁÉNÉäÉbÉNÇ
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetFileList", "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetFileList", "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
 End Sub
+
+Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_AóvëfHrefÇ»ÇÁUrlëJà⁄Ç≈É_ÉEÉìÉçÅ[ÉhÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadLinkSelector = "#download"
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+
+    Dim crdownload_files() As String
+    crdownload_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
+
+    Dim completed_files(0 To 0) As String
+    completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
+    Set FsSrv = fs_stub
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
+
+    Dim selector_body As String
+    selector_body = "{""using"":""css selector"",""value"":""#download""}"
+
+    Dim href_endpoint As String
+    href_endpoint = "/session/abc/element/download-1/attribute/href"
+
+    Dim navigate_body As String
+    navigate_body = "{""url"":""https://example.test/files/report.pdf""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""https://example.test/files/report.pdf""}", "GET", href_endpoint, "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", navigate_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Dim actual_file_path As String
+    Dim actual_status As String
+    actual_status = session_client.DownloadLinkedFile(actual_file_path)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals G_WEB_DOWNLOAD_STATUS_DOWNLOADED, actual_status
+    Assert.Equals "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", actual_file_path
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "GET", href_endpoint, "")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/url", navigate_body)
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/download-1/click", "{}")
+End Sub
+
 Public Sub Test_WebDriverSessionClient_QuitSessionÇ≈WebDriverSessionÇèIóπÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
