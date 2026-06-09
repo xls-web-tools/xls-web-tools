@@ -89,8 +89,6 @@ Private Sub pValidateUniqueOutputColumnNames()
     For left_idx = 0 To pDetailDefinitions.Count - 1
         Dim left_def As DetailColumnDefinition
         Set left_def = pDetailDefinitions.Item(left_idx)
-        Call pValidateReservedOutputColumnName(left_def.OutputColumnName)
-
         Dim right_idx As Long
         For right_idx = left_idx + 1 To pDetailDefinitions.Count - 1
             Dim right_def As DetailColumnDefinition
@@ -159,12 +157,6 @@ Private Sub pCheckInit()
     End If
 End Sub
 
-Private Sub pValidateReservedOutputColumnName(ByVal OutputColumnName As String)
-    Select Case OutputColumnName
-        Case G_WEB_OUTPUT_COL_TARGET_ID, G_WEB_OUTPUT_COL_STATUS, G_WEB_OUTPUT_COL_ERROR, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName Ç™å≈íËä«óùóÒÇ∆èdï°ÇµÇƒÇ¢Ç‹Ç∑ÅB(" & OutputColumnName & ")"
-    End Select
-End Sub
 
 Private Function pParseOrExpression() As Boolean
     Dim result_value As Boolean

@@ -169,6 +169,127 @@ Public Sub Test_OutputSheetWriter_ERROR行は定義済み出力列だけを空欄化する(ByVal 
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteRange")
 End Sub
 
+Public Sub Test_OutputSheetWriter_重複ヘッダーは同じ抽出値を両方へ出力する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "件名", "件名")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 0)
+    Call detail_values.Update(0, "案件A")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "案件A")
+End Sub
+
+Public Sub Test_OutputSheetWriter_固定管理列名ヘッダーは同名抽出値を出力する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, G_WEB_OUTPUT_COL_TARGET_ID, G_WEB_OUTPUT_COL_STATUS, G_WEB_OUTPUT_COL_ERROR, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition(G_WEB_OUTPUT_COL_TARGET_ID, "#detail-target-id"))
+    Call detail_defs.Add(New_DetailColumnDefinition(G_WEB_OUTPUT_COL_STATUS, "#detail-status"))
+    Call detail_defs.Add(New_DetailColumnDefinition(G_WEB_OUTPUT_COL_ERROR, "#detail-error"))
+    Call detail_defs.Add(New_DetailColumnDefinition(G_WEB_OUTPUT_COL_DOWNLOAD_STATUS, "#detail-download-status"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 3)
+    Call detail_values.Update(0, "DETAIL-ID")
+    Call detail_values.Update(1, "DETAIL-STATUS")
+    Call detail_values.Update(2, "DETAIL-ERROR")
+    Call detail_values.Update(3, "DETAIL-DOWNLOAD")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 2, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 3, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 4, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "DETAIL-ID")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "DETAIL-STATUS")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 7, "DETAIL-ERROR")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 8, "DETAIL-DOWNLOAD")
+End Sub
+
+Public Sub Test_OutputSheetWriter_固定管理列名ヘッダーも未定義なら保持する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, G_WEB_OUTPUT_COL_TARGET_ID)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 0)
+    Call detail_values.Update(0, "案件A")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 2, G_WEB_STATUS_OK)
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=5, Sheet:="result"))
+End Sub
+
 Public Sub Test_OutputSheetWriter_既存行扱いを判定する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
