@@ -173,6 +173,46 @@ Private Property Get IToolSettings_OutputConditionExpression() As String
     IToolSettings_OutputConditionExpression = OutputConditionExpression
 End Property
 
+'* True の場合はダウンロード対象ファイルを取得します。
+Public Property Get DownloadEnabled() As Boolean
+    DownloadEnabled = pGetOptionalBooleanParam("DownloadEnabled", False)
+End Property
+Private Property Get IToolSettings_DownloadEnabled() As Boolean
+    IToolSettings_DownloadEnabled = DownloadEnabled
+End Property
+
+'* True の場合はダウンロード失敗を詳細ページ単位の ERROR にします。
+Public Property Get DownloadRequired() As Boolean
+    DownloadRequired = pGetOptionalBooleanParam("DownloadRequired", False)
+End Property
+Private Property Get IToolSettings_DownloadRequired() As Boolean
+    IToolSettings_DownloadRequired = DownloadRequired
+End Property
+
+'* ダウンロード保存先ルート。
+Public Property Get DownloadRootPath() As String
+    If DownloadEnabled Then
+        DownloadRootPath = pGetRequiredParam("DownloadRootPath")
+    Else
+        DownloadRootPath = pGetOptionalParam("DownloadRootPath", "")
+    End If
+End Property
+Private Property Get IToolSettings_DownloadRootPath() As String
+    IToolSettings_DownloadRootPath = DownloadRootPath
+End Property
+
+'* 詳細ページ上のダウンロードリンクを特定する selector。
+Public Property Get DownloadLinkSelector() As String
+    If DownloadEnabled Then
+        DownloadLinkSelector = pGetRequiredParam("DownloadLinkSelector")
+    Else
+        DownloadLinkSelector = pGetOptionalParam("DownloadLinkSelector", "")
+    End If
+End Property
+Private Property Get IToolSettings_DownloadLinkSelector() As String
+    IToolSettings_DownloadLinkSelector = DownloadLinkSelector
+End Property
+
 '* 画面到達や selector 出現を待つ秒数。
 Public Property Get TimeoutSeconds() As Long
     TimeoutSeconds = pGetOptionalLongParam("TimeoutSeconds", C_DEFAULT_TIMEOUT_SECONDS)

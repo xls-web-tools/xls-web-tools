@@ -23,7 +23,8 @@ Private Const C_COL_DETAIL_PAGE_ID As Long = 1
 Private Const C_COL_TARGET_ID As Long = 2
 Private Const C_COL_STATUS As Long = 3
 Private Const C_COL_ERROR As Long = 4
-Private Const C_COL_DETAIL_START As Long = 5
+Private Const C_COL_DOWNLOAD_STATUS As Long = 5
+Private Const C_COL_DETAIL_START As Long = 6
 
 Private pIsInitialized As Boolean
 Private pSettings As IToolSettings
@@ -56,6 +57,7 @@ Public Sub EnsureHeaders()
     Call pWriteHeader(C_COL_TARGET_ID, G_WEB_OUTPUT_COL_TARGET_ID)
     Call pWriteHeader(C_COL_STATUS, G_WEB_OUTPUT_COL_STATUS)
     Call pWriteHeader(C_COL_ERROR, G_WEB_OUTPUT_COL_ERROR)
+    Call pWriteHeader(C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
 
     Dim detail_defs As ObjectList
     Set detail_defs = pSettings.DetailColumnDefinitions
@@ -90,7 +92,8 @@ Public Sub WriteDiagnosticRow( _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
-        ByVal DetailValues As ArrayObject)
+        ByVal DetailValues As ArrayObject, _
+        Optional ByVal DownloadStatus As String = "")
     Call pCheckInit
 
     If DetailValues Is Nothing Then
@@ -100,7 +103,7 @@ Public Sub WriteDiagnosticRow( _
     Dim output_row As Long
     output_row = pResolveDiagnosticOutputRow(DetailPageId, TargetId)
 
-    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DetailValues)
+    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
 End Sub
 
 Private Function pResolveDiagnosticOutputRow(ByVal DetailPageId As String, ByVal TargetId As String) As Long
@@ -135,7 +138,8 @@ Public Sub WriteCollectionRow( _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
-        ByVal DetailValues As ArrayObject)
+        ByVal DetailValues As ArrayObject, _
+        Optional ByVal DownloadStatus As String = "")
     Call pCheckInit
 
     If DetailValues Is Nothing Then
@@ -145,7 +149,7 @@ Public Sub WriteCollectionRow( _
     Dim output_row As Long
     output_row = pResolveCollectionOutputRow(TargetId)
 
-    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DetailValues)
+    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
 End Sub
 
 Private Function pResolveCollectionOutputRow(ByVal TargetId As String) As Long
@@ -251,12 +255,14 @@ Private Sub pWriteOutputRow( _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
+        ByVal DownloadStatus As String, _
         ByVal DetailValues As ArrayObject)
 
     Call pWriteOutputCell(RowIndex, C_COL_DETAIL_PAGE_ID, DetailPageId)
     Call pWriteOutputCell(RowIndex, C_COL_TARGET_ID, TargetId)
     Call pWriteOutputCell(RowIndex, C_COL_STATUS, Status)
     Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
+    Call pWriteOutputCell(RowIndex, C_COL_DOWNLOAD_STATUS, DownloadStatus)
 
     Dim detail_idx As Long
     For detail_idx = DetailValues.LowerBound To DetailValues.UpperBound
@@ -267,7 +273,7 @@ End Sub
 Private Function pResolveNextOutputRow() As Long
     Dim finish_column As Long
     finish_column = C_COL_DETAIL_START + pSettings.DetailColumnDefinitions.Count - 1
-    If finish_column < C_COL_ERROR Then finish_column = C_COL_ERROR
+    If finish_column < C_COL_DOWNLOAD_STATUS Then finish_column = C_COL_DOWNLOAD_STATUS
 
     Dim search_bounds As WorksheetRangeBounds
     Set search_bounds = New_RangeBounds( _

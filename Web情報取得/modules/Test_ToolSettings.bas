@@ -35,6 +35,10 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_OVERWRITE, 18)
     Call pSetSetting(ws_stub, "OutputConditionExpression", "[申請者] != """"", 19)
     Call pSetSetting(ws_stub, "TimeoutSeconds", "45", 20)
+    Call pSetSetting(ws_stub, "DownloadEnabled", "True", 21)
+    Call pSetSetting(ws_stub, "DownloadRequired", "True", 22)
+    Call pSetSetting(ws_stub, "DownloadRootPath", "C:\Downloads", 23)
+    Call pSetSetting(ws_stub, "DownloadLinkSelector", "#download", 24)
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -97,6 +101,18 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_timeout As Long
     actual_timeout = tool_settings.TimeoutSeconds
 
+    Dim actual_download_enabled As Boolean
+    actual_download_enabled = tool_settings.DownloadEnabled
+
+    Dim actual_download_required As Boolean
+    actual_download_required = tool_settings.DownloadRequired
+
+    Dim actual_download_root_path As String
+    actual_download_root_path = tool_settings.DownloadRootPath
+
+    Dim actual_download_link_selector As String
+    actual_download_link_selector = tool_settings.DownloadLinkSelector
+
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.Equals "C:\Driver\msedgedriver.exe", actual_driver_path
@@ -118,6 +134,10 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals G_WEB_ROW_MODE_OVERWRITE, actual_existing_mode
     Assert.Equals "[申請者] != """"", actual_condition_expression
     Assert.EqualsNumeric 45, actual_timeout
+    Assert.IsTrue actual_download_enabled
+    Assert.IsTrue actual_download_required
+    Assert.Equals "C:\Downloads", actual_download_root_path
+    Assert.Equals "#download", actual_download_link_selector
 End Sub
 
 Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert As UnitTestAssert)
@@ -141,6 +161,10 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetMissingSetting(ws_stub, "ExistingRowMode")
     Call pSetMissingSetting(ws_stub, "OutputConditionExpression")
     Call pSetMissingSetting(ws_stub, "TimeoutSeconds")
+    Call pSetMissingSetting(ws_stub, "DownloadEnabled")
+    Call pSetMissingSetting(ws_stub, "DownloadRequired")
+    Call pSetMissingSetting(ws_stub, "DownloadRootPath")
+    Call pSetMissingSetting(ws_stub, "DownloadLinkSelector")
 
     Dim tool_settings As IToolSettings
     Set tool_settings = New ToolSettings
@@ -173,6 +197,18 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Dim actual_timeout As Long
     actual_timeout = tool_settings.TimeoutSeconds
 
+    Dim actual_download_enabled As Boolean
+    actual_download_enabled = tool_settings.DownloadEnabled
+
+    Dim actual_download_required As Boolean
+    actual_download_required = tool_settings.DownloadRequired
+
+    Dim actual_download_root_path As String
+    actual_download_root_path = tool_settings.DownloadRootPath
+
+    Dim actual_download_link_selector As String
+    actual_download_link_selector = tool_settings.DownloadLinkSelector
+
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.Equals "C:\Workbook\bin\msedgedriver.exe", actual_driver_path
@@ -184,8 +220,52 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Assert.Equals G_WEB_ROW_MODE_SKIP_EXISTING, actual_existing_mode
     Assert.Equals "", actual_condition_expression
     Assert.EqualsNumeric 30, actual_timeout
+    Assert.IsFalse actual_download_enabled
+    Assert.IsFalse actual_download_required
+    Assert.Equals "", actual_download_root_path
+    Assert.Equals "", actual_download_link_selector
 End Sub
 
+Public Sub Test_ToolSettings_Settingsシート_DownloadEnabledTrueで保存先ルート未設定はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetSetting(ws_stub, "DownloadEnabled", "True", 21)
+    Call pSetMissingSetting(ws_stub, "DownloadRootPath")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim actual_download_root_path As String
+    actual_download_root_path = tool_settings.DownloadRootPath
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_DownloadEnabledTrueでリンクSelector未設定はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetSetting(ws_stub, "DownloadEnabled", "True", 21)
+    Call pSetSetting(ws_stub, "DownloadRootPath", "C:\Downloads", 22)
+    Call pSetMissingSetting(ws_stub, "DownloadLinkSelector")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim actual_download_link_selector As String
+    actual_download_link_selector = tool_settings.DownloadLinkSelector
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+End Sub
 Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

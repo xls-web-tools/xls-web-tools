@@ -83,6 +83,34 @@ Public Function New_OutputSheetWriter(ByVal Settings As IToolSettings) As Output
     Set New_OutputSheetWriter = result_value
 End Function
 
+
+'* ダウンロード済みファイル保存を生成します。
+'*
+'* @param Settings Web情報取得の設定。
+'* @param FileSystem ファイルシステム操作サービス。
+'* @return 初期化済みのダウンロード済みファイル保存。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DownloadedFileSaver に委譲します。
+Public Function New_DownloadedFileSaver( _
+        ByVal Settings As IToolSettings, _
+        ByVal FileSystem As IFileSystemService, _
+        Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DownloadedFileSaver
+
+    Dim actual_zip_extractor As IZipExtractor
+    If ZipExtractor Is Nothing Then
+        Set actual_zip_extractor = New ShellZipExtractor
+    Else
+        Set actual_zip_extractor = ZipExtractor
+    End If
+
+    Dim result_value As DownloadedFileSaver
+    Set result_value = New DownloadedFileSaver
+    Call result_value.Initialize(Settings, FileSystem, actual_zip_extractor)
+
+    Set New_DownloadedFileSaver = result_value
+End Function
+
 '* WebDriver session client を生成します。
 '*
 '* @param Client WebDriver HTTP API 呼び出しクライアント。

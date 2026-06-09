@@ -17,15 +17,32 @@ Option Base 0
 '!
 ' #############################################################################
 
+Private Const C_DOWNLOAD_DIRECTORY_PREFIX As String = "xls-web-tools_"
+Private Const C_CRDOWNLOAD_FILE_REGEX As String = "\.crdownload$"
+
 Private pClient As IWebDriverClient
 Private pSettings As IToolSettings
 Private pSessionId As String
+Private pDownloadDirectoryPath As String
+Private pLastDownloadErrorDescription As String
 Private pIsInitialized As Boolean
 
 '* 作成済み session id。
 Public Property Get SessionId() As String
     Call pCheckInit
     SessionId = pSessionId
+End Property
+
+'* WebDriver session の実ダウンロード先として指定した一時ディレクトリ。
+Public Property Get DownloadDirectoryPath() As String
+    Call pCheckInit
+    DownloadDirectoryPath = pDownloadDirectoryPath
+End Property
+
+'* 直近のダウンロードエラー内容。
+Public Property Get LastDownloadErrorDescription() As String
+    Call pCheckInit
+    LastDownloadErrorDescription = pLastDownloadErrorDescription
 End Property
 
 '* WebDriver session client を初期化します。
@@ -46,6 +63,8 @@ Public Sub Initialize(ByVal Client As IWebDriverClient, ByVal Settings As IToolS
     Set pClient = Client
     Set pSettings = Settings
     pSessionId = ""
+    pDownloadDirectoryPath = ""
+    pLastDownloadErrorDescription = ""
     pIsInitialized = True
 End Sub
 
@@ -76,8 +95,27 @@ Private Function pBuildCreateSessionBody() As String
     args_text = """--user-data-dir=" & pJsonEscape(pSettings.BrowserProfilePath) & """"
     If pSettings.Headless Then args_text = args_text & ",""--headless=new"""
 
-    pBuildCreateSessionBody = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"": [" & args_text & "]}}}}"
-    pBuildCreateSessionBody = Replace(pBuildCreateSessionBody, """args"": [", """args"":[")
+    Dim edge_options_text As String
+    edge_options_text = """args"": [" & args_text & "]"
+    edge_options_text = Replace(edge_options_text, """args"": [", """args"":[")
+
+    If pSettings.DownloadEnabled Then
+        pDownloadDirectoryPath = pCreateTemporaryDownloadDirectory()
+        edge_options_text = edge_options_text _
+                & ",""prefs"":{""download.default_directory"":""" & pJsonEscape(pDownloadDirectoryPath) & """,""download.prompt_for_download"":false,""download.directory_upgrade"":true}"
+    Else
+        pDownloadDirectoryPath = ""
+    End If
+
+    pBuildCreateSessionBody = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{" & edge_options_text & "}}}}"
+End Function
+
+Private Function pCreateTemporaryDownloadDirectory() As String
+    If FsSrv Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystemService が初期化されていません。"
+    End If
+
+    pCreateTemporaryDownloadDirectory = FsSrv.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
 End Function
 
 Private Function pExtractJsonString(ByVal JsonText As String, ByVal KeyName As String) As String
@@ -190,6 +228,45 @@ Public Function CountElements(ByVal Selector As String) As Long
 
     CountElements = pCountElementIds(response_body)
     Call pSwitchToTopLevelContext
+End Function
+'* ダウンロードリンクをクリックし、ダウンロード済みファイルパスを返します。
+'*
+'* @param DownloadedFilePath [出力] ダウンロード完了ファイルのパス。
+'* @return ダウンロード状態。
+Public Function DownloadLinkedFile(ByRef DownloadedFilePath As String) As String
+    Call pCheckInit
+    Call pRequireSession
+
+    DownloadedFilePath = ""
+    pLastDownloadErrorDescription = ""
+
+    On Error GoTo ON_ERROR
+
+    Dim link_count As Long
+    link_count = CountElements(pSettings.DownloadLinkSelector)
+
+    Dim result_status As String
+    Select Case link_count
+     Case 0
+        result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE
+     Case 1
+        Call pClickElement("css selector", pSettings.DownloadLinkSelector)
+        result_status = pWaitForDownloadedFile(DownloadedFilePath)
+     Case Else
+        pLastDownloadErrorDescription = "ダウンロードリンクが複数あります。(" & CStr(link_count) & ")"
+        result_status = G_WEB_DOWNLOAD_STATUS_ERROR
+    End Select
+
+    On Error GoTo 0
+    DownloadLinkedFile = result_status
+    Exit Function
+
+ON_ERROR:
+    pLastDownloadErrorDescription = Err.Description
+    Err.Clear
+    On Error GoTo 0
+
+    DownloadLinkedFile = G_WEB_DOWNLOAD_STATUS_ERROR
 End Function
 '* selector に一致する要素の表示テキストを読み取ります。
 '*
@@ -415,6 +492,55 @@ Private Function pIsNoSuchElement(ByVal ResponseBody As String) As Boolean
     pIsNoSuchElement = (LCase$(pExtractJsonString(ResponseBody, "error")) = "no such element")
 End Function
 
+Private Function pWaitForDownloadedFile(ByRef DownloadedFilePath As String) As String
+    Call pRequireDownloadFileSystem
+
+    Dim deadline_time As Date
+    deadline_time = DateAdd("s", pSettings.TimeoutSeconds, Now)
+
+    Do
+        Dim crdownload_files() As String
+        crdownload_files = FsSrv.GetFileList(pDownloadDirectoryPath, CatchRegExp:=C_CRDOWNLOAD_FILE_REGEX)
+
+        Dim completed_files() As String
+        completed_files = FsSrv.GetFileList(pDownloadDirectoryPath, IgnoreRegExp:=C_CRDOWNLOAD_FILE_REGEX)
+
+        If pStringArrayCount(crdownload_files) = 0 Then
+            Select Case pStringArrayCount(completed_files)
+             Case 1
+                DownloadedFilePath = completed_files(LBound(completed_files))
+                pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_DOWNLOADED
+                Exit Function
+             Case Is > 1
+                pLastDownloadErrorDescription = "ダウンロード完了ファイルが複数あります。(" & CStr(pStringArrayCount(completed_files)) & ")"
+                pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
+                Exit Function
+            End Select
+        End If
+
+        DoEvents
+    Loop While Now < deadline_time
+
+    pLastDownloadErrorDescription = "ダウンロード完了を待機中にタイムアウトしました。"
+    pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
+End Function
+
+Private Sub pRequireDownloadFileSystem()
+    If FsSrv Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystemService が初期化されていません。"
+    End If
+    If pDownloadDirectoryPath = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="一時ダウンロード領域がありません。"
+    End If
+End Sub
+
+Private Function pStringArrayCount(ByRef Values() As String) As Long
+    If IsEmptyArray(Values) Then
+        pStringArrayCount = 0
+    Else
+        pStringArrayCount = UBound(Values) - LBound(Values) + 1
+    End If
+End Function
 Private Function pFindElementResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
     Dim target_locator_type As String
     target_locator_type = LocatorType

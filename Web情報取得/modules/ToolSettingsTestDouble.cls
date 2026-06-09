@@ -37,6 +37,10 @@ Private pNextPageOperationName As String
 Private pNextPageAvailableSelector As String
 Private pExistingRowMode As String
 Private pOutputConditionExpression As String
+Private pDownloadEnabled As Boolean
+Private pDownloadRequired As Boolean
+Private pDownloadRootPath As String
+Private pDownloadLinkSelector As String
 Private pTimeoutSeconds As Long
 Private pTransitionOperations As ObjectList
 Private pDetailColumnDefinitions As ObjectList
@@ -238,6 +242,50 @@ Private Property Get IToolSettings_OutputConditionExpression() As String
     IToolSettings_OutputConditionExpression = OutputConditionExpression
 End Property
 
+'* True の場合はダウンロード対象ファイルを取得します。
+Public Property Get DownloadEnabled() As Boolean
+    DownloadEnabled = pDownloadEnabled
+End Property
+Public Property Let DownloadEnabled(ByVal NewValue As Boolean)
+    pDownloadEnabled = NewValue
+End Property
+Private Property Get IToolSettings_DownloadEnabled() As Boolean
+    IToolSettings_DownloadEnabled = DownloadEnabled
+End Property
+
+'* True の場合はダウンロード失敗を詳細ページ単位の ERROR にします。
+Public Property Get DownloadRequired() As Boolean
+    DownloadRequired = pDownloadRequired
+End Property
+Public Property Let DownloadRequired(ByVal NewValue As Boolean)
+    pDownloadRequired = NewValue
+End Property
+Private Property Get IToolSettings_DownloadRequired() As Boolean
+    IToolSettings_DownloadRequired = DownloadRequired
+End Property
+
+'* ダウンロード保存先ルート。
+Public Property Get DownloadRootPath() As String
+    DownloadRootPath = pDownloadRootPath
+End Property
+Public Property Let DownloadRootPath(ByVal NewValue As String)
+    pDownloadRootPath = NewValue
+End Property
+Private Property Get IToolSettings_DownloadRootPath() As String
+    IToolSettings_DownloadRootPath = DownloadRootPath
+End Property
+
+'* 詳細ページ上のダウンロードリンクを特定する selector。
+Public Property Get DownloadLinkSelector() As String
+    DownloadLinkSelector = pDownloadLinkSelector
+End Property
+Public Property Let DownloadLinkSelector(ByVal NewValue As String)
+    pDownloadLinkSelector = NewValue
+End Property
+Private Property Get IToolSettings_DownloadLinkSelector() As String
+    IToolSettings_DownloadLinkSelector = DownloadLinkSelector
+End Property
+
 '* 画面到達や selector 出現を待つ秒数。
 Public Property Get TimeoutSeconds() As Long
     TimeoutSeconds = pTimeoutSeconds
@@ -290,6 +338,10 @@ Private Sub Class_Initialize()
     pNextPageAvailableSelector = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pOutputConditionExpression = ""
+    pDownloadEnabled = False
+    pDownloadRequired = False
+    pDownloadRootPath = ""
+    pDownloadLinkSelector = ""
     pTimeoutSeconds = 30
     Set pTransitionOperations = New_ObjectList("TransitionOperation")
     Set pDetailColumnDefinitions = New_ObjectList("DetailColumnDefinition")

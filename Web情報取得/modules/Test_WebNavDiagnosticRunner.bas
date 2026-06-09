@@ -173,6 +173,11 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
 
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+    Set FsSrv = fs_stub
+
     Dim output_target_search_bounds As WorksheetRangeBounds
     Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
 
@@ -191,6 +196,9 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadRootPath = "D:\Root"
+    tool_settings.DownloadLinkSelector = "#download"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
@@ -205,7 +213,7 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Dim create_body As String
-    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
 
     Dim auth_find_body As String
     auth_find_body = "{""using"":""css selector"",""value"":""#top-ready""}"
@@ -231,6 +239,9 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Dim requester_find_body As String
     requester_find_body = "{""using"":""css selector"",""value"":""#requester""}"
 
+    Dim download_find_body As String
+    download_find_body = "{""using"":""css selector"",""value"":""#download""}"
+
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
     Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
@@ -249,6 +260,8 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Call client_double.Store.SetReturn("Execute", "{""value"":""案件A""}", "GET", "/session/abc/element/subject-element/text", "")
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""requester-element""}}", "POST", "/session/abc/element", requester_find_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":""山田太郎""}", "GET", "/session/abc/element/requester-element/text", "")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[]}", "POST", "/session/abc/elements", download_find_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
 
     Dim session_client As WebDriverSessionClient
@@ -269,8 +282,9 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Call pAssertWrittenCell(Assert, ws_stub, 2, 2, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 2, 3, G_WEB_STATUS_OK)
     Call pAssertWrittenCell(Assert, ws_stub, 2, 4, "")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, "案件A")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "山田太郎")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 7, "山田太郎")
 End Sub
 
 Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal Assert As UnitTestAssert)

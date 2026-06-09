@@ -44,8 +44,9 @@ Public Sub Test_OutputSheetWriter_固定管理列と詳細列のヘッダーを用意する(ByVal A
     Call pAssertHeader(Assert, ws_stub, 2, G_WEB_OUTPUT_COL_TARGET_ID)
     Call pAssertHeader(Assert, ws_stub, 3, G_WEB_OUTPUT_COL_STATUS)
     Call pAssertHeader(Assert, ws_stub, 4, G_WEB_OUTPUT_COL_ERROR)
-    Call pAssertHeader(Assert, ws_stub, 5, "件名")
-    Call pAssertHeader(Assert, ws_stub, 6, "申請者")
+    Call pAssertHeader(Assert, ws_stub, 5, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
+    Call pAssertHeader(Assert, ws_stub, 6, "件名")
+    Call pAssertHeader(Assert, ws_stub, 7, "申請者")
 End Sub
 
 Public Sub Test_OutputSheetWriter_診断出力は対象ID一致行を上書きする(ByVal Assert As UnitTestAssert)
@@ -81,13 +82,14 @@ Public Sub Test_OutputSheetWriter_診断出力は対象ID一致行を上書きする(ByVal Asser
     Set writer = New_OutputSheetWriter(tool_settings)
 
     ' --- Act ---
-    Call writer.WriteDiagnosticRow("", "T-001", G_WEB_STATUS_OK, "", detail_values)
+    Call writer.WriteDiagnosticRow("", "T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Call pAssertWrittenCell(Assert, ws_stub, 5, 2, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 5, 3, G_WEB_STATUS_OK)
-    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "案件A")
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="result"))
 End Sub
 
@@ -205,10 +207,10 @@ Public Sub Test_OutputSheetWriter_本番出力は対象ID一致行を更新し未登録なら末尾へ
     Call ws_stub.Store.SetReturn("Find", missing_rows, "T-002", search_bounds, True, True, True, True)
 
     Dim used_search_bounds As WorksheetRangeBounds
-    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=5, Sheet:="result")
+    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=6, Sheet:="result")
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=6, FinishColumn:=5, Sheet:="result")
+    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=6, FinishColumn:=6, Sheet:="result")
     Call ws_stub.Store.SetReturn("GetUsedRangeBounds", used_bounds, used_search_bounds, True, True, True, False)
 
     Dim detail_values As ArrayObject
@@ -220,18 +222,20 @@ Public Sub Test_OutputSheetWriter_本番出力は対象ID一致行を更新し未登録なら末尾へ
     Set writer = New_OutputSheetWriter(tool_settings)
 
     ' --- Act ---
-    Call writer.WriteCollectionRow("", "T-001", G_WEB_STATUS_OK, "", detail_values)
-    Call writer.WriteCollectionRow("", "T-002", G_WEB_STATUS_ERROR, "missing", detail_values)
+    Call writer.WriteCollectionRow("", "T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Call writer.WriteCollectionRow("", "T-002", G_WEB_STATUS_ERROR, "missing", detail_values, G_WEB_DOWNLOAD_STATUS_ERROR)
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Call pAssertWrittenCell(Assert, ws_stub, 5, 2, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 5, 3, G_WEB_STATUS_OK)
-    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "案件A")
     Call pAssertWrittenCell(Assert, ws_stub, 7, 2, "T-002")
     Call pAssertWrittenCell(Assert, ws_stub, 7, 3, G_WEB_STATUS_ERROR)
     Call pAssertWrittenCell(Assert, ws_stub, 7, 4, "missing")
-    Call pAssertWrittenCell(Assert, ws_stub, 7, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 7, 5, G_WEB_DOWNLOAD_STATUS_ERROR)
+    Call pAssertWrittenCell(Assert, ws_stub, 7, 6, "案件A")
 End Sub
 Private Sub pAssertHeader(ByVal Assert As UnitTestAssert, ByVal WsStub As WorksheetServiceTestDouble, ByVal ColumnIndex As Long, ByVal ExpectedHeader As String)
     Dim target_bounds As WorksheetRangeBounds

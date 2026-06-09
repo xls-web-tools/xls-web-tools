@@ -25,11 +25,26 @@ Public Const G_WEB_OUTPUT_COL_STATUS As String = "取得状態"
 '* 出力シートのエラー内容列名。
 Public Const G_WEB_OUTPUT_COL_ERROR As String = "エラー内容"
 
+'* 出力シートのダウンロード状態列名。
+Public Const G_WEB_OUTPUT_COL_DOWNLOAD_STATUS As String = "ダウンロード状態"
+
 '* 正常取得を表す状態値。
 Public Const G_WEB_STATUS_OK As String = "OK"
 
 '* エラー取得を表す状態値。
 Public Const G_WEB_STATUS_ERROR As String = "ERROR"
+
+'* ダウンロード対象ファイルを取得したことを表す状態値。
+Public Const G_WEB_DOWNLOAD_STATUS_DOWNLOADED As String = "DOWNLOADED"
+
+'* ダウンロード対象ファイルが存在しないことを表す状態値。
+Public Const G_WEB_DOWNLOAD_STATUS_NO_FILE As String = "NO_FILE"
+
+'* 既存ファイルやフォルダー保護のためダウンロード反映をスキップしたことを表す状態値。
+Public Const G_WEB_DOWNLOAD_STATUS_SKIPPED As String = "SKIPPED"
+
+'* ダウンロード対象ファイルの取得や保存に失敗したことを表す状態値。
+Public Const G_WEB_DOWNLOAD_STATUS_ERROR As String = "ERROR"
 
 '* 既存行を再取得せずにスキップする既存行モード。
 Public Const G_WEB_ROW_MODE_SKIP_EXISTING As String = "SkipExisting"

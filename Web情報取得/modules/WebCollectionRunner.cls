@@ -312,8 +312,27 @@ Private Sub pCollectListItem( _
 
     Dim detail_values As ArrayObject
     Set detail_values = pSessionClient.ReadDetailColumnValues(pSettings.DetailColumnDefinitions)
-    Call OutputWriter.WriteCollectionRow("", output_target_id, G_WEB_STATUS_OK, "", detail_values)
-    pSucceededCount = pSucceededCount + 1
+
+    Dim download_error_description As String
+    Dim download_status As String
+    download_status = pDownloadCurrentDetailFile(output_target_id, download_error_description)
+
+    Dim row_status As String
+    row_status = G_WEB_STATUS_OK
+
+    Dim row_error_description As String
+    row_error_description = ""
+    If pDownloadStatusRequiresRowError(download_status) Then
+        row_status = G_WEB_STATUS_ERROR
+        row_error_description = download_error_description
+    End If
+
+    Call OutputWriter.WriteCollectionRow("", output_target_id, row_status, row_error_description, detail_values, download_status)
+    If row_status = G_WEB_STATUS_ERROR Then
+        pErrorCount = pErrorCount + 1
+    Else
+        pSucceededCount = pSucceededCount + 1
+    End If
 
     On Error GoTo 0
     Call pReturnToList
@@ -330,6 +349,49 @@ ITEM_ERROR:
     If needs_return Then Call pReturnToList
 End Sub
 
+Private Function pDownloadCurrentDetailFile( _
+        ByVal TargetId As String, _
+        ByRef ErrorDescription As String) As String
+
+    ErrorDescription = ""
+    If Not pSettings.DownloadEnabled Then
+        pDownloadCurrentDetailFile = ""
+        Exit Function
+    End If
+
+    On Error GoTo DOWNLOAD_ERROR
+
+    Dim downloaded_file_path As String
+    Dim result_status As String
+    result_status = pSessionClient.DownloadLinkedFile(downloaded_file_path)
+
+    If result_status = G_WEB_DOWNLOAD_STATUS_DOWNLOADED Then
+        Dim file_saver As DownloadedFileSaver
+        Set file_saver = New_DownloadedFileSaver(pSettings, FsSrv)
+        result_status = file_saver.SaveDownloadedFile(downloaded_file_path, TargetId)
+        If result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then ErrorDescription = file_saver.LastErrorDescription
+    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then
+        ErrorDescription = pSessionClient.LastDownloadErrorDescription
+    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE Then
+        ErrorDescription = "ダウンロードリンクがありません。"
+    End If
+
+    On Error GoTo 0
+    pDownloadCurrentDetailFile = result_status
+    Exit Function
+
+DOWNLOAD_ERROR:
+    ErrorDescription = Err.Description
+    Err.Clear
+    On Error GoTo 0
+
+    pDownloadCurrentDetailFile = G_WEB_DOWNLOAD_STATUS_ERROR
+End Function
+
+Private Function pDownloadStatusRequiresRowError(ByVal DownloadStatus As String) As Boolean
+    pDownloadStatusRequiresRowError = (pSettings.DownloadRequired _
+            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
+End Function
 Private Function pShouldOutputByCondition(ByVal ConditionEvaluator As OutputConditionEvaluator) As Boolean
     If Not ConditionEvaluator.IsEnabled Then
         pShouldOutputByCondition = True

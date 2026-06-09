@@ -95,6 +95,22 @@ End Property
 Public Property Get OutputConditionExpression() As String
 End Property
 
+'* True の場合はダウンロード対象ファイルを取得します。
+Public Property Get DownloadEnabled() As Boolean
+End Property
+
+'* True の場合はダウンロード失敗を詳細ページ単位の ERROR にします。
+Public Property Get DownloadRequired() As Boolean
+End Property
+
+'* ダウンロード保存先ルート。
+Public Property Get DownloadRootPath() As String
+End Property
+
+'* 詳細ページ上のダウンロードリンクを特定する selector。
+Public Property Get DownloadLinkSelector() As String
+End Property
+
 '* 画面到達や selector 出現を待つ秒数。
 Public Property Get TimeoutSeconds() As Long
 End Property

@@ -22,6 +22,20 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
 
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+
+    Dim crdownload_files() As String
+    crdownload_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
+
+    Dim completed_files(0 To 0) As String
+    completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
+    Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-002", False, True)
+    Set FsSrv = fs_stub
+
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
@@ -38,6 +52,9 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     tool_settings.ReturnToListOperationName = "ReturnToList"
     tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     tool_settings.TimeoutSeconds = 1
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadRootPath = "D:\Root"
+    tool_settings.DownloadLinkSelector = "#download"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
@@ -54,7 +71,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call pPrepareExistingOutputRows(ws_stub)
 
     Dim create_body As String
-    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
 
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
@@ -70,6 +87,10 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", "{""script"":""openDetail(1)"",""args"":[]}")
     Call pSetTextElement(client_double, "#target-id", "target-element", "T-002")
     Call client_double.Store.SetReturn("Execute.AnyRequestBody", "{""value"": [""案件B""]}", "POST", "/session/abc/execute/sync")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", pCssFindBody("#download"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", pCssFindBody("#download"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/download-1/click", "{}")
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""return-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#return-list"))
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/return-list-element/click", "{}")
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
@@ -104,7 +125,9 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call pAssertWrittenCell(Assert, ws_stub, 6, 2, "T-002")
     Call pAssertWrittenCell(Assert, ws_stub, 6, 3, G_WEB_STATUS_OK)
     Call pAssertWrittenCell(Assert, ws_stub, 6, 4, "")
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 5, "案件B")
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 5, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 6, "案件B")
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("MoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", "D:\Root\T-002\002_report.pdf", False)
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="output"))
     Assert.IsNothing ProgStat
 End Sub
