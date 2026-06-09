@@ -21,6 +21,7 @@ Public Sub Test_OutputSheetWriter_固定管理列と詳細列のヘッダーを用意する(ByVal A
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -40,12 +41,131 @@ Public Sub Test_OutputSheetWriter_固定管理列と詳細列のヘッダーを用意する(ByVal A
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Call pAssertHeader(Assert, ws_stub, 1, G_WEB_OUTPUT_COL_TARGET_ID)
-    Call pAssertHeader(Assert, ws_stub, 2, G_WEB_OUTPUT_COL_STATUS)
-    Call pAssertHeader(Assert, ws_stub, 3, G_WEB_OUTPUT_COL_ERROR)
-    Call pAssertHeader(Assert, ws_stub, 4, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
-    Call pAssertHeader(Assert, ws_stub, 5, "件名")
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=1, Column:=6, Sheet:="result"))
+
+    Dim actual_values As Variant
+    actual_values = pGetLatestWrittenRangeValues(ws_stub)
+
+    Assert.Equals G_WEB_OUTPUT_COL_TARGET_ID, CStr(actual_values(1, 1))
+    Assert.Equals G_WEB_OUTPUT_COL_STATUS, CStr(actual_values(1, 2))
+    Assert.Equals G_WEB_OUTPUT_COL_ERROR, CStr(actual_values(1, 3))
+    Assert.Equals G_WEB_OUTPUT_COL_DOWNLOAD_STATUS, CStr(actual_values(1, 4))
+    Assert.Equals "件名", CStr(actual_values(1, 5))
+    Assert.EqualsNumeric 5, UBound(actual_values, 2)
+End Sub
+
+Public Sub Test_OutputSheetWriter_既存outputを現行ヘッダーへ正規化する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("判定", "#decision"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester", OutputEnabled:=True))
+    Call detail_defs.Add(New_DetailColumnDefinition("部署", "#department", OutputEnabled:=True))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim existing_values(1 To 2, 1 To 8) As Variant
+    existing_values(1, 1) = "件名"
+    existing_values(1, 2) = G_WEB_OUTPUT_COL_TARGET_ID
+    existing_values(1, 3) = "詳細ページID"
+    existing_values(1, 4) = G_WEB_OUTPUT_COL_STATUS
+    existing_values(1, 5) = "旧列"
+    existing_values(1, 6) = "旧列"
+    existing_values(1, 7) = "申請者"
+    existing_values(1, 8) = G_WEB_OUTPUT_COL_ERROR
+    existing_values(2, 1) = "案件A"
+    existing_values(2, 2) = "T-001"
+    existing_values(2, 3) = "D-001"
+    existing_values(2, 4) = G_WEB_STATUS_OK
+    existing_values(2, 5) = "old1"
+    existing_values(2, 6) = "old2"
+    existing_values(2, 7) = "山田"
+    existing_values(2, 8) = ""
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = pSetExistingOutputValues(ws_stub, existing_values)
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.EnsureHeaders
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, ws_stub.Store.GetCallCount("ClearRange", used_bounds)
+
+    Dim actual_values As Variant
+    actual_values = pGetLatestWrittenRangeValues(ws_stub)
+
+    Assert.Equals G_WEB_OUTPUT_COL_TARGET_ID, CStr(actual_values(1, 1))
+    Assert.Equals G_WEB_OUTPUT_COL_STATUS, CStr(actual_values(1, 2))
+    Assert.Equals G_WEB_OUTPUT_COL_ERROR, CStr(actual_values(1, 3))
+    Assert.Equals G_WEB_OUTPUT_COL_DOWNLOAD_STATUS, CStr(actual_values(1, 4))
+    Assert.Equals "件名", CStr(actual_values(1, 5))
+    Assert.Equals "申請者", CStr(actual_values(1, 6))
+    Assert.Equals "部署", CStr(actual_values(1, 7))
+
+    Assert.Equals "T-001", CStr(actual_values(2, 1))
+    Assert.Equals G_WEB_STATUS_OK, CStr(actual_values(2, 2))
+    Assert.Equals "", CStr(actual_values(2, 3))
+    Assert.Equals "", CStr(actual_values(2, 4))
+    Assert.Equals "案件A", CStr(actual_values(2, 5))
+    Assert.Equals "山田", CStr(actual_values(2, 6))
+    Assert.Equals "", CStr(actual_values(2, 7))
+    Assert.EqualsNumeric 7, UBound(actual_values, 2)
+End Sub
+
+Public Sub Test_OutputSheetWriter_現行ヘッダー重複は出力シート不整合エラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title", OutputEnabled:=True))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim existing_values(1 To 1, 1 To 4) As Variant
+    existing_values(1, 1) = G_WEB_OUTPUT_COL_TARGET_ID
+    existing_values(1, 2) = "旧列"
+    existing_values(1, 3) = "旧列"
+    existing_values(1, 4) = G_WEB_OUTPUT_COL_TARGET_ID
+    Call pSetExistingOutputValues(ws_stub, existing_values)
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.EnsureHeaders
+
+    ' --- Assert ---
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(0 < InStr(1, Err.Description, "出力シート不整合", vbTextCompare), "現行ヘッダー重複が出力シート不整合として扱われる")
 End Sub
 
 Public Sub Test_OutputSheetWriter_診断出力は対象ID一致行を上書きする(ByVal Assert As UnitTestAssert)
@@ -298,6 +418,51 @@ Public Sub Test_OutputSheetWriter_全詳細列非出力なら固定管理列だけを書き込む(ByV
     Call pAssertWrittenCell(Assert, ws_stub, 2, 4, G_WEB_DOWNLOAD_STATUS_NO_FILE)
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=5, Sheet:="result"))
 End Sub
+
+Private Sub pSetEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = pOutputUsedSearchBounds()
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="result")
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+End Sub
+
+Private Function pSetExistingOutputValues(ByVal WsStub As WorksheetServiceTestDouble, ByRef ExistingValues As Variant) As WorksheetRangeBounds
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = pOutputUsedSearchBounds()
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds( _
+            Row:=1, _
+            Column:=1, _
+            FinishRow:=UBound(ExistingValues, 1), _
+            FinishColumn:=UBound(ExistingValues, 2), _
+            Sheet:="result")
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", ExistingValues, used_bounds)
+
+    Set pSetExistingOutputValues = used_bounds
+End Function
+
+Private Function pOutputUsedSearchBounds() As WorksheetRangeBounds
+    Set pOutputUsedSearchBounds = New_RangeBounds( _
+            Row:=1, _
+            Column:=1, _
+            FinishRow:=G_ROW_MAX, _
+            FinishColumn:=G_COL_MAX, _
+            Sheet:="result")
+End Function
+
+Private Function pGetLatestWrittenRangeValues(ByVal WsStub As WorksheetServiceTestDouble) As Variant
+    Dim target_bounds As WorksheetRangeBounds
+    Set target_bounds = New_RangeBounds(Row:=1, Column:=1, Sheet:="result")
+
+    Dim call_record As TestDoubleCallRecord
+    Set call_record = WsStub.Store.GetLatestCall("WriteRange", target_bounds)
+
+    pGetLatestWrittenRangeValues = call_record.GetArgument(1)
+End Function
 
 Private Sub pAssertHeader(ByVal Assert As UnitTestAssert, ByVal WsStub As WorksheetServiceTestDouble, ByVal ColumnIndex As Long, ByVal ExpectedHeader As String)
     Dim target_bounds As WorksheetRangeBounds

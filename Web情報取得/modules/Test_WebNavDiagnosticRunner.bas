@@ -172,6 +172,7 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
@@ -297,6 +298,7 @@ Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal 
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim output_target_search_bounds As WorksheetRangeBounds
     Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
@@ -386,6 +388,7 @@ Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim output_target_search_bounds As WorksheetRangeBounds
     Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
@@ -778,6 +781,15 @@ Public Sub Test_WebNavDiagnosticRunner_一覧復帰失敗は復帰不能エラーにする(ByVal 
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+Private Sub pPrepareEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim used_search_bounds As WorksheetRangeBounds
+    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=G_COL_MAX, Sheet:="output")
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="output")
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, used_search_bounds, True, True, True, False)
+End Sub
+
 Private Function pCssFindBody(ByVal Selector As String) As String
     pCssFindBody = "{""using"":""css selector"",""value"":""" & Selector & """}"
 End Function

@@ -21,6 +21,7 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
@@ -145,6 +146,7 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -226,6 +228,7 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -328,6 +331,7 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -427,6 +431,7 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -506,7 +511,18 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 
+Private Sub pPrepareEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim used_search_bounds As WorksheetRangeBounds
+    Set used_search_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=G_COL_MAX, Sheet:="output")
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=1, Column:=1, FinishRow:=0, FinishColumn:=0, Sheet:="output")
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, used_search_bounds, True, True, True, False)
+End Sub
+
 Private Sub pPrepareExistingOutputRows(ByVal WsStub As WorksheetServiceTestDouble)
+    Call pPrepareEmptyOutput(WsStub)
+
     Dim search_bounds As WorksheetRangeBounds
     Set search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
@@ -532,6 +548,8 @@ Private Sub pPrepareSingleExistingOkOutputRow( _
         ByVal WsStub As WorksheetServiceTestDouble, _
         ByVal TargetId As String, _
         ByVal OutputRow As Long)
+
+    Call pPrepareEmptyOutput(WsStub)
 
     Dim search_bounds As WorksheetRangeBounds
     Set search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
