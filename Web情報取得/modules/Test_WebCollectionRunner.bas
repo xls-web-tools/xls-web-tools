@@ -80,6 +80,8 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Set ProgStat = Nothing
+
     Dim runner As WebCollectionRunner
     Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
 
@@ -104,6 +106,88 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     Call pAssertWrittenCell(Assert, ws_stub, 6, 4, "")
     Call pAssertWrittenCell(Assert, ws_stub, 6, 5, "ˆÄŒB")
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="output"))
+    Assert.IsNothing ProgStat
+End Sub
+
+Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemSelector = "#list tbody tr"
+    tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
+    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
+    tool_settings.TimeoutSeconds = 1
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":[]}", "POST", "/session/abc/elements", pCssFindBody("#list tbody tr"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Set ProgStat = New ProgressStatus
+    Application.StatusBar = False
+
+    Dim runner As WebCollectionRunner
+    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = runner.Run()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "abc", actual_session_id
+    Assert.EqualsNumeric 1, runner.PageCount
+    Assert.Equals "", ProgStat.TaskName
+    Assert.EqualsNumeric 100, ProgStat.TotalValue
+    Assert.EqualsNumeric 0, ProgStat.ProcessedValue
+    Assert.IsFalse ProgStat.IsComplete
+    Assert.Equals False, CBool(Application.StatusBar)
 End Sub
 
 Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸o—Í‘ÎÛŠO‚É”‚¦‚é(ByVal Assert As UnitTestAssert)
@@ -183,6 +267,8 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
 
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
+
+    Set ProgStat = Nothing
 
     Dim runner As WebCollectionRunner
     Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
@@ -277,6 +363,8 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Set ProgStat = New ProgressStatus
+
     Dim runner As WebCollectionRunner
     Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
 
@@ -291,6 +379,11 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
     Assert.EqualsNumeric 2, runner.SkippedCount
     Assert.EqualsNumeric 0, runner.ErrorCount
     Assert.EqualsNumeric 2, runner.PageCount
+    Assert.Equals "æ“¾’†", ProgStat.TaskName
+    Assert.EqualsNumeric 2, ProgStat.TotalValue
+    Assert.EqualsNumeric 2, ProgStat.ProcessedValue
+    Assert.IsTrue ProgStat.IsComplete
+    Assert.Equals False, CBool(Application.StatusBar)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/next-link-element/click", "{}")
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", "{""script"":""openDetail(0)"",""args"":[]}")
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", "{""script"":""openDetail(1)"",""args"":[]}")
@@ -367,6 +460,8 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Set ProgStat = New ProgressStatus
+
     Dim runner As WebCollectionRunner
     Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
 
@@ -378,6 +473,9 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     Assert.IsTrue 0 < InStr(1, Err.Description, "ƒy[ƒW‚ªi‚İ‚Ü‚¹‚ñ", vbTextCompare)
     Assert.EqualsNumeric 1, runner.SkippedCount
     Assert.EqualsNumeric 1, runner.PageCount
+    Assert.EqualsNumeric 0, ProgStat.ProcessedValue
+    Assert.IsFalse ProgStat.IsComplete
+    Assert.Equals False, CBool(Application.StatusBar)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/next-link-element/click", "{}")
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")

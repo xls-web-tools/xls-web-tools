@@ -17,6 +17,8 @@ Option Base 0
 '!
 ' #############################################################################
 
+Private Const C_PROGRESS_TASK_NAME As String = "取得中"
+
 Private pProcess As IWebDriverProcess
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
@@ -25,6 +27,7 @@ Private pSkippedCount As Long
 Private pOutputExcludedCount As Long
 Private pErrorCount As Long
 Private pPageCount As Long
+Private pProgressStarted As Boolean
 Private pIsInitialized As Boolean
 
 '* 正常に出力した件数。
@@ -88,6 +91,7 @@ Public Sub Initialize( _
     pOutputExcludedCount = 0
     pErrorCount = 0
     pPageCount = 0
+    pProgressStarted = False
     pIsInitialized = True
 End Sub
 
@@ -108,6 +112,7 @@ Public Function Run() As String
     pOutputExcludedCount = 0
     pErrorCount = 0
     pPageCount = 0
+    pProgressStarted = False
 
     Dim condition_evaluator As OutputConditionEvaluator
     Set condition_evaluator = New OutputConditionEvaluator
@@ -126,6 +131,7 @@ Public Function Run() As String
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
     Call pCollectPages(output_writer, condition_evaluator)
+    Call pMarkProgressComplete
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -147,6 +153,7 @@ ON_ERROR:
     err_help_context = Err.HelpContext
 
     On Error Resume Next
+    Call pClearProgress
     If result_value <> "" Then Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
     On Error GoTo 0
@@ -174,6 +181,7 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal Conditi
             If pPageCount = 1 Then Exit Sub
             Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後に一覧項目がありません。"
         End If
+        Call pAddProgressTotal(item_count)
 
         Dim target_snapshot As ArrayObject
         Set target_snapshot = pBuildListTargetSnapshot(item_count)
@@ -188,11 +196,49 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal Conditi
         Dim item_idx As Long
         For item_idx = 0 To item_count - 1
             Call pCollectListItem(OutputWriter, target_snapshot, item_idx, ConditionEvaluator)
+            Call pIncrementProgress
         Next item_idx
 
         If Not pHasNextPage() Then Exit Do
         Call pMoveToNextPage(first_target_id)
     Loop
+End Sub
+
+Private Sub pAddProgressTotal(ByVal ItemCount As Long)
+    If ProgStat Is Nothing Then Exit Sub
+
+    If pProgressStarted Then
+        ProgStat.TotalValue = ProgStat.TotalValue + CDbl(ItemCount)
+        ProgStat.ProcessedValue = ProgStat.ProcessedValue
+        Call ProgStat.DisplayProgress
+    Else
+        Call ProgStat.Reset
+        ProgStat.TaskName = C_PROGRESS_TASK_NAME
+        ProgStat.TotalValue = CDbl(ItemCount)
+        ProgStat.ProcessedValue = 0
+        pProgressStarted = True
+    End If
+End Sub
+
+Private Sub pIncrementProgress()
+    If ProgStat Is Nothing Then Exit Sub
+    If Not pProgressStarted Then Exit Sub
+
+    ProgStat.ProcessedValue = ProgStat.ProcessedValue + 1
+End Sub
+
+Private Sub pMarkProgressComplete()
+    If ProgStat Is Nothing Then Exit Sub
+    If Not pProgressStarted Then Exit Sub
+
+    Call ProgStat.MarkAsComplete
+End Sub
+
+Private Sub pClearProgress()
+    If ProgStat Is Nothing Then Exit Sub
+    If Not pProgressStarted Then Exit Sub
+
+    Call ProgStat.Reset(ResetTaskName:=False, ResetStartAndTotalValue:=False)
 End Sub
 
 Private Function pBuildListTargetSnapshot(ByVal ItemCount As Long) As ArrayObject
