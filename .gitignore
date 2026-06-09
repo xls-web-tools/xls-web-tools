@@ -1,5 +1,5 @@
 ~$*.xls?
-**/*.lnk
+*.lnk
 
 # Web Driverの実行ファイルやブラウザのプロファイルは追跡しない。
 **/msedgedriver.exe
@@ -8,4 +8,3 @@
 
 # ドキュメントはコードから生成するため、追跡しない。
 **/docs/api-reference/
-**/docs/api-reference.lnk
