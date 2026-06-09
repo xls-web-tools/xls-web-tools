@@ -179,7 +179,7 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Set FsSrv = fs_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
-    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim output_found_rows As ObjectList
     Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
@@ -278,13 +278,12 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, "T-001")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 3, G_WEB_STATUS_OK)
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 4, "")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, G_WEB_DOWNLOAD_STATUS_NO_FILE)
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "案件A")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 7, "山田太郎")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 3, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 4, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, "案件A")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "山田太郎")
 End Sub
 
 Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal Assert As UnitTestAssert)
@@ -300,7 +299,7 @@ Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal 
     Set WsSrv = ws_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
-    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim output_found_rows As ObjectList
     Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
@@ -371,7 +370,7 @@ Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal 
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.Equals "abc", actual_session_id
     Assert.IsTrue runner.IsOutputExcluded
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="output"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=1, Sheet:="output"))
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
@@ -389,7 +388,7 @@ Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書
     Set WsSrv = ws_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
-    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim output_found_rows As ObjectList
     Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
@@ -480,9 +479,9 @@ Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, "T-001")
-    Call pAssertWrittenCell(Assert, ws_stub, 2, 3, G_WEB_STATUS_ERROR)
-    Call pAssertWrittenCellContains(Assert, ws_stub, 2, 4, "no such element")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 1, "T-001")
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 2, G_WEB_STATUS_ERROR)
+    Call pAssertWrittenCellContains(Assert, ws_stub, 2, 3, "no such element")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
 End Sub

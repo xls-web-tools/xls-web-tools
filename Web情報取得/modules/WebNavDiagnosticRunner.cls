@@ -207,7 +207,7 @@ Private Sub pWriteDiagnosticOutputIfConfigured(ByVal ConditionEvaluator As Outpu
         row_error_description = download_error_description
     End If
 
-    Call output_writer.WriteDiagnosticRow("", pTargetId, row_status, row_error_description, detail_values, download_status)
+    Call output_writer.WriteDiagnosticRow(pTargetId, row_status, row_error_description, detail_values, download_status)
     Exit Sub
 
 DETAIL_ERROR:
@@ -217,7 +217,7 @@ DETAIL_ERROR:
     On Error GoTo 0
 
     Set detail_values = pCreateBlankDetailValues(detail_defs)
-    Call output_writer.WriteDiagnosticRow("", pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
+    Call output_writer.WriteDiagnosticRow(pTargetId, G_WEB_STATUS_ERROR, err_desc, detail_values)
 End Sub
 
 Private Function pDownloadCurrentDetailFile( _

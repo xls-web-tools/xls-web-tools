@@ -122,13 +122,13 @@ Public Sub Test_WebCollectionRunner_åªç›ÉyÅ[ÉWÇëŒè€IDéÂÉLÅ[Ç≈èÑâÒÇµä˘ë∂OKÇÕÉXÉL
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 2, "T-002")
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 3, G_WEB_STATUS_OK)
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 4, "")
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 5, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
-    Call pAssertWrittenCell(Assert, ws_stub, 6, 6, "àƒåèB")
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 1, "T-002")
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 2, G_WEB_STATUS_OK)
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 3, "")
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 4, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Call pAssertWrittenCell(Assert, ws_stub, 6, 5, "àƒåèB")
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("MoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", "D:\Root\T-002\002_report.pdf", False)
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="output"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=2, Sheet:="output"))
     Assert.IsNothing ProgStat
 End Sub
 
@@ -257,13 +257,13 @@ Public Sub Test_WebCollectionRunner_ä˘ë∂ERRORçsÇ™èåèïsàÍívÇ»ÇÁä˘ë∂çsÇçXêVÇπÇ∏è
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Dim output_target_search_bounds As WorksheetRangeBounds
-    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim output_found_rows As ObjectList
     Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
-    Call output_found_rows.Add(New_RangeBounds(Row:=6, Column:=2, Sheet:="output"))
+    Call output_found_rows.Add(New_RangeBounds(Row:=6, Column:=1, Sheet:="output"))
     Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
-    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=6, Column:=3, Sheet:="output"), False)
+    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=6, Column:=2, Sheet:="output"), False)
 
     Dim create_body As String
     create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
@@ -309,8 +309,8 @@ Public Sub Test_WebCollectionRunner_ä˘ë∂ERRORçsÇ™èåèïsàÍívÇ»ÇÁä˘ë∂çsÇçXêVÇπÇ∏è
     Assert.EqualsNumeric 0, runner.ErrorCount
     Assert.EqualsNumeric 1, runner.PageCount
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/return-list-element/click", "{}")
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=2, Sheet:="output"))
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=6, Column:=3, Sheet:="output"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=2, Column:=1, Sheet:="output"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=6, Column:=2, Sheet:="output"))
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
@@ -506,19 +506,19 @@ End Sub
 
 Private Sub pPrepareExistingOutputRows(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim ok_rows As ObjectList
     Set ok_rows = New_ObjectList("WorksheetRangeBounds")
-    Call ok_rows.Add(New_RangeBounds(Row:=5, Column:=2, Sheet:="output"))
+    Call ok_rows.Add(New_RangeBounds(Row:=5, Column:=1, Sheet:="output"))
     Call WsStub.Store.SetReturn("Find", ok_rows, "T-001", search_bounds, True, True, True, True)
-    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=5, Column:=3, Sheet:="output"), False)
+    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=5, Column:=2, Sheet:="output"), False)
 
     Dim error_rows As ObjectList
     Set error_rows = New_ObjectList("WorksheetRangeBounds")
-    Call error_rows.Add(New_RangeBounds(Row:=6, Column:=2, Sheet:="output"))
+    Call error_rows.Add(New_RangeBounds(Row:=6, Column:=1, Sheet:="output"))
     Call WsStub.Store.SetReturn("Find", error_rows, "T-002", search_bounds, True, True, True, True)
-    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=6, Column:=3, Sheet:="output"), False)
+    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=6, Column:=2, Sheet:="output"), False)
 End Sub
 
 Private Sub pPrepareExistingOkOutputRows(ByVal WsStub As WorksheetServiceTestDouble)
@@ -532,13 +532,13 @@ Private Sub pPrepareSingleExistingOkOutputRow( _
         ByVal OutputRow As Long)
 
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=G_ROW_MAX, FinishColumn:=2, Sheet:="output")
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
 
     Dim found_rows As ObjectList
     Set found_rows = New_ObjectList("WorksheetRangeBounds")
-    Call found_rows.Add(New_RangeBounds(Row:=OutputRow, Column:=2, Sheet:="output"))
+    Call found_rows.Add(New_RangeBounds(Row:=OutputRow, Column:=1, Sheet:="output"))
     Call WsStub.Store.SetReturn("Find", found_rows, TargetId, search_bounds, True, True, True, True)
-    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=OutputRow, Column:=3, Sheet:="output"), False)
+    Call WsStub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=OutputRow, Column:=2, Sheet:="output"), False)
 End Sub
 
 Private Function pCssFindBody(ByVal Selector As String) As String

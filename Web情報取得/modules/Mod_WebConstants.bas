@@ -13,9 +13,6 @@ Option Private Module
 '* settings シート名。
 Public Const G_WEB_SETTINGS_SHEET As String = "settings"
 
-'* 出力シートの詳細ページ ID 列名。
-Public Const G_WEB_OUTPUT_COL_DETAIL_PAGE_ID As String = "詳細ページID"
-
 '* 出力シートの対象 ID 列名。
 Public Const G_WEB_OUTPUT_COL_TARGET_ID As String = "対象ID"
 

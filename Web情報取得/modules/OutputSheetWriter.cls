@@ -19,12 +19,11 @@ Option Base 0
 
 Private Const C_HEADER_ROW As Long = 1
 Private Const C_DIAGNOSTIC_OUTPUT_ROW As Long = 2
-Private Const C_COL_DETAIL_PAGE_ID As Long = 1
-Private Const C_COL_TARGET_ID As Long = 2
-Private Const C_COL_STATUS As Long = 3
-Private Const C_COL_ERROR As Long = 4
-Private Const C_COL_DOWNLOAD_STATUS As Long = 5
-Private Const C_COL_DETAIL_START As Long = 6
+Private Const C_COL_TARGET_ID As Long = 1
+Private Const C_COL_STATUS As Long = 2
+Private Const C_COL_ERROR As Long = 3
+Private Const C_COL_DOWNLOAD_STATUS As Long = 4
+Private Const C_COL_DETAIL_START As Long = 5
 
 Private pIsInitialized As Boolean
 Private pSettings As IToolSettings
@@ -53,7 +52,6 @@ End Sub
 Public Sub EnsureHeaders()
     Call pCheckInit
 
-    Call pWriteHeader(C_COL_DETAIL_PAGE_ID, G_WEB_OUTPUT_COL_DETAIL_PAGE_ID)
     Call pWriteHeader(C_COL_TARGET_ID, G_WEB_OUTPUT_COL_TARGET_ID)
     Call pWriteHeader(C_COL_STATUS, G_WEB_OUTPUT_COL_STATUS)
     Call pWriteHeader(C_COL_ERROR, G_WEB_OUTPUT_COL_ERROR)
@@ -79,16 +77,14 @@ End Sub
 
 '* 診断用の出力行を書き込みます。
 '*
-'* @param DetailPageId 詳細ページID。
 '* @param TargetId 対象ID。
 '* @param Status 取得状態。
 '* @param ErrorDescription エラー内容。
 '* @param DetailValues 詳細ページ列定義に対応する抽出値。
 '*
 '* @details
-'* TargetId または DetailPageId の既存行があればその行へ上書きし、見つからない場合は 2 行目へ書き込みます。
+'* TargetId の既存行があればその行へ上書きし、見つからない場合は 2 行目へ書き込みます。
 Public Sub WriteDiagnosticRow( _
-        ByVal DetailPageId As String, _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
@@ -101,20 +97,14 @@ Public Sub WriteDiagnosticRow( _
     End If
 
     Dim output_row As Long
-    output_row = pResolveDiagnosticOutputRow(DetailPageId, TargetId)
+    output_row = pResolveDiagnosticOutputRow(TargetId)
 
-    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
+    Call pWriteOutputRow(output_row, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
 End Sub
 
-Private Function pResolveDiagnosticOutputRow(ByVal DetailPageId As String, ByVal TargetId As String) As Long
+Private Function pResolveDiagnosticOutputRow(ByVal TargetId As String) As Long
     Dim target_row As Long
     target_row = pFindExistingOutputRow(C_COL_TARGET_ID, TargetId)
-    If target_row <> 0 Then
-        pResolveDiagnosticOutputRow = target_row
-        Exit Function
-    End If
-
-    target_row = pFindExistingOutputRow(C_COL_DETAIL_PAGE_ID, DetailPageId)
     If target_row <> 0 Then
         pResolveDiagnosticOutputRow = target_row
         Exit Function
@@ -125,7 +115,6 @@ End Function
 
 '* 本番収集用の出力行を書き込みます。
 '*
-'* @param DetailPageId 詳細ページID。
 '* @param TargetId 対象ID。
 '* @param Status 取得状態。
 '* @param ErrorDescription エラー内容。
@@ -134,7 +123,6 @@ End Function
 '* @details
 '* TargetId の既存行があればその行へ上書きし、見つからない場合は出力先シートの末尾へ追加します。
 Public Sub WriteCollectionRow( _
-        ByVal DetailPageId As String, _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
@@ -149,7 +137,7 @@ Public Sub WriteCollectionRow( _
     Dim output_row As Long
     output_row = pResolveCollectionOutputRow(TargetId)
 
-    Call pWriteOutputRow(output_row, DetailPageId, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
+    Call pWriteOutputRow(output_row, TargetId, Status, ErrorDescription, DownloadStatus, DetailValues)
 End Sub
 
 Private Function pResolveCollectionOutputRow(ByVal TargetId As String) As Long
@@ -251,14 +239,12 @@ End Sub
 
 Private Sub pWriteOutputRow( _
         ByVal RowIndex As Long, _
-        ByVal DetailPageId As String, _
         ByVal TargetId As String, _
         ByVal Status As String, _
         ByVal ErrorDescription As String, _
         ByVal DownloadStatus As String, _
         ByVal DetailValues As ArrayObject)
 
-    Call pWriteOutputCell(RowIndex, C_COL_DETAIL_PAGE_ID, DetailPageId)
     Call pWriteOutputCell(RowIndex, C_COL_TARGET_ID, TargetId)
     Call pWriteOutputCell(RowIndex, C_COL_STATUS, Status)
     Call pWriteOutputCell(RowIndex, C_COL_ERROR, ErrorDescription)
@@ -278,7 +264,7 @@ Private Function pResolveNextOutputRow() As Long
     Dim search_bounds As WorksheetRangeBounds
     Set search_bounds = New_RangeBounds( _
             Row:=C_HEADER_ROW, _
-            Column:=C_COL_DETAIL_PAGE_ID, _
+            Column:=C_COL_TARGET_ID, _
             FinishRow:=G_ROW_MAX, _
             FinishColumn:=finish_column, _
             Sheet:=pSettings.OutputSheetName)

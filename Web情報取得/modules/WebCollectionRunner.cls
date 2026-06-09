@@ -327,7 +327,7 @@ Private Sub pCollectListItem( _
         row_error_description = download_error_description
     End If
 
-    Call OutputWriter.WriteCollectionRow("", output_target_id, row_status, row_error_description, detail_values, download_status)
+    Call OutputWriter.WriteCollectionRow(output_target_id, row_status, row_error_description, detail_values, download_status)
     If row_status = G_WEB_STATUS_ERROR Then
         pErrorCount = pErrorCount + 1
     Else
@@ -412,7 +412,7 @@ Private Sub pWriteErrorCollectionRow( _
     Dim detail_values As ArrayObject
     Set detail_values = pCreateBlankDetailValues(pSettings.DetailColumnDefinitions)
 
-    Call OutputWriter.WriteCollectionRow("", TargetId, G_WEB_STATUS_ERROR, ErrorDescription, detail_values)
+    Call OutputWriter.WriteCollectionRow(TargetId, G_WEB_STATUS_ERROR, ErrorDescription, detail_values)
 End Sub
 
 Private Function pReadListItemTargetId(ByVal ItemIndex As Long) As String
