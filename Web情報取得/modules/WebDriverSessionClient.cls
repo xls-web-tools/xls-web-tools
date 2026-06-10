@@ -18,7 +18,7 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_DOWNLOAD_DIRECTORY_PREFIX As String = "xls-web-tools_"
-Private Const C_CRDOWNLOAD_FILE_REGEX As String = "\.crdownload$"
+Private Const C_INCOMPLETE_DOWNLOAD_FILE_REGEX As String = "\.(crdownload|tmp)$"
 
 Private pClient As IWebDriverClient
 Private pSettings As IToolSettings
@@ -503,13 +503,13 @@ Private Function pWaitForDownloadedFile(ByRef DownloadedFilePath As String) As S
     deadline_time = DateAdd("s", pSettings.TimeoutSeconds, Now)
 
     Do
-        Dim crdownload_files() As String
-        crdownload_files = FsSrv.GetFileList(pDownloadDirectoryPath, CatchRegExp:=C_CRDOWNLOAD_FILE_REGEX)
+        Dim incomplete_files() As String
+        incomplete_files = FsSrv.GetFileList(pDownloadDirectoryPath, CatchRegExp:=C_INCOMPLETE_DOWNLOAD_FILE_REGEX)
 
         Dim completed_files() As String
-        completed_files = FsSrv.GetFileList(pDownloadDirectoryPath, IgnoreRegExp:=C_CRDOWNLOAD_FILE_REGEX)
+        completed_files = FsSrv.GetFileList(pDownloadDirectoryPath, IgnoreRegExp:=C_INCOMPLETE_DOWNLOAD_FILE_REGEX)
 
-        If pStringArrayCount(crdownload_files) = 0 Then
+        If pStringArrayCount(incomplete_files) = 0 Then
             Select Case pStringArrayCount(completed_files)
              Case 1
                 DownloadedFilePath = completed_files(LBound(completed_files))

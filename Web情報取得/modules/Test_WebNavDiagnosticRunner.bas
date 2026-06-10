@@ -481,11 +481,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
 
     Dim crdownload_files() As String
     crdownload_files = EmptyStringArray()
-    Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
+    Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
 
     Dim completed_files(0 To 0) As String
     completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
-    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-001", False, True)
     Set FsSrv = fs_stub
 
