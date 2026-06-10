@@ -224,6 +224,75 @@ Public Sub Test_DetailValueResolver_文字列結合はエラー(ByVal Assert As UnitTestA
     Assert.IsTrue 0 < InStr(1, Err.Description, "ValueExpression", vbTextCompare)
 End Sub
 
+Public Sub Test_DetailValueResolver_ValueExpressionでLFを含むOutputColumnNameを実LFで参照できる(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim column_name As String
+    column_name = "件名" & vbLf & "詳細"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition(column_name, "#subject"))
+    Call detail_defs.Add(New_DetailColumnDefinition("別名", "", ValueExpression:="[" & column_name & "]"))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+    Call resolver.Initialize(detail_defs)
+
+    Dim actual_values As ArrayObject
+
+    ' --- Act ---
+    Set actual_values = resolver.ResolveValues(pValues("案件A"))
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "案件A", CStr(actual_values.Item(1))
+End Sub
+
+Public Sub Test_DetailValueResolver_列参照内backslashnはLFとして扱わない(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名" & vbLf & "詳細", "#subject"))
+    Call detail_defs.Add(New_DetailColumnDefinition("別名", "", ValueExpression:="[件名\n詳細]"))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+
+    ' --- Act ---
+    Call resolver.Initialize(detail_defs)
+
+    ' --- Assert ---
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.IsTrue 0 < InStr(1, Err.Description, "未定義", vbTextCompare)
+End Sub
+
+Public Sub Test_DetailValueResolver_文字列リテラル内backslashnはLFとして扱う(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("元列", "#source"))
+    Call detail_defs.Add(New_DetailColumnDefinition("派生", "", ValueExpression:="""A\nB"""))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+    Call resolver.Initialize(detail_defs)
+
+    Dim actual_values As ArrayObject
+
+    ' --- Act ---
+    Set actual_values = resolver.ResolveValues(pValues("dummy"))
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "A" & vbLf & "B", CStr(actual_values.Item(1))
+End Sub
+
 Public Sub Test_DetailValueResolver_未定義列参照はエラー(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

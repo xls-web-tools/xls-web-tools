@@ -131,6 +131,101 @@ Public Sub Test_OutputConditionEvaluator_OutputColumnName‘å¬ˆá‚¢‚Í•Ê—ñ‚Æ‚µ‚ÄQ
     Call Assert.IsTrue(actual, "‘å•¶š¬•¶š‚¾‚¯ˆÙ‚È‚é OutputColumnName ‚ğ•Ê‚Ì’Šo—ñ‚Æ‚µ‚ÄğŒQÆ‚Å‚«‚é")
 End Sub
 
+Public Sub Test_OutputConditionEvaluator_LF‚ğŠÜ‚ŞOutputColumnName‚ğÀLF‚ÅQÆ‚Å‚«‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim column_name As String
+    column_name = "Œ–¼" & vbLf & "Ú×"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition(column_name, "#subject"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[" & column_name & "] == ""‘ÎÛ""", detail_defs)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 0)
+    Call detail_values.Update(0, "‘ÎÛ")
+
+    Dim actual As Boolean
+    actual = evaluator.ShouldOutput(detail_values)
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(actual, "LF ‚ğŠÜ‚Ş OutputColumnName ‚ğÀ LF ‚Ì—ñQÆ‚ÅğŒ•]‰¿‚Å‚«‚é")
+End Sub
+
+Public Sub Test_OutputConditionEvaluator_—ñQÆ“àbackslashn‚ÍLF‚Æ‚µ‚Äˆµ‚í‚È‚¢(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ–¼" & vbLf & "Ú×", "#subject"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[Œ–¼\nÚ×] == ""‘ÎÛ""", detail_defs)
+
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(0 < InStr(1, Err.Description, "–¢’è‹`", vbTextCompare), "—ñQÆ“à‚Ì \n ‚ÍÀ LF ‚É•ÏŠ·‚³‚ê‚È‚¢")
+End Sub
+
+Public Sub Test_OutputConditionEvaluator_•¶š—ñƒŠƒeƒ‰ƒ‹“àbackslashn‚ÍLF‚Æ‚µ‚Äˆµ‚¤(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ–¼", "#subject"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[Œ–¼] == ""A\nB""", detail_defs)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 0)
+    Call detail_values.Update(0, "A" & vbLf & "B")
+
+    Dim actual As Boolean
+    actual = evaluator.ShouldOutput(detail_values)
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(actual, "•¶š—ñƒŠƒeƒ‰ƒ‹“à‚Ì \n ‚Í LF ‚Æ‚µ‚Ä”äŠr‚³‚ê‚é")
+End Sub
+
+Public Sub Test_OutputConditionEvaluator_LFˆá‚¢‚Í•Ê—ñ‚Æ‚µ‚ÄQÆ‚Å‚«‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim first_column_name As String
+    first_column_name = "”»’è" & vbLf & "A"
+
+    Dim second_column_name As String
+    second_column_name = "”»’è" & vbLf & "B"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition(first_column_name, "#decision-a"))
+    Call detail_defs.Add(New_DetailColumnDefinition(second_column_name, "#decision-b"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[" & second_column_name & "] == ""‘ÎÛ""", detail_defs)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 1)
+    Call detail_values.Update(0, "‘ÎÛŠO")
+    Call detail_values.Update(1, "‘ÎÛ")
+
+    Dim actual As Boolean
+    actual = evaluator.ShouldOutput(detail_values)
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(actual, "LF ‚ÅˆÙ‚È‚é OutputColumnName ‚Í•Ê—ñ‚Æ‚µ‚ÄğŒQÆ‚Å‚«‚é")
+End Sub
+
 Public Sub Test_OutputConditionEvaluator_ŒÅ’èŠÇ——ñ–¼‚Æ“¯–¼‚Ì’Šo—ñ‚ğğŒQÆ‚Å‚«‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
