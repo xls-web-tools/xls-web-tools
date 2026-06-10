@@ -299,11 +299,13 @@ Private Function pCreateDownloader( _
         ByVal Settings As ToolSettingsTestDouble, _
         ByVal FileSystem As FileSystemServiceTestDouble) As DetailFileDownloader
 
+    Set FsSrv = FileSystem
+
     Dim session_client As WebDriverSessionClient
-    Set session_client = New_WebDriverSessionClient(ClientDouble, Settings, FileSystem)
+    Set session_client = New_WebDriverSessionClient(ClientDouble, Settings)
     Call session_client.CreateSession
 
-    Set pCreateDownloader = New_DetailFileDownloader(session_client, Settings, FileSystem)
+    Set pCreateDownloader = New_DetailFileDownloader(session_client, Settings)
 End Function
 
 Private Sub pRegisterCreateSession(ByVal ClientDouble As WebDriverClientTestDouble)

@@ -38,20 +38,16 @@ End Property
 
 '* WebDriver process を初期化します。
 '*
-'* @param FileSystem ファイル存在確認に使うサービス。
 '* @param PortProbe port 使用状況確認に使う probe。
 '*
 '* @details
-'* FileSystem と PortProbe は Nothing にできません。
-Public Sub Initialize(ByVal FileSystem As IFileSystemService, ByVal PortProbe As IWebDriverPortProbe)
-    If FileSystem Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="FileSystem は必須です。"
-    End If
+'* PortProbe は Nothing にできません。
+Public Sub Initialize(ByVal PortProbe As IWebDriverPortProbe)
     If PortProbe Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="PortProbe は必須です。"
     End If
 
-    Set pFileSystem = FileSystem
+    Set pFileSystem = FsSrv
     Set pPortProbe = PortProbe
     pWebDriverPort = 0
     pIsRunning = False

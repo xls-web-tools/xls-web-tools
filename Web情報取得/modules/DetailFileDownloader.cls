@@ -29,15 +29,13 @@ Private pIsInitialized As Boolean
 '*
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
 '* @param FileSaver ダウンロード済みファイル保存処理。
 '*
 '* @details
-'* browser 上のリンク操作、staging 領域の監視、最終保存処理を差し替えてテストできるよう依存を外部から受け取ります。
+'* browser 上のリンク操作と最終保存処理を外部から受け取り、ファイル操作は FsSrv を使用します。
 Public Sub Initialize( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
-        ByVal FileSystem As IFileSystemService, _
         ByVal FileSaver As DownloadedFileSaver)
 
     If SessionClient Is Nothing Then
@@ -46,16 +44,13 @@ Public Sub Initialize( _
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="Settings は必須です。"
     End If
-    If FileSystem Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="FileSystem は必須です。"
-    End If
     If FileSaver Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="FileSaver は必須です。"
     End If
 
     Set pSessionClient = SessionClient
     Set pSettings = Settings
-    Set pFileSystem = FileSystem
+    Set pFileSystem = FsSrv
     Set pFileSaver = FileSaver
     pIsInitialized = True
 End Sub

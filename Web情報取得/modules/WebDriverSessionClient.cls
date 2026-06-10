@@ -42,14 +42,12 @@ End Property
 '*
 '* @param Client WebDriver HTTP API 呼び出しクライアント。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
 '*
 '* @details
 '* Client と Settings は Nothing にできません。session 作成時の capabilities は Settings から組み立てます。
 Public Sub Initialize( _
         ByVal Client As IWebDriverClient, _
-        ByVal Settings As IToolSettings, _
-        Optional ByVal FileSystem As IFileSystemService = Nothing)
+        ByVal Settings As IToolSettings)
 
     If Client Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Client は必須です。"
@@ -57,13 +55,10 @@ Public Sub Initialize( _
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Settings は必須です。"
     End If
-    If Settings.DownloadEnabled And (FileSystem Is Nothing) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
-    End If
 
     Set pClient = Client
     Set pSettings = Settings
-    Set pFileSystem = FileSystem
+    Set pFileSystem = FsSrv
     pSessionId = ""
     pDownloadDirectoryPath = ""
     pIsInitialized = True

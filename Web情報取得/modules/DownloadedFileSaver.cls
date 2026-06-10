@@ -34,28 +34,23 @@ End Property
 '* DownloadedFileSaver を初期化します。
 '*
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
 '* @param ZipExtractor ZIP 展開処理。
 '*
 '* @details
-'* ダウンロード保存先、ZIP flatten、ファイル衝突判定を設定に従って実行できるよう、ファイル操作と ZIP 展開を外部から受け取ります。
+'* ダウンロード保存先、ZIP flatten、ファイル衝突判定を設定に従って実行します。ファイル操作は FsSrv、ZIP 展開は ZipExtractor を使用します。
 Public Sub Initialize( _
         ByVal Settings As IToolSettings, _
-        ByVal FileSystem As IFileSystemService, _
         ByVal ZipExtractor As IZipExtractor)
 
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="Settings は必須です。"
-    End If
-    If FileSystem Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="FileSystem は必須です。"
     End If
     If ZipExtractor Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="ZipExtractor は必須です。"
     End If
 
     Set pSettings = Settings
-    Set pFileSystem = FileSystem
+    Set pFileSystem = FsSrv
     Set pZipExtractor = ZipExtractor
     pLastErrorDescription = ""
     pIsInitialized = True

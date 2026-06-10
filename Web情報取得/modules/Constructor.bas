@@ -129,7 +129,6 @@ End Function
 '*
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。DownloadEnabled=True の場合に使用します。
 '* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
 '* @return 初期化済みの詳細ページ runner。
 '*
@@ -138,7 +137,6 @@ End Function
 Public Function New_DetailPageRunner( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
-        Optional ByVal FileSystem As IFileSystemService = Nothing, _
         Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DetailPageRunner
 
     If Settings Is Nothing Then
@@ -147,7 +145,7 @@ Public Function New_DetailPageRunner( _
 
     Dim file_downloader As DetailFileDownloader
     If Settings.DownloadEnabled Then
-        Set file_downloader = New_DetailFileDownloader(SessionClient, Settings, FileSystem, ZipExtractor)
+        Set file_downloader = New_DetailFileDownloader(SessionClient, Settings, ZipExtractor)
     End If
 
     Dim result_value As DetailPageRunner
@@ -176,7 +174,6 @@ End Function
 '*
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。省略時は FsSrv を使用します。
 '* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
 '* @return 初期化済みの詳細ページのダウンロード処理。
 '*
@@ -185,18 +182,14 @@ End Function
 Public Function New_DetailFileDownloader( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
-        Optional ByVal FileSystem As IFileSystemService = Nothing, _
         Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DetailFileDownloader
 
-    Dim actual_file_system As IFileSystemService
-    Set actual_file_system = pResolveFileSystem(FileSystem, "Function New_DetailFileDownloader")
-
     Dim file_saver As DownloadedFileSaver
-    Set file_saver = New_DownloadedFileSaver(Settings, actual_file_system, ZipExtractor)
+    Set file_saver = New_DownloadedFileSaver(Settings, ZipExtractor)
 
     Dim result_value As DetailFileDownloader
     Set result_value = New DetailFileDownloader
-    Call result_value.Initialize(SessionClient, Settings, actual_file_system, file_saver)
+    Call result_value.Initialize(SessionClient, Settings, file_saver)
 
     Set New_DetailFileDownloader = result_value
 End Function
@@ -204,7 +197,6 @@ End Function
 '* ダウンロード済みファイル保存を生成します。
 '*
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
 '* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
 '* @return 初期化済みのダウンロード済みファイル保存。
 '*
@@ -212,7 +204,6 @@ End Function
 '* ZIP ファイルの flatten 保存を通常保存と同じ入口で扱うため、ZIP 展開処理を注入して保存処理を生成します。
 Public Function New_DownloadedFileSaver( _
         ByVal Settings As IToolSettings, _
-        ByVal FileSystem As IFileSystemService, _
         Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DownloadedFileSaver
 
     Dim actual_zip_extractor As IZipExtractor
@@ -224,7 +215,7 @@ Public Function New_DownloadedFileSaver( _
 
     Dim result_value As DownloadedFileSaver
     Set result_value = New DownloadedFileSaver
-    Call result_value.Initialize(Settings, FileSystem, actual_zip_extractor)
+    Call result_value.Initialize(Settings, actual_zip_extractor)
 
     Set New_DownloadedFileSaver = result_value
 End Function
@@ -233,24 +224,16 @@ End Function
 '*
 '* @param Client WebDriver HTTP API 呼び出しクライアント。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
 '* @return 初期化済みの WebDriver session client。
 '*
 '* @details
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSessionClient に委譲します。
 Public Function New_WebDriverSessionClient( _
         ByVal Client As IWebDriverClient, _
-        ByVal Settings As IToolSettings, _
-        Optional ByVal FileSystem As IFileSystemService = Nothing) As WebDriverSessionClient
-
-    Dim actual_file_system As IFileSystemService
-    If Not (Settings Is Nothing) Then
-        If Settings.DownloadEnabled Then Set actual_file_system = pResolveFileSystem(FileSystem, "Function New_WebDriverSessionClient")
-    End If
-
+        ByVal Settings As IToolSettings) As WebDriverSessionClient
     Dim result_value As WebDriverSessionClient
     Set result_value = New WebDriverSessionClient
-    Call result_value.Initialize(Client, Settings, actual_file_system)
+    Call result_value.Initialize(Client, Settings)
 
     Set New_WebDriverSessionClient = result_value
 End Function
@@ -285,19 +268,16 @@ End Function
 
 '* WebDriver process 管理を生成します。
 '*
-'* @param FileSystem ファイル存在確認に使うサービス。
 '* @param PortProbe port 使用状況確認に使う probe。
 '* @return 初期化済みの WebDriver process 管理。
 '*
 '* @details
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverProcess に委譲します。
-Public Function New_WebDriverProcess( _
-        ByVal FileSystem As IFileSystemService, _
-        ByVal PortProbe As IWebDriverPortProbe) As WebDriverProcess
+Public Function New_WebDriverProcess(ByVal PortProbe As IWebDriverPortProbe) As WebDriverProcess
 
     Dim result_value As WebDriverProcess
     Set result_value = New WebDriverProcess
-    Call result_value.Initialize(FileSystem, PortProbe)
+    Call result_value.Initialize(PortProbe)
 
     Set New_WebDriverProcess = result_value
 End Function
@@ -376,18 +356,4 @@ Public Function New_WebCollectionRunner( _
     Call result_value.Initialize(Lifecycle, Settings)
 
     Set New_WebCollectionRunner = result_value
-End Function
-
-Private Function pResolveFileSystem( _
-        ByVal FileSystem As IFileSystemService, _
-        ByVal SourceName As String) As IFileSystemService
-
-    If FileSystem Is Nothing Then
-        If FsSrv Is Nothing Then
-            Err.Raise Number:=vbObjectError + 1, Source:=SourceName, Description:="FileSystem は必須です。"
-        End If
-        Set pResolveFileSystem = FsSrv
-    Else
-        Set pResolveFileSystem = FileSystem
-    End If
 End Function

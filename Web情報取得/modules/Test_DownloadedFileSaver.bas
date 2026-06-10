@@ -20,10 +20,11 @@ Public Sub Test_DownloadedFileSaver_’Êíƒtƒ@ƒCƒ‹‚ğ‘ÎÛIDƒtƒHƒ‹ƒ_[‚Ö––”ö3Œ…Ú“ª
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\ABC123", False, True)
 
     Dim saver As DownloadedFileSaver
-    Set saver = New_DownloadedFileSaver(tool_settings, fs_stub)
+    Set saver = New_DownloadedFileSaver(tool_settings)
 
     ' --- Act ---
     Dim actual_status As String
@@ -45,10 +46,11 @@ Public Sub Test_DownloadedFileSaver_o—Íæƒtƒ@ƒCƒ‹‚ªŠù‚É‚ ‚éê‡‚ÍˆÚ“®‚¹‚¸SKIPPE
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
     Call fs_stub.Store.SetReturn("PathExists", True, "D:\Root\ABC123\123_report.pdf")
 
     Dim saver As DownloadedFileSaver
-    Set saver = New_DownloadedFileSaver(tool_settings, fs_stub)
+    Set saver = New_DownloadedFileSaver(tool_settings)
 
     ' --- Act ---
     Dim actual_status As String
@@ -70,6 +72,7 @@ Public Sub Test_DownloadedFileSaver_ZIP’¼‰º‚ª1ƒtƒHƒ‹ƒ_[‚È‚ç’†g‚ğ‘ÎÛIDƒtƒHƒ‹ƒ_
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Extract", "xls-web-tools_zip_")
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\ABC123", False, True)
 
@@ -93,7 +96,7 @@ Public Sub Test_DownloadedFileSaver_ZIP’¼‰º‚ª1ƒtƒHƒ‹ƒ_[‚È‚ç’†g‚ğ‘ÎÛIDƒtƒHƒ‹ƒ_
     Set zip_stub = New ZipExtractorTestDouble
 
     Dim saver As DownloadedFileSaver
-    Set saver = New_DownloadedFileSaver(tool_settings, fs_stub, zip_stub)
+    Set saver = New_DownloadedFileSaver(tool_settings, zip_stub)
 
     ' --- Act ---
     Dim actual_status As String
@@ -118,9 +121,10 @@ Public Sub Test_DownloadedFileSaver_‘ÎÛID‚ªWindowsƒtƒHƒ‹ƒ_[–¼‚Æ‚µ‚Ä•s³‚È‚çERR
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
 
     Dim saver As DownloadedFileSaver
-    Set saver = New_DownloadedFileSaver(tool_settings, fs_stub)
+    Set saver = New_DownloadedFileSaver(tool_settings)
 
     ' --- Act ---
     Dim actual_status As String

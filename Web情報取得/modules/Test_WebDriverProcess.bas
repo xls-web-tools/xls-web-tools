@@ -21,12 +21,13 @@ Public Sub Test_WebDriverProcess_WebDriverÀsƒtƒ@ƒCƒ‹‚ª‚È‚¢ê‡‚Í”z’u•s‘«ƒGƒ‰[
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
 
     Dim port_probe As WebDriverPortProbeTestDouble
     Set port_probe = New WebDriverPortProbeTestDouble
 
     Dim process As WebDriverProcess
-    Set process = New_WebDriverProcess(fs_stub, port_probe)
+    Set process = New_WebDriverProcess(port_probe)
 
     ' --- Act ---
     Call process.Start(tool_settings)
@@ -50,6 +51,7 @@ Public Sub Test_WebDriverProcess_“¯‚¶Port‚ªg—p’†‚Ìê‡‚Í‘¼ƒvƒƒZƒX‚ğI—¹‚¹‚¸’†’
 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
     Call fs_stub.Store.SetReturn("IsFile", True, "C:\Driver\msedgedriver.exe")
 
     Dim port_probe As WebDriverPortProbeTestDouble
@@ -57,7 +59,7 @@ Public Sub Test_WebDriverProcess_“¯‚¶Port‚ªg—p’†‚Ìê‡‚Í‘¼ƒvƒƒZƒX‚ğI—¹‚¹‚¸’†’
     Call port_probe.Store.SetReturn("IsPortInUse", True, CLng(9515))
 
     Dim process As WebDriverProcess
-    Set process = New_WebDriverProcess(fs_stub, port_probe)
+    Set process = New_WebDriverProcess(port_probe)
 
     ' --- Act ---
     Call process.Start(tool_settings)
