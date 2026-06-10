@@ -85,6 +85,8 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 通常の抽出列は `Selector` を指定して `ValueExpression` を空欄にします。派生列は `Selector` を空欄にして `ValueExpression` を指定します。両方空欄、または両方指定された非空行は settings エラーです。
 
+条件付きの派生列は `IF([列2] == "", [列1], [列2])` のように指定します。`ValueExpression` に使える値式は、列参照、ダブルクォート文字列リテラル、`IF(条件, 値式, 値式)` です。
+
 ## 出力対象条件
 
 `OutputConditionExpression` に条件式を書くと、条件に一致する詳細ページだけを `output` に出します。条件に一致しない場合は、取得失敗ではなく「出力対象外」として扱われ、既存行も削除しません。

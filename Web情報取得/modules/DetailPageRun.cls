@@ -20,6 +20,7 @@ Option Base 0
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pConditionEvaluator As OutputConditionEvaluator
+Private pValueResolver As DetailValueResolver
 Private pIsInitialized As Boolean
 
 '* 詳細ページ run を初期化します。
@@ -38,6 +39,10 @@ Public Sub Initialize( _
     Set pSettings = Settings
     Set pConditionEvaluator = New OutputConditionEvaluator
     Call pConditionEvaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
+
+    Set pValueResolver = New DetailValueResolver
+    Call pValueResolver.Initialize(pSettings.DetailColumnDefinitions)
+
     pIsInitialized = True
 End Sub
 
@@ -158,12 +163,8 @@ Private Function pReadDetailValues() As ArrayObject
         Exit Function
     End If
 
-    Dim resolver As DetailValueResolver
-    Set resolver = New DetailValueResolver
-    Call resolver.Initialize(detail_defs)
-
     Dim extraction_defs As ObjectList
-    Set extraction_defs = resolver.ExtractionColumnDefinitions
+    Set extraction_defs = pValueResolver.ExtractionColumnDefinitions
 
     Dim extraction_values As ArrayObject
     If extraction_defs.Count = 0 Then
@@ -172,7 +173,7 @@ Private Function pReadDetailValues() As ArrayObject
         Set extraction_values = pSessionClient.ReadDetailColumnValues(extraction_defs)
     End If
 
-    Set pReadDetailValues = resolver.ResolveValues(extraction_values)
+    Set pReadDetailValues = pValueResolver.ResolveValues(extraction_values)
 End Function
 
 Private Function pDownloadCurrentDetailFile( _
