@@ -135,9 +135,9 @@ CSS selector で iframe / frame 内の要素を指定する場合は、`frame se
 
 `DownloadEnabled=True` の場合、Web情報取得は詳細ページ 1 件につき 0 または 1 つのダウンロード対象ファイルを扱う。ダウンロードリンクは `DownloadLinkSelector` で特定し、URL を VBA 側で組み立てない。A 要素などでブラウザ解決済みの `http://` または `https://` の `href` が取得できる場合は認証済み Edge session 上でその URL へ遷移してダウンロードを開始し、それ以外の場合は認証済み Edge session 上のクリックとして実行する。selector が 0 件の場合は `ダウンロード状態=NO_FILE` とする。selector が 2 件以上に一致した場合は設定誤りまたはページ構造の想定外として `ダウンロード状態=ERROR` とする。
 
-Edge の実ダウンロード先は、`FileSystemService` が返す OS のユーザー一時フォルダー配下に実行ごとの一時ダウンロード領域を作って指定する。利用者が settings で指定するのは最終保存先の `DownloadRootPath` だけとする。一時フォルダー場所取得は `xls-common-devtools` 側の `FileSystemService` API を前提とする。
+Edge の実ダウンロード先は、`FileSystemService` が返す OS のユーザー一時フォルダー配下に実行ごとの一時ダウンロード領域を作って指定する。利用者が settings で指定するのは最終保存先の `DownloadRootPath` だけとする。一時フォルダー場所取得は `xls-common-devtools` 側の `FileSystemService` API を前提とする。各詳細ページのダウンロード開始前に、一時ダウンロード領域内の既存ファイルを削除し、前回失敗や未処理ファイルを次の完了判定に混ぜない。
 
-ダウンロード完了待ちは、一時ダウンロード領域に新しいファイルが現れ、`.crdownload` や `.tmp` の未完了ファイルが消えたことを `TimeoutSeconds` まで待つ。完了ファイルが 1 件に確定しない場合、複数ファイルが増えた場合、または待機 timeout の場合は `ダウンロード状態=ERROR` とする。
+ダウンロード完了待ちは、一時ダウンロード領域に `.crdownload` や `.tmp` の未完了ファイルがなく、完了候補が 1 件で、その候補が存在する通常ファイルかつサイズが 0 バイト超である状態を `TimeoutSeconds` まで待つ。0 バイトの予約ファイルや待機中に消えた候補は未完了として扱う。完了ファイルが 1 件に確定しない場合、複数ファイルが増えた場合、または待機 timeout の場合は `ダウンロード状態=ERROR` とする。
 
 最終保存先は `{DownloadRootPath}\{対象ID}\` とする。対象IDは詳細ページ上の表示値を `Trim` した文字列をそのままフォルダー名に使う。対象IDが空、Windows フォルダー名で使えない文字または制御文字を含む、末尾がピリオドまたは空白である、または Windows 予約名である場合は、その詳細ページのダウンロード処理を `ERROR` とする。対象IDの自動置換やサニタイズは行わない。
 

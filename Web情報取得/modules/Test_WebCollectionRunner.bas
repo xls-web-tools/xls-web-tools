@@ -27,6 +27,10 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
 
+    Dim staging_files() As String
+    staging_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+
     Dim crdownload_files() As String
     crdownload_files = EmptyStringArray()
     Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
@@ -34,6 +38,8 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Dim completed_files(0 To 0) As String
     completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
     Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-002", False, True)
     Set FsSrv = fs_stub
 

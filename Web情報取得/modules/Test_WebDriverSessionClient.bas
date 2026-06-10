@@ -136,6 +136,10 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_ÉäÉìÉN1åèÇ»ÇÁÉNÉäÉbÉNÇ
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
 
+    Dim staging_files() As String
+    staging_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+
     Dim crdownload_files() As String
     crdownload_files = EmptyStringArray()
     Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
@@ -143,6 +147,8 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_ÉäÉìÉN1åèÇ»ÇÁÉNÉäÉbÉNÇ
     Dim completed_files(0 To 0) As String
     completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
     Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Set FsSrv = fs_stub
 
     Dim create_body As String
@@ -193,6 +199,10 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_tmpÉtÉ@ÉCÉãÇÕäÆóπàµÇ¢Ç
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
 
+    Dim staging_files() As String
+    staging_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+
     Dim empty_files() As String
     empty_files = EmptyStringArray()
     Call fs_stub.Store.SetReturn("GetFileList", empty_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.crdownload$", "", True)
@@ -205,6 +215,8 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_tmpÉtÉ@ÉCÉãÇÕäÆóπàµÇ¢Ç
     Dim completed_files(0 To 0) As String
     completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
     Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Set FsSrv = fs_stub
 
     Dim create_body As String
@@ -238,6 +250,132 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_tmpÉtÉ@ÉCÉãÇÕäÆóπàµÇ¢Ç
     Assert.EqualsNumeric 0, fs_stub.Store.GetCallCount("GetFileList", "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.crdownload$", True)
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetFileList", "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
 End Sub
+Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_ZeroByteFileIsNotCompleted(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadLinkSelector = "#download"
+    tool_settings.TimeoutSeconds = 0
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+
+    Dim staging_files() As String
+    staging_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+
+    Dim incomplete_files() As String
+    incomplete_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", incomplete_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
+
+    Dim completed_files(0 To 0) As String
+    completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 0#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Set FsSrv = fs_stub
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
+
+    Dim selector_body As String
+    selector_body = "{""using"":""css selector"",""value"":""#download""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/download-1/click", "{}")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Dim actual_file_path As String
+    Dim actual_status As String
+    actual_status = session_client.DownloadLinkedFile(actual_file_path)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals G_WEB_DOWNLOAD_STATUS_ERROR, actual_status
+    Assert.Equals "", actual_file_path
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetFileSize", "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+End Sub
+
+Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_ClearsStagingBeforeDownload(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.DownloadEnabled = True
+    tool_settings.DownloadLinkSelector = "#download"
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+
+    Dim staging_files(0 To 1) As String
+    staging_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\stale.pdf"
+    staging_files(1) = "C:\Temp\xls-web-tools_tmp123.tmp\stale.crdownload"
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+    Call fs_stub.Store.SetReturn("RemoveFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\stale.pdf", False)
+    Call fs_stub.Store.SetReturn("RemoveFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\stale.crdownload", False)
+
+    Dim incomplete_files() As String
+    incomplete_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", incomplete_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
+
+    Dim completed_files(0 To 0) As String
+    completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
+    Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Set FsSrv = fs_stub
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""],""prefs"":{""download.default_directory"":""C:\\Temp\\xls-web-tools_tmp123.tmp"",""download.prompt_for_download"":false,""download.directory_upgrade"":true}}}}}"
+
+    Dim selector_body As String
+    selector_body = "{""using"":""css selector"",""value"":""#download""}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}]}", "POST", "/session/abc/elements", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""download-1""}}", "POST", "/session/abc/element", selector_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/download-1/click", "{}")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Dim actual_file_path As String
+    Dim actual_status As String
+    actual_status = session_client.DownloadLinkedFile(actual_file_path)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals G_WEB_DOWNLOAD_STATUS_DOWNLOADED, actual_status
+    Assert.Equals "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf", actual_file_path
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("RemoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\stale.pdf", False)
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("RemoveFile", "C:\Temp\xls-web-tools_tmp123.tmp\stale.crdownload", False)
+End Sub
 
 Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_AóvëfHrefÇ»ÇÁUrlëJà⁄Ç≈É_ÉEÉìÉçÅ[ÉhÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
@@ -254,6 +392,10 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_AóvëfHrefÇ»ÇÁUrlëJà⁄Ç≈
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
 
+    Dim staging_files() As String
+    staging_files = EmptyStringArray()
+    Call fs_stub.Store.SetReturn("GetFileList", staging_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "", True)
+
     Dim crdownload_files() As String
     crdownload_files = EmptyStringArray()
     Call fs_stub.Store.SetReturn("GetFileList", crdownload_files, "C:\Temp\xls-web-tools_tmp123.tmp", "\.(crdownload|tmp)$", "", True)
@@ -261,6 +403,8 @@ Public Sub Test_WebDriverSessionClient_DownloadLinkedFile_AóvëfHrefÇ»ÇÁUrlëJà⁄Ç≈
     Dim completed_files(0 To 0) As String
     completed_files(0) = "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf"
     Call fs_stub.Store.SetReturn("GetFileList", completed_files, "C:\Temp\xls-web-tools_tmp123.tmp", "", "\.(crdownload|tmp)$", True)
+    Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
+    Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Set FsSrv = fs_stub
 
     Dim create_body As String

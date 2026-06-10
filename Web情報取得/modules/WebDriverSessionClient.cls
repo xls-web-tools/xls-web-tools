@@ -250,6 +250,7 @@ Public Function DownloadLinkedFile(ByRef DownloadedFilePath As String) As String
      Case 0
         result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE
      Case 1
+        Call pClearDownloadDirectory
         If pTryNavigateDownloadLink("css selector", pSettings.DownloadLinkSelector) Then
             result_status = pWaitForDownloadedFile(DownloadedFilePath)
         Else
@@ -512,9 +513,13 @@ Private Function pWaitForDownloadedFile(ByRef DownloadedFilePath As String) As S
         If pStringArrayCount(incomplete_files) = 0 Then
             Select Case pStringArrayCount(completed_files)
              Case 1
-                DownloadedFilePath = completed_files(LBound(completed_files))
-                pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_DOWNLOADED
-                Exit Function
+                Dim candidate_file_path As String
+                candidate_file_path = completed_files(LBound(completed_files))
+                If pIsDownloadFileReady(candidate_file_path) Then
+                    DownloadedFilePath = candidate_file_path
+                    pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_DOWNLOADED
+                    Exit Function
+                End If
              Case Is > 1
                 pLastDownloadErrorDescription = "ダウンロード完了ファイルが複数あります。(" & CStr(pStringArrayCount(completed_files)) & ")"
                 pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
@@ -528,6 +533,42 @@ Private Function pWaitForDownloadedFile(ByRef DownloadedFilePath As String) As S
     pLastDownloadErrorDescription = "ダウンロード完了を待機中にタイムアウトしました。"
     pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
 End Function
+
+Private Function pIsDownloadFileReady(ByVal FilePath As String) As Boolean
+    On Error GoTo NOT_READY
+
+    Dim result_value As Boolean
+    result_value = False
+
+    If FsSrv.IsFile(FilePath) Then
+        If 0# < FsSrv.GetFileSize(FilePath) Then
+            result_value = FsSrv.IsFile(FilePath)
+        End If
+    End If
+
+    On Error GoTo 0
+    pIsDownloadFileReady = result_value
+    Exit Function
+
+NOT_READY:
+    Err.Clear
+    On Error GoTo 0
+    pIsDownloadFileReady = False
+End Function
+
+Private Sub pClearDownloadDirectory()
+    Call pRequireDownloadFileSystem
+
+    Dim staging_files() As String
+    staging_files = FsSrv.GetFileList(pDownloadDirectoryPath)
+
+    If pStringArrayCount(staging_files) = 0 Then Exit Sub
+
+    Dim file_index As Long
+    For file_index = LBound(staging_files) To UBound(staging_files)
+        Call FsSrv.RemoveFile(staging_files(file_index))
+    Next file_index
+End Sub
 
 Private Sub pRequireDownloadFileSystem()
     If FsSrv Is Nothing Then
