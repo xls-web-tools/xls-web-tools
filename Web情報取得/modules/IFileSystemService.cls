@@ -121,6 +121,16 @@ End Function
 Public Function GetLastModified(ByVal PathLikeString As String) As Date
 End Function
 
+'* ファイルサイズをバイト単位で得ます。
+'*
+'* @param FilePath ファイルのパス。
+'* @return ファイルサイズ。単位はバイトです。
+'*
+'* @details
+'* 指定されたファイルのサイズをバイト単位で得ます。対象が存在しない、またはファイルではない場合はエラーです。
+Public Function GetFileSize(ByVal FilePath As String) As Double
+End Function
+
 '* ディレクトリを作成します。
 '*
 '* @param DirectoryPath ディレクトリのパス。

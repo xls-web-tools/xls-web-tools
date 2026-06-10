@@ -154,6 +154,20 @@ Private Function IFileSystemService_GetLastModified(ByVal PathLikeString As Stri
     IFileSystemService_GetLastModified = GetLastModified(PathLikeString)
 End Function
 
+'* GetFileSize ÇÃ strict stub Ç≈Ç∑ÅBñﬂÇËílÇÕ Store Ç…ñæé¶ìoò^ÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB
+Public Function GetFileSize(ByVal FilePath As String) As Double
+    Call Store.RaiseIfError("GetFileSize", FilePath)
+
+    Dim result_value As Double
+    result_value = Store.GetReturn("GetFileSize", FilePath)
+    Call Store.RecordCall("GetFileSize", FilePath)
+
+    GetFileSize = result_value
+End Function
+Private Function IFileSystemService_GetFileSize(ByVal FilePath As String) As Double
+    IFileSystemService_GetFileSize = GetFileSize(FilePath)
+End Function
+
 '* CreateDirectory ÇÃ strict stub Ç≈Ç∑ÅBñﬂÇËílÇÕ Store Ç…ñæé¶ìoò^ÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB
 Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False, Optional ByVal Recursive As Boolean = False) As Boolean
     Call Store.RaiseIfError("CreateDirectory", DirectoryPath, Force, Recursive)

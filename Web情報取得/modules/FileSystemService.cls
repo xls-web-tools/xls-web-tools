@@ -348,6 +348,29 @@ Private Function IFileSystemService_GetLastModified(ByVal PathLikeString As Stri
     IFileSystemService_GetLastModified = GetLastModified(PathLikeString)
 End Function
 
+' ファイルサイズをバイト単位で得ます。
+'
+' @param FilePath ファイルのパス。
+' @return ファイルサイズ。単位はバイトです。
+'
+' @details
+' 指定されたファイルのサイズをバイト単位で得ます。
+Public Function GetFileSize(ByVal FilePath As String) As Double
+    Dim file_path As String
+    file_path = GetAbsolutePath(FilePath)
+
+    If pFSO.FileExists(file_path) Then
+        GetFileSize = pFSO.GetFile(file_path).Size
+    ElseIf pFSO.FolderExists(file_path) Then
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "ファイルサイズ取得対象がファイルではありません。(" & file_path & ")"
+    Else
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "ファイルサイズ取得対象のファイルがありません。(" & file_path & ")"
+    End If
+End Function
+Private Function IFileSystemService_GetFileSize(ByVal FilePath As String) As Double
+    IFileSystemService_GetFileSize = GetFileSize(FilePath)
+End Function
+
 ' ディレクトリを作成します。
 '
 ' @param DirectoryPath ディレクトリのパス。
