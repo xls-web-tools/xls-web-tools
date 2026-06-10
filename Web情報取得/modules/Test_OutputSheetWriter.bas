@@ -205,6 +205,44 @@ Public Sub Test_OutputSheetWriter_重複ヘッダーは同じ抽出値を両方へ出力する(ByVal
     Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "案件A")
 End Sub
 
+Public Sub Test_OutputSheetWriter_ヘッダー照合は大文字小文字を区別する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "Name", "name")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Name", "#upper-name"))
+    Call detail_defs.Add(New_DetailColumnDefinition("name", "#lower-name"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 1)
+    Call detail_values.Update(0, "UPPER")
+    Call detail_values.Update(1, "LOWER")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "UPPER")
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 6, "LOWER")
+End Sub
+
 Public Sub Test_OutputSheetWriter_固定管理列名ヘッダーは同名抽出値を出力する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

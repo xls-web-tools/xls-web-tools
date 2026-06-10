@@ -290,7 +290,7 @@ Private Function pFindDetailDefinitionIndex(ByVal DetailDefinitions As ObjectLis
     For def_idx = 0 To DetailDefinitions.Count - 1
         Dim detail_def As DetailColumnDefinition
         Set detail_def = DetailDefinitions.Item(def_idx)
-        If StrComp(detail_def.OutputColumnName, HeaderText, vbTextCompare) = 0 Then
+        If StrComp(detail_def.OutputColumnName, HeaderText, vbBinaryCompare) = 0 Then
             pFindDetailDefinitionIndex = def_idx
             Exit Function
         End If

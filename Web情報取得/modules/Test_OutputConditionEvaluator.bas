@@ -106,6 +106,31 @@ Public Sub Test_OutputConditionEvaluator_OutputColumnName重複はエラー(ByVal Asse
     Call Assert.IsTrue(0 < InStr(1, Err.Description, "重複", vbTextCompare), "重複した OutputColumnName がエラーになる")
 End Sub
 
+Public Sub Test_OutputConditionEvaluator_OutputColumnName大小違いは別列として参照できる(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Name", "#upper-name"))
+    Call detail_defs.Add(New_DetailColumnDefinition("name", "#lower-name"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[Name] == ""UPPER"" AND [name] == ""LOWER""", detail_defs)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 1)
+    Call detail_values.Update(0, "UPPER")
+    Call detail_values.Update(1, "LOWER")
+
+    Dim actual As Boolean
+    actual = evaluator.ShouldOutput(detail_values)
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call Assert.IsTrue(actual, "大文字小文字だけ異なる OutputColumnName を別の抽出列として条件参照できる")
+End Sub
+
 Public Sub Test_OutputConditionEvaluator_固定管理列名と同名の抽出列を条件参照できる(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
