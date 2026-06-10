@@ -22,6 +22,8 @@ Private Const C_PROGRESS_TASK_NAME As String = "取得中"
 Private pLifecycle As WebDriverSessionLifecycle
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
+Private pTransitionResolver As TransitionOperationResolver
+Private pIndexTemplate As ListItemIndexTemplate
 Private pSucceededCount As Long
 Private pSkippedCount As Long
 Private pOutputExcludedCount As Long
@@ -81,6 +83,8 @@ Public Sub Initialize( _
     Set pLifecycle = Lifecycle
     Set pSessionClient = Lifecycle.SessionClient
     Set pSettings = Settings
+    Set pTransitionResolver = New_TransitionOperationResolver(Settings)
+    Set pIndexTemplate = New_ListItemIndexTemplate()
     pSucceededCount = 0
     pSkippedCount = 0
     pOutputExcludedCount = 0
@@ -152,7 +156,7 @@ End Function
 
 Private Sub pOpenListPage()
     Dim list_operation As TransitionOperation
-    Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
+    Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
 End Sub
@@ -273,7 +277,7 @@ Private Sub pCollectListItem( _
     End If
 
     Dim run_result As DetailPageRunResult
-    Set run_result = DetailRunner.Run(current_target_id, pSettings.DetailTransitionOperationName, ItemIndex:=ItemIndex)
+    Set run_result = DetailRunner.Run(current_target_id, ItemIndex:=ItemIndex)
 
     If run_result.IsOutputExcluded Then
         pOutputExcludedCount = pOutputExcludedCount + 1
@@ -296,7 +300,7 @@ End Sub
 
 Private Function pReadListItemTargetId(ByVal ItemIndex As Long) As String
     Dim selector_value As String
-    selector_value = pApplyIndexTemplate(pSettings.ListItemTargetIdSelector, ItemIndex)
+    selector_value = pIndexTemplate.Apply(pSettings.ListItemTargetIdSelector, ItemIndex)
 
     Dim result_value As String
     result_value = Trim$(pSessionClient.ReadElementText(selector_value))
@@ -330,7 +334,7 @@ End Function
 
 Private Sub pMoveToNextPage(ByVal PreviousFirstTargetId As String)
     Dim next_operation As TransitionOperation
-    Set next_operation = pFindTransitionOperation(pSettings.NextPageOperationName)
+    Set next_operation = pTransitionResolver.ResolveNextPageOperation()
     Call pSessionClient.RunTransitionOperation(next_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pWaitForFirstTargetChange(PreviousFirstTargetId)
@@ -367,29 +371,3 @@ Private Sub pWaitForFirstTargetChange(ByVal PreviousFirstTargetId As String)
 
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後にページが進みません。(" & PreviousFirstTargetId & ")"
 End Sub
-
-Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex As Long) As String
-    Dim result_value As String
-    result_value = TargetText
-    result_value = Replace(result_value, "{{index}}", CStr(ItemIndex))
-    result_value = Replace(result_value, "{{rowNumber}}", CStr(ItemIndex + 1))
-
-    pApplyIndexTemplate = result_value
-End Function
-
-Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
-    Dim operations As ObjectList
-    Set operations = pSettings.TransitionOperations
-
-    Dim operation_idx As Long
-    For operation_idx = 0 To operations.Count - 1
-        Dim target_operation As TransitionOperation
-        Set target_operation = operations.Item(operation_idx)
-        If StrComp(target_operation.OperationName, OperationName, vbTextCompare) = 0 Then
-            Set pFindTransitionOperation = target_operation
-            Exit Function
-        End If
-    Next operation_idx
-
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
-End Function

@@ -20,6 +20,8 @@ Option Base 0
 Private pLifecycle As WebDriverSessionLifecycle
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
+Private pTransitionResolver As TransitionOperationResolver
+Private pIndexTemplate As ListItemIndexTemplate
 Private pListItemTargetId As String
 Private pTargetId As String
 Private pIsOutputExcluded As Boolean
@@ -64,6 +66,8 @@ Public Sub Initialize( _
     Set pLifecycle = Lifecycle
     Set pSessionClient = Lifecycle.SessionClient
     Set pSettings = Settings
+    Set pTransitionResolver = New_TransitionOperationResolver(Settings)
+    Set pIndexTemplate = New_ListItemIndexTemplate()
     pListItemTargetId = ""
     pTargetId = ""
     pIsOutputExcluded = False
@@ -93,7 +97,7 @@ Public Function Run() As String
     Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
 
     Dim list_operation As TransitionOperation
-    Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
+    Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pRunFirstDetail(detail_runner)
@@ -128,14 +132,13 @@ Private Sub pCheckInit()
 End Sub
 
 Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
-    If Trim$(pSettings.DetailTransitionOperationName) = "" Then Exit Sub
+    If Not pTransitionResolver.HasDetailTransitionOperation Then Exit Sub
 
     pListItemTargetId = pReadFirstListItemTargetId()
 
     Dim run_result As DetailPageRunResult
     Set run_result = DetailRunner.Run( _
             pListItemTargetId, _
-            pSettings.DetailTransitionOperationName, _
             ItemIndex:=0, _
             IsDiagnosticMode:=True)
 
@@ -157,26 +160,12 @@ Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
 End Sub
 
 
-Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
-    Dim operations As ObjectList
-    Set operations = pSettings.TransitionOperations
-
-    Dim operation_idx As Long
-    For operation_idx = 0 To operations.Count - 1
-        Dim target_operation As TransitionOperation
-        Set target_operation = operations.Item(operation_idx)
-        If StrComp(target_operation.OperationName, OperationName, vbTextCompare) = 0 Then
-            Set pFindTransitionOperation = target_operation
-            Exit Function
-        End If
-    Next operation_idx
-
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="âÊñ ëJà⁄ëÄçÏÇ™å©Ç¬Ç©ÇËÇ‹ÇπÇÒÅB(" & OperationName & ")"
-End Function
-
 Private Function pReadFirstListItemTargetId() As String
+    Dim selector_value As String
+    selector_value = pIndexTemplate.Apply(pSettings.ListItemTargetIdSelector, 0)
+
     Dim result_value As String
-    result_value = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
+    result_value = Trim$(pSessionClient.ReadElementText(selector_value))
     If result_value = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="àÍóóè„ÇÃëŒè€IDÇéÊìæÇ≈Ç´Ç‹ÇπÇÒÅB"
     End If

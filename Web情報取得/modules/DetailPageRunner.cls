@@ -19,6 +19,7 @@ Option Base 0
 
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
+Private pTransitionResolver As TransitionOperationResolver
 Private pConditionEvaluator As OutputConditionEvaluator
 Private pValueResolver As DetailValueResolver
 Private pFileDownloader As DetailFileDownloader
@@ -49,6 +50,7 @@ Public Sub Initialize( _
 
     Set pSessionClient = SessionClient
     Set pSettings = Settings
+    Set pTransitionResolver = New_TransitionOperationResolver(Settings)
     Set pFileDownloader = FileDownloader
     Set pConditionEvaluator = New OutputConditionEvaluator
     Call pConditionEvaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
@@ -62,7 +64,6 @@ End Sub
 '* 詳細ページ 1 件分を処理します。
 '*
 '* @param ListTargetId 一覧上で取得した対象ID。
-'* @param DetailOperationName 詳細ページへ遷移する画面遷移操作名。
 '* @param ItemIndex 一覧上の項目インデックス。locator template の {{index}} と {{rowNumber}} に使用します。
 '* @param IsDiagnosticMode True の場合、対象ID確認前のエラーは診断 runner へ再送出します。
 '* @return 詳細ページ 1 件分の処理結果。
@@ -71,7 +72,6 @@ End Sub
 '* 詳細ページへ遷移し、対象ID照合、出力条件判定、詳細値抽出、ダウンロード処理を実行してから一覧へ戻ります。
 Public Function Run( _
         ByVal ListTargetId As String, _
-        ByVal DetailOperationName As String, _
         Optional ByVal ItemIndex As Long = 0, _
         Optional ByVal IsDiagnosticMode As Boolean = False) As DetailPageRunResult
 
@@ -89,7 +89,7 @@ Public Function Run( _
     On Error GoTo DETAIL_ERROR
 
     Dim detail_operation As TransitionOperation
-    Set detail_operation = pBuildIndexedTransitionOperation(DetailOperationName, ItemIndex)
+    Set detail_operation = pTransitionResolver.ResolveDetailTransitionOperation(ItemIndex)
     Call pSessionClient.RunTransitionOperation(detail_operation)
     needs_return = True
 
@@ -242,29 +242,14 @@ Private Function pShouldOutputByCondition() As Boolean
     pShouldOutputByCondition = pConditionEvaluator.ShouldOutputByColumnValues(referenced_values, condition_defs)
 End Function
 
-Private Function pBuildIndexedTransitionOperation( _
-        ByVal OperationName As String, _
-        ByVal ItemIndex As Long) As TransitionOperation
-
-    Dim base_operation As TransitionOperation
-    Set base_operation = pFindTransitionOperation(OperationName)
-
-    Set pBuildIndexedTransitionOperation = New_TransitionOperation( _
-            base_operation.OperationName, _
-            base_operation.LocatorType, _
-            pApplyIndexTemplate(base_operation.LocatorValue, ItemIndex), _
-            Script:=pApplyIndexTemplate(base_operation.Script, ItemIndex), _
-            WaitConditionName:=base_operation.WaitConditionName)
-End Function
-
 Private Sub pReturnToListIfNeeded(ByVal NeedsReturn As Boolean)
     If Not NeedsReturn Then Exit Sub
-    If Trim$(pSettings.ReturnToListOperationName) = "" Then Exit Sub
+    If Not pTransitionResolver.HasReturnToListOperation Then Exit Sub
 
     On Error GoTo RETURN_ERROR
 
     Dim return_operation As TransitionOperation
-    Set return_operation = pFindTransitionOperation(pSettings.ReturnToListOperationName)
+    Set return_operation = pTransitionResolver.ResolveReturnToListOperation()
     Call pSessionClient.RunTransitionOperation(return_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
 
@@ -307,29 +292,3 @@ Private Sub pCheckInit()
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="初期化されていません。"
     End If
 End Sub
-
-Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex As Long) As String
-    Dim result_value As String
-    result_value = TargetText
-    result_value = Replace(result_value, "{{index}}", CStr(ItemIndex))
-    result_value = Replace(result_value, "{{rowNumber}}", CStr(ItemIndex + 1))
-
-    pApplyIndexTemplate = result_value
-End Function
-
-Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
-    Dim operations As ObjectList
-    Set operations = pSettings.TransitionOperations
-
-    Dim operation_idx As Long
-    For operation_idx = 0 To operations.Count - 1
-        Dim target_operation As TransitionOperation
-        Set target_operation = operations.Item(operation_idx)
-        If StrComp(target_operation.OperationName, OperationName, vbTextCompare) = 0 Then
-            Set pFindTransitionOperation = target_operation
-            Exit Function
-        End If
-    Next operation_idx
-
-    Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
-End Function

@@ -35,6 +35,34 @@ Public Function New_TransitionOperation( _
     Set New_TransitionOperation = result_value
 End Function
 
+'* 一覧項目 index テンプレートを生成します。
+'*
+'* @return 新しい一覧項目 index テンプレート。
+'*
+'* @details
+'* {{index}} / {{rowNumber}} の置換規則を共有するための Module を生成します。
+Public Function New_ListItemIndexTemplate() As ListItemIndexTemplate
+    Dim result_value As ListItemIndexTemplate
+    Set result_value = New ListItemIndexTemplate
+
+    Set New_ListItemIndexTemplate = result_value
+End Function
+
+'* 画面遷移操作 resolver を生成します。
+'*
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの画面遷移操作 resolver。
+'*
+'* @details
+'* settings の画面遷移操作名から実行する TransitionOperation を解決します。
+Public Function New_TransitionOperationResolver(ByVal Settings As IToolSettings) As TransitionOperationResolver
+    Dim result_value As TransitionOperationResolver
+    Set result_value = New TransitionOperationResolver
+    Call result_value.Initialize(Settings)
+
+    Set New_TransitionOperationResolver = result_value
+End Function
+
 '* 詳細ページ列定義を生成します。
 '*
 '* @param OutputColumnName 出力列名。
