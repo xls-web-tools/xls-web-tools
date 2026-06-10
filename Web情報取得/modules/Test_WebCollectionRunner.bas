@@ -222,10 +222,10 @@ Public Sub Test_WebCollectionRunner_初回ページ0件なら収集進捗を開始しない(ByVal 
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.Equals "abc", actual_session_id
     Assert.EqualsNumeric 1, runner.PageCount
-    Assert.Equals "", ProgStat.TaskName
-    Assert.EqualsNumeric 100, ProgStat.TotalValue
-    Assert.EqualsNumeric 0, ProgStat.ProcessedValue
-    Assert.IsFalse ProgStat.IsComplete
+    Assert.Equals "取得準備中", ProgStat.TaskName
+    Assert.EqualsNumeric 5, ProgStat.TotalValue
+    Assert.EqualsNumeric 5, ProgStat.ProcessedValue
+    Assert.IsTrue ProgStat.IsComplete
     Assert.Equals False, CBool(Application.StatusBar)
 End Sub
 

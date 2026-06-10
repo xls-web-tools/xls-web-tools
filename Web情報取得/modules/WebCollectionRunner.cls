@@ -115,12 +115,12 @@ Public Function Run() As String
 
     Dim detail_runner As DetailPageRunner
     Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
+
+    Dim preparation As WebCollectionPreparation
     On Error GoTo ON_ERROR
 
-    result_value = pLifecycle.StartSession()
-    Call pSessionClient.NavigateToStartUrl
-    Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
-    Call pOpenListPage
+    Set preparation = New_WebCollectionPreparation(pLifecycle, pSettings)
+    result_value = preparation.Run()
 
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
@@ -147,19 +147,13 @@ ON_ERROR:
     err_help_context = Err.HelpContext
 
     On Error Resume Next
+    If Not preparation Is Nothing Then Call preparation.ClearProgress
     Call pClearProgress
     On Error GoTo 0
     Call pLifecycle.CleanupAfterError(err_desc)
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Function
-
-Private Sub pOpenListPage()
-    Dim list_operation As TransitionOperation
-    Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
-    Call pSessionClient.RunTransitionOperation(list_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
-End Sub
 
 Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailRunner As DetailPageRunner)
     Dim first_target_ids As ObjectSet

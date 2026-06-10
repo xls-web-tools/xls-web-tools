@@ -18,6 +18,9 @@ Option Private Module
 Public Sub RunDiagnostic_Click()
     Call InitializeCommonService(Force:=True)
 
+    Dim run_state As CommonRunStateManager
+    Set run_state = New CommonRunStateManager
+
     Dim app_state As ApplicationScreenUpdateManager
     Set app_state = New ApplicationScreenUpdateManager
     Call app_state.DisableUpdates(StopEvents:=False)

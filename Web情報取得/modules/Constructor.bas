@@ -348,6 +348,25 @@ Public Function New_WebDriverSmokeRunner(ByVal Lifecycle As WebDriverSessionLife
     Set New_WebDriverSmokeRunner = result_value
 End Function
 
+'* Web collection preparation を生成します。
+'*
+'* @param Lifecycle WebDriver session lifecycle。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みの Web collection preparation。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebCollectionPreparation に委譲します。
+Public Function New_WebCollectionPreparation( _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
+        ByVal Settings As IToolSettings) As WebCollectionPreparation
+
+    Dim result_value As WebCollectionPreparation
+    Set result_value = New WebCollectionPreparation
+    Call result_value.Initialize(Lifecycle, Settings)
+
+    Set New_WebCollectionPreparation = result_value
+End Function
+
 '* Web navigation diagnostic runner を生成します。
 '*
 '* @param Lifecycle WebDriver session lifecycle。

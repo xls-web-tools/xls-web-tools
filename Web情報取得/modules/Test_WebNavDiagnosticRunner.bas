@@ -56,6 +56,8 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrlから一覧画面到達まで診断する(ByVa
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Set ProgStat = New ProgressStatus
+
     Dim lifecycle As WebDriverSessionLifecycle
     Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
 
@@ -78,6 +80,11 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrlから一覧画面到達まで診断する(ByVa
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/open-list-element/click", "{}")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+    Assert.Equals "取得準備中", ProgStat.TaskName
+    Assert.EqualsNumeric 5, ProgStat.TotalValue
+    Assert.EqualsNumeric 5, ProgStat.ProcessedValue
+    Assert.IsTrue ProgStat.IsComplete
+    Assert.Equals False, CBool(Application.StatusBar)
 End Sub
 
 Public Sub Test_WebNavDiagnosticRunner_先頭一覧項目から詳細ページへ入り対象IDを抽出する(ByVal Assert As UnitTestAssert)

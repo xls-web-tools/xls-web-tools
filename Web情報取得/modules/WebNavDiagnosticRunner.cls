@@ -92,14 +92,9 @@ Public Function Run() As String
     Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
-    result_value = pLifecycle.StartSession()
-    Call pSessionClient.NavigateToStartUrl
-    Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
-
-    Dim list_operation As TransitionOperation
-    Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
-    Call pSessionClient.RunTransitionOperation(list_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+    Dim preparation As WebCollectionPreparation
+    Set preparation = New_WebCollectionPreparation(pLifecycle, pSettings)
+    result_value = preparation.Run()
     Call pRunFirstDetail(detail_runner)
 
     Call pLifecycle.FinishSession
@@ -120,6 +115,9 @@ ON_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
+    On Error Resume Next
+    If Not preparation Is Nothing Then Call preparation.ClearProgress
+    On Error GoTo 0
     Call pLifecycle.CleanupAfterError(err_desc)
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
