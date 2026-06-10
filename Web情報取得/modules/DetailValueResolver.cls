@@ -40,6 +40,107 @@ Public Property Get ExtractionColumnDefinitions() As ObjectList
     Set ExtractionColumnDefinitions = pExtractionDefinitions
 End Property
 
+'* 指定列の解決に必要な列定義を、元の settings 行順で返します。
+Public Function BuildDependentDefinitions( _
+        ByVal TargetDefinitions As ObjectList, _
+        Optional ByVal OptionalExtraction As Boolean = False, _
+        Optional ByVal IgnoreDerivedBlankMode As Boolean = False) As ObjectList
+
+    Call pCheckInit
+    If TargetDefinitions Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="TargetDefinitions は必須です。"
+    End If
+
+    Dim needed() As Boolean
+    If 0 < pDefinitions.Count Then ReDim needed(0 To pDefinitions.Count - 1)
+
+    Dim target_idx As Long
+    For target_idx = 0 To TargetDefinitions.Count - 1
+        Dim target_def As DetailColumnDefinition
+        Set target_def = TargetDefinitions.Item(target_idx)
+
+        Dim def_idx As Long
+        def_idx = pFindDefinitionIndex(target_def.OutputColumnName)
+        If def_idx < 0 Then
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & target_def.OutputColumnName & ")"
+        End If
+        Call pMarkDependentDefinition(def_idx, needed)
+    Next target_idx
+
+    Dim result_value As ObjectList
+    Set result_value = New_ObjectList("DetailColumnDefinition")
+
+    Dim result_idx As Long
+    For result_idx = 0 To pDefinitions.Count - 1
+        If needed(result_idx) Then
+            Dim src_def As DetailColumnDefinition
+            Set src_def = pDefinitions.Item(result_idx)
+            Call result_value.Add(pCopyDefinition(src_def, OptionalExtraction, IgnoreDerivedBlankMode))
+        End If
+    Next result_idx
+
+    Set BuildDependentDefinitions = result_value
+End Function
+
+Private Sub pMarkDependentDefinition( _
+        ByVal DefinitionIndex As Long, _
+        ByRef Needed() As Boolean)
+
+    If Needed(DefinitionIndex) Then Exit Sub
+    Needed(DefinitionIndex) = True
+
+    Dim detail_def As DetailColumnDefinition
+    Set detail_def = pDefinitions.Item(DefinitionIndex)
+    If Not detail_def.IsDerived Then Exit Sub
+
+    Dim references As Collection
+    Set references = pCollectReferences(DefinitionIndex)
+
+    Dim ref_name As Variant
+    For Each ref_name In references
+        Dim ref_idx As Long
+        ref_idx = pFindDefinitionIndex(CStr(ref_name))
+        If ref_idx < 0 Then
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & CStr(ref_name) & ")"
+        End If
+        Call pMarkDependentDefinition(ref_idx, Needed)
+    Next ref_name
+End Sub
+
+Private Function pCopyDefinition( _
+        ByVal DetailDefinition As DetailColumnDefinition, _
+        ByVal OptionalExtraction As Boolean, _
+        ByVal IgnoreDerivedBlankMode As Boolean) As DetailColumnDefinition
+
+    Dim blank_mode As String
+    blank_mode = DetailDefinition.BlankMode
+
+    If DetailDefinition.IsDerived Then
+        If IgnoreDerivedBlankMode Then blank_mode = "AllowBlank"
+        Set pCopyDefinition = New_DetailColumnDefinition( _
+                DetailDefinition.OutputColumnName, _
+                "", _
+                ValueExpression:=DetailDefinition.ValueExpression, _
+                BlankMode:=blank_mode)
+        Exit Function
+    End If
+
+    Dim is_required As Boolean
+    is_required = DetailDefinition.IsRequired
+    If OptionalExtraction Then
+        is_required = False
+        blank_mode = "AllowBlank"
+    End If
+
+    Set pCopyDefinition = New_DetailColumnDefinition( _
+            DetailDefinition.OutputColumnName, _
+            DetailDefinition.Selector, _
+            ExtractType:=DetailDefinition.ExtractType, _
+            AttributeName:=DetailDefinition.AttributeName, _
+            IsRequired:=is_required, _
+            BlankMode:=blank_mode)
+End Function
+
 '* 値解決を初期化します。
 '*
 '* @param DetailColumnDefinitions 詳細ページ列定義の一覧。
@@ -164,7 +265,9 @@ End Function
 '*
 '* @param ExtractionValues ExtractionColumnDefinitions と同じ順序の抽出値。
 '* @return 元の詳細ページ列定義と同じ順序の値。
-Public Function ResolveValues(ByVal ExtractionValues As ArrayObject) As ArrayObject
+Public Function ResolveValues( _
+        ByVal ExtractionValues As ArrayObject, _
+        Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ArrayObject
     Call pCheckInit
     If ExtractionValues Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ExtractionValues は必須です。"
@@ -194,12 +297,27 @@ Public Function ResolveValues(ByVal ExtractionValues As ArrayObject) As ArrayObj
 
     For def_idx = 0 To pDefinitions.Count - 1
         Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then Call pResolveDefinitionValue(def_idx)
+        If detail_def.IsDerived Then
+            Dim derived_value As String
+            derived_value = pResolveDefinitionValue(def_idx)
+            If ValidateDerivedBlankMode Then Call pValidateDerivedBlankMode(detail_def, derived_value)
+        End If
     Next def_idx
 
     Set ResolveValues = pResolvedValues
     Set pResolvedValues = Nothing
 End Function
+
+
+Private Sub pValidateDerivedBlankMode( _
+        ByVal DetailDefinition As DetailColumnDefinition, _
+        ByVal DerivedValue As String)
+
+    If StrComp(DetailDefinition.BlankMode, "ErrorIfBlank", vbTextCompare) <> 0 Then Exit Sub
+    If DerivedValue <> "" Then Exit Sub
+
+    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列の値が空欄です。(" & DetailDefinition.OutputColumnName & ")"
+End Sub
 
 Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As String
     If pResolveState(DefinitionIndex) = C_STATE_RESOLVED Then

@@ -26,6 +26,7 @@ Private pIsInitialized As Boolean
 Private pExpression As String
 Private pDetailDefinitions As ObjectList
 Private pReferencedDefinitions As ObjectList
+Private pReferencedValueDefinitions As ObjectList
 Private pEvalValues As ArrayObject
 Private pEvalMode As Long
 Private pPosition As Long
@@ -48,13 +49,21 @@ Public Property Get ReferencedColumnDefinitions() As ObjectList
         Dim src_def As DetailColumnDefinition
         Set src_def = pReferencedDefinitions.Item(def_idx)
         ' 条件判定用の先読みでは、参照列が読めない場合も空文字列として評価します。
-        Call result_value.Add(New_DetailColumnDefinition( _
-                src_def.OutputColumnName, _
-                src_def.Selector, _
-                ExtractType:=src_def.ExtractType, _
-                AttributeName:=src_def.AttributeName, _
-                IsRequired:=False, _
-                BlankMode:="AllowBlank"))
+        If src_def.IsDerived Then
+            Call result_value.Add(New_DetailColumnDefinition( _
+                    src_def.OutputColumnName, _
+                    "", _
+                    ValueExpression:=src_def.ValueExpression, _
+                    BlankMode:="AllowBlank"))
+        Else
+            Call result_value.Add(New_DetailColumnDefinition( _
+                    src_def.OutputColumnName, _
+                    src_def.Selector, _
+                    ExtractType:=src_def.ExtractType, _
+                    AttributeName:=src_def.AttributeName, _
+                    IsRequired:=False, _
+                    BlankMode:="AllowBlank"))
+        End If
     Next def_idx
 
     Set ReferencedColumnDefinitions = result_value
@@ -72,6 +81,7 @@ Public Sub Initialize(ByVal Expression As String, ByVal DetailColumnDefinitions 
     pExpression = Trim$(Expression)
     Set pDetailDefinitions = DetailColumnDefinitions
     Set pReferencedDefinitions = New_ObjectList("DetailColumnDefinition")
+    Set pReferencedValueDefinitions = Nothing
     pEvalMode = C_EVAL_MODE_VALIDATE
     Set pEvalValues = Nothing
     pPosition = 1
@@ -132,14 +142,29 @@ End Function
 
 '* 参照列だけを読み取った値に基づき、出力対象か否かを返します。
 Public Function ShouldOutputByReferencedValues(ByVal ReferencedValues As ArrayObject) As Boolean
+    ShouldOutputByReferencedValues = ShouldOutputByColumnValues(ReferencedValues, pReferencedDefinitions)
+End Function
+
+'* 指定された列定義に対応する値に基づき、出力対象か否かを返します。
+Public Function ShouldOutputByColumnValues( _
+        ByVal ReferencedValues As ArrayObject, _
+        ByVal ValueDefinitions As ObjectList) As Boolean
+
     Call pCheckInit
+    If ReferencedValues Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ReferencedValues は必須です。"
+    End If
+    If ValueDefinitions Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueDefinitions は必須です。"
+    End If
 
     If Not IsEnabled Then
-        ShouldOutputByReferencedValues = True
+        ShouldOutputByColumnValues = True
         Exit Function
     End If
 
     Set pEvalValues = ReferencedValues
+    Set pReferencedValueDefinitions = ValueDefinitions
     pEvalMode = C_EVAL_MODE_REFERENCED_VALUES
     pPosition = 1
 
@@ -148,7 +173,8 @@ Public Function ShouldOutputByReferencedValues(ByVal ReferencedValues As ArrayOb
     Call pRequireExpressionEnd
 
     Set pEvalValues = Nothing
-    ShouldOutputByReferencedValues = result_value
+    Set pReferencedValueDefinitions = Nothing
+    ShouldOutputByColumnValues = result_value
 End Function
 
 Private Sub pCheckInit()
@@ -266,7 +292,7 @@ Private Function pReadColumnValue(ByVal ColumnName As String) As String
             pReadColumnValue = Trim$(CStr(pEvalValues.Item(def_idx)))
         Case C_EVAL_MODE_REFERENCED_VALUES
             Dim ref_idx As Long
-            ref_idx = pFindDefinitionIndex(ColumnName, pReferencedDefinitions)
+            ref_idx = pFindDefinitionIndex(ColumnName, pReferencedValueDefinitions)
             If ref_idx < 0 Then
                 Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="参照列値に OutputColumnName が含まれていません。(" & ColumnName & ")"
             End If

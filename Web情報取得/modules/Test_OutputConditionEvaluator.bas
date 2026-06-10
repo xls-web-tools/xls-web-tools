@@ -244,3 +244,29 @@ Public Sub Test_OutputConditionEvaluator_ğŒQÆ—ñ‚Í”CˆÓ—ñ‚Æ‚µ‚Ä“Ç‚İæ‚é(ByVal 
     Call Assert.IsFalse(referenced_def.IsRequired, "ğŒQÆ—ñ‚Í selector Œ‡—‚ğ‹ó•¶š—ñˆµ‚¢‚Å‚«‚é‚æ‚¤”CˆÓ—ñ‚Æ‚µ‚Ä“Ç‚Ş")
     Assert.Equals "AllowBlank", referenced_def.BlankMode
 End Sub
+
+Public Sub Test_OutputConditionEvaluator_”h¶—ñ‚ğğŒQÆ—ñ‚Æ‚µ‚Ä•Ô‚·(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ³—ñ", "#source"))
+    Call detail_defs.Add(New_DetailColumnDefinition("”h¶", "", ValueExpression:="[Œ³—ñ]"))
+
+    Dim evaluator As OutputConditionEvaluator
+    Set evaluator = New OutputConditionEvaluator
+    Call evaluator.Initialize("[”h¶] == ""‘ÎÛ""", detail_defs)
+
+    Dim referenced_defs As ObjectList
+    Set referenced_defs = evaluator.ReferencedColumnDefinitions
+
+    Dim referenced_def As DetailColumnDefinition
+    Set referenced_def = referenced_defs.Item(0)
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, referenced_defs.Count
+    Assert.Equals "”h¶", referenced_def.OutputColumnName
+    Assert.IsTrue referenced_def.IsDerived
+    Assert.Equals "[Œ³—ñ]", referenced_def.ValueExpression
+    Assert.Equals "AllowBlank", referenced_def.BlankMode
+End Sub

@@ -226,10 +226,30 @@ Private Function pShouldOutputByCondition() As Boolean
         Exit Function
     End If
 
-    Dim referenced_values As ArrayObject
-    Set referenced_values = pSessionClient.ReadDetailColumnValues(pConditionEvaluator.ReferencedColumnDefinitions)
+    Dim condition_defs As ObjectList
+    Set condition_defs = pValueResolver.BuildDependentDefinitions( _
+            pConditionEvaluator.ReferencedColumnDefinitions, _
+            OptionalExtraction:=True, _
+            IgnoreDerivedBlankMode:=True)
 
-    pShouldOutputByCondition = pConditionEvaluator.ShouldOutputByReferencedValues(referenced_values)
+    Dim condition_resolver As DetailValueResolver
+    Set condition_resolver = New DetailValueResolver
+    Call condition_resolver.Initialize(condition_defs)
+
+    Dim extraction_defs As ObjectList
+    Set extraction_defs = condition_resolver.ExtractionColumnDefinitions
+
+    Dim extraction_values As ArrayObject
+    If extraction_defs.Count = 0 Then
+        Set extraction_values = pCreateBlankDetailValues(extraction_defs)
+    Else
+        Set extraction_values = pSessionClient.ReadDetailColumnValues(extraction_defs)
+    End If
+
+    Dim referenced_values As ArrayObject
+    Set referenced_values = condition_resolver.ResolveValues(extraction_values, ValidateDerivedBlankMode:=False)
+
+    pShouldOutputByCondition = pConditionEvaluator.ShouldOutputByColumnValues(referenced_values, condition_defs)
 End Function
 
 Private Function pBuildIndexedTransitionOperation( _
