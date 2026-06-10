@@ -302,65 +302,78 @@ Public Function New_WebDriverProcess( _
     Set New_WebDriverProcess = result_value
 End Function
 
-'* WebDriver smoke runner を生成します。
+'* WebDriver session lifecycle を生成します。
 '*
 '* @param Process WebDriver process 操作。
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
+'* @param KeepVisibleBrowserOnError True の場合、可視ブラウザ診断のエラー時に session と process を残します。
+'* @return 初期化済みの WebDriver session lifecycle。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSessionLifecycle に委譲します。
+Public Function New_WebDriverSessionLifecycle( _
+        ByVal Process As IWebDriverProcess, _
+        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Settings As IToolSettings, _
+        Optional ByVal KeepVisibleBrowserOnError As Boolean = False) As WebDriverSessionLifecycle
+
+    Dim result_value As WebDriverSessionLifecycle
+    Set result_value = New WebDriverSessionLifecycle
+    Call result_value.Initialize(Process, SessionClient, Settings, KeepVisibleBrowserOnError:=KeepVisibleBrowserOnError)
+
+    Set New_WebDriverSessionLifecycle = result_value
+End Function
+
+'* WebDriver smoke runner を生成します。
+'*
+'* @param Lifecycle WebDriver session lifecycle。
 '* @return 初期化済みの WebDriver smoke runner。
 '*
 '* @details
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSmokeRunner に委譲します。
-Public Function New_WebDriverSmokeRunner( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
-        ByVal Settings As IToolSettings) As WebDriverSmokeRunner
-
+Public Function New_WebDriverSmokeRunner(ByVal Lifecycle As WebDriverSessionLifecycle) As WebDriverSmokeRunner
     Dim result_value As WebDriverSmokeRunner
     Set result_value = New WebDriverSmokeRunner
-    Call result_value.Initialize(Process, SessionClient, Settings)
+    Call result_value.Initialize(Lifecycle)
 
     Set New_WebDriverSmokeRunner = result_value
 End Function
 
 '* Web navigation diagnostic runner を生成します。
 '*
-'* @param Process WebDriver process 操作。
-'* @param SessionClient WebDriver session client。
+'* @param Lifecycle WebDriver session lifecycle。
 '* @param Settings Web情報取得の設定。
 '* @return 初期化済みの Web navigation diagnostic runner。
 '*
 '* @details
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebNavDiagnosticRunner に委譲します。
 Public Function New_WebNavDiagnosticRunner( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
         ByVal Settings As IToolSettings) As WebNavDiagnosticRunner
 
     Dim result_value As WebNavDiagnosticRunner
     Set result_value = New WebNavDiagnosticRunner
-    Call result_value.Initialize(Process, SessionClient, Settings)
+    Call result_value.Initialize(Lifecycle, Settings)
 
     Set New_WebNavDiagnosticRunner = result_value
 End Function
 
 '* Web collection runner を生成します。
 '*
-'* @param Process WebDriver process 操作。
-'* @param SessionClient WebDriver session client。
+'* @param Lifecycle WebDriver session lifecycle。
 '* @param Settings Web情報取得の設定。
 '* @return 初期化済みの Web collection runner。
 '*
 '* @details
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebCollectionRunner に委譲します。
 Public Function New_WebCollectionRunner( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
         ByVal Settings As IToolSettings) As WebCollectionRunner
 
     Dim result_value As WebCollectionRunner
     Set result_value = New WebCollectionRunner
-    Call result_value.Initialize(Process, SessionClient, Settings)
+    Call result_value.Initialize(Lifecycle, Settings)
 
     Set New_WebCollectionRunner = result_value
 End Function

@@ -36,8 +36,11 @@ Public Sub RunDiagnostic_Click()
     Dim process As WebDriverProcess
     Set process = New_WebDriverProcess(FsSrv, New_WebDriverPortProbe())
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, settings)
 
     Call runner.Run
 
@@ -101,8 +104,11 @@ Public Sub Collect_Click()
     Dim process As WebDriverProcess
     Set process = New_WebDriverProcess(FsSrv, New_WebDriverPortProbe())
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, settings)
+    Set runner = New_WebCollectionRunner(lifecycle, settings)
 
     Call runner.Run
 

@@ -33,8 +33,11 @@ Public Sub Test_WebDriverSmokeRunner_Process‹N“®‚©‚çSessionQuit‚Ü‚Å’Ê‚·(ByVal As
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebDriverSmokeRunner
-    Set runner = New_WebDriverSmokeRunner(process, session_client, tool_settings)
+    Set runner = New_WebDriverSmokeRunner(lifecycle)
 
     ' --- Act ---
     Dim actual_session_id As String

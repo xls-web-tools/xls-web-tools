@@ -17,37 +17,21 @@ Option Base 0
 '!
 ' #############################################################################
 
-Private pProcess As IWebDriverProcess
-Private pSessionClient As WebDriverSessionClient
-Private pSettings As IToolSettings
+Private pLifecycle As WebDriverSessionLifecycle
 Private pIsInitialized As Boolean
 
 '* WebDriver smoke runner を初期化します。
 '*
-'* @param Process WebDriver process 操作。
-'* @param SessionClient WebDriver session client。
-'* @param Settings Web情報取得の設定。
+'* @param Lifecycle WebDriver session lifecycle。
 '*
 '* @details
-'* process 起動、session 作成、quit、process 終了の依存を外部から渡します。
-Public Sub Initialize( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
-        ByVal Settings As IToolSettings)
-
-    If Process Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSmokeRunner", Description:="Process は必須です。"
-    End If
-    If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSmokeRunner", Description:="SessionClient は必須です。"
-    End If
-    If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSmokeRunner", Description:="Settings は必須です。"
+'* process 起動、session 作成、quit、process 終了の依存を lifecycle に委譲します。
+Public Sub Initialize(ByVal Lifecycle As WebDriverSessionLifecycle)
+    If Lifecycle Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSmokeRunner", Description:="Lifecycle は必須です。"
     End If
 
-    Set pProcess = Process
-    Set pSessionClient = SessionClient
-    Set pSettings = Settings
+    Set pLifecycle = Lifecycle
     pIsInitialized = True
 End Sub
 
@@ -56,18 +40,15 @@ End Sub
 '* @return 作成された session id。
 '*
 '* @details
-'* WebDriver process 起動、session 作成、quit、process 終了を順に実行します。途中で失敗した場合も起動済み process の終了を試みます。
+'* WebDriver session lifecycle の開始と正常終了を通します。
 Public Function Run() As String
     Call pCheckInit
 
     On Error GoTo ON_ERROR
 
-    Call pProcess.Start(pSettings)
-
     Dim result_value As String
-    result_value = pSessionClient.CreateSession()
-    Call pSessionClient.QuitSession(result_value)
-    Call pProcess.StopProcess
+    result_value = pLifecycle.StartSession()
+    Call pLifecycle.FinishSession
 
     On Error GoTo 0
     Run = result_value
@@ -85,9 +66,7 @@ ON_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    On Error Resume Next
-    Call pProcess.StopProcess
-    On Error GoTo 0
+    Call pLifecycle.CleanupAfterError(err_desc)
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Function

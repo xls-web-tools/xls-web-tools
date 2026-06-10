@@ -19,7 +19,7 @@ Option Base 0
 
 Private Const C_PROGRESS_TASK_NAME As String = "取得中"
 
-Private pProcess As IWebDriverProcess
+Private pLifecycle As WebDriverSessionLifecycle
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pSucceededCount As Long
@@ -62,29 +62,24 @@ End Property
 
 '* Web collection runner を初期化します。
 '*
-'* @param Process WebDriver process 操作。
-'* @param SessionClient WebDriver session client。
+'* @param Lifecycle WebDriver session lifecycle。
 '* @param Settings Web情報取得の設定。
 '*
 '* @details
-'* process 起動、session 操作、settings 読み取りの依存を外部から渡します。
+'* session lifecycle の開始、正常終了、エラー時 cleanup は lifecycle に委譲します。
 Public Sub Initialize( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
         ByVal Settings As IToolSettings)
 
-    If Process Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="Process は必須です。"
-    End If
-    If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="SessionClient は必須です。"
+    If Lifecycle Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="Settings は必須です。"
     End If
 
-    Set pProcess = Process
-    Set pSessionClient = SessionClient
+    Set pLifecycle = Lifecycle
+    Set pSessionClient = Lifecycle.SessionClient
     Set pSettings = Settings
     pSucceededCount = 0
     pSkippedCount = 0
@@ -118,9 +113,7 @@ Public Function Run() As String
     Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
-    Call pProcess.Start(pSettings)
-
-    result_value = pSessionClient.CreateSession()
+    result_value = pLifecycle.StartSession()
     Call pSessionClient.NavigateToStartUrl
     Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
     Call pOpenListPage
@@ -131,8 +124,7 @@ Public Function Run() As String
     Call pCollectPages(output_writer, detail_runner)
     Call pMarkProgressComplete
 
-    Call pSessionClient.QuitSession(result_value)
-    Call pProcess.StopProcess
+    Call pLifecycle.FinishSession
 
     On Error GoTo 0
     Run = result_value
@@ -152,9 +144,8 @@ ON_ERROR:
 
     On Error Resume Next
     Call pClearProgress
-    If result_value <> "" Then Call pSessionClient.QuitSession(result_value)
-    Call pProcess.StopProcess
     On Error GoTo 0
+    Call pLifecycle.CleanupAfterError(err_desc)
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Function

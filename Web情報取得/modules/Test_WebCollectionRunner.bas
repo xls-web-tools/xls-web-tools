@@ -111,8 +111,11 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
 
     Set ProgStat = Nothing
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+    Set runner = New_WebCollectionRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -205,8 +208,11 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
     Set ProgStat = New ProgressStatus
     Application.StatusBar = False
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+    Set runner = New_WebCollectionRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -304,8 +310,11 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
 
     Set ProgStat = Nothing
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+    Set runner = New_WebCollectionRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -400,8 +409,11 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
 
     Set ProgStat = New ProgressStatus
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+    Set runner = New_WebCollectionRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -498,8 +510,11 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
 
     Set ProgStat = New ProgressStatus
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
     Dim runner As WebCollectionRunner
-    Set runner = New_WebCollectionRunner(process, session_client, tool_settings)
+    Set runner = New_WebCollectionRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run

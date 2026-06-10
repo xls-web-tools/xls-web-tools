@@ -17,7 +17,7 @@ Option Base 0
 '!
 ' #############################################################################
 
-Private pProcess As IWebDriverProcess
+Private pLifecycle As WebDriverSessionLifecycle
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pListItemTargetId As String
@@ -45,29 +45,24 @@ End Property
 
 '* WebDriver navigation diagnostic runner を初期化します。
 '*
-'* @param Process WebDriver process 操作。
-'* @param SessionClient WebDriver session client。
+'* @param Lifecycle WebDriver session lifecycle。
 '* @param Settings Web情報取得の設定。
 '*
 '* @details
-'* process 起動、session 操作、settings 読み取りの依存を外部から渡します。
+'* session lifecycle の開始、正常終了、エラー時 cleanup は lifecycle に委譲します。
 Public Sub Initialize( _
-        ByVal Process As IWebDriverProcess, _
-        ByVal SessionClient As WebDriverSessionClient, _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
         ByVal Settings As IToolSettings)
 
-    If Process Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="Process は必須です。"
-    End If
-    If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="SessionClient は必須です。"
+    If Lifecycle Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="Settings は必須です。"
     End If
 
-    Set pProcess = Process
-    Set pSessionClient = SessionClient
+    Set pLifecycle = Lifecycle
+    Set pSessionClient = Lifecycle.SessionClient
     Set pSettings = Settings
     pListItemTargetId = ""
     pTargetId = ""
@@ -80,7 +75,7 @@ End Sub
 '* @return 作成された session id。
 '*
 '* @details
-'* WebDriver process 起動、session 作成、取得開始 URL 遷移、認証後起点 selector 待機、一覧遷移操作、一覧 selector 待機、詳細遷移操作、対象ID取得、quit、process 終了を順に実行します。
+'* WebDriver session lifecycle を開始し、取得開始 URL 遷移、認証後起点 selector 待機、一覧遷移操作、一覧 selector 待機、詳細遷移操作、対象ID取得を順に実行します。
 Public Function Run() As String
     Call pCheckInit
 
@@ -93,9 +88,7 @@ Public Function Run() As String
     Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
-    Call pProcess.Start(pSettings)
-
-    result_value = pSessionClient.CreateSession()
+    result_value = pLifecycle.StartSession()
     Call pSessionClient.NavigateToStartUrl
     Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
 
@@ -105,8 +98,7 @@ Public Function Run() As String
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pRunFirstDetail(detail_runner)
 
-    Call pSessionClient.QuitSession(result_value)
-    Call pProcess.StopProcess
+    Call pLifecycle.FinishSession
 
     On Error GoTo 0
     Run = result_value
@@ -124,14 +116,7 @@ ON_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    If pShouldKeepBrowserForDiagnostic(result_value) Then
-        err_desc = err_desc & vbCrLf & "Headless=False のため、診断用にブラウザを残しました。確認後、ブラウザを閉じてください。"
-    Else
-        On Error Resume Next
-        If result_value <> "" Then Call pSessionClient.QuitSession(result_value)
-        Call pProcess.StopProcess
-        On Error GoTo 0
-    End If
+    Call pLifecycle.CleanupAfterError(err_desc)
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Function
@@ -171,9 +156,6 @@ Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
             run_result.DownloadStatus)
 End Sub
 
-Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
-    pShouldKeepBrowserForDiagnostic = ((Not pSettings.Headless) And SessionId <> "")
-End Function
 
 Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
     Dim operations As ObjectList

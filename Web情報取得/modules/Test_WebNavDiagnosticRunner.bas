@@ -56,8 +56,11 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -142,8 +145,11 @@ Public Sub Test_WebNavDiagnosticRunner_æ“ªˆê——€–Ú‚©‚çÚ×ƒy[ƒW‚Ö“ü‚è‘ÎÛID‚ğ’
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -271,8 +277,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚ÉŠî‚Ã‚­f’fo—Ís‚ğ‘‚­(ByVal 
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -357,8 +366,11 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñƒwƒbƒ_[‚É’Pƒ—ñQÆ‚Ì’l‚ğ‘‚­(ByVa
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -442,8 +454,11 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñ‚ğo—Í‘ÎÛğŒ‚ÅQÆ‚µ‚Äf’fs‚ğ‘‚
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -526,8 +541,11 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒˆê’vŒã‚Ì”h¶—ñBlankMode‹ó—“‚ÍERRORs‚
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -609,8 +627,11 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚ç”h¶—ñBlankMode‹ó—“‚Å‚àERRO
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -686,8 +707,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àŒÅ’èŠÇ——ñ‚¾‚¯‚Ìf’fs‚
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -781,8 +805,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚ÅDownloadRequired‚È‚çNO_FI
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -889,8 +916,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -980,8 +1010,11 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚çf’fo—Ís‚ğ‘‚©‚È‚¢(ByVal 
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Dim actual_session_id As String
@@ -1094,8 +1127,11 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -1175,8 +1211,11 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——ã‚ÆÚ×ƒy[ƒW‚Ì‘ÎÛID•sˆê’v‚ÍƒGƒ‰[(
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -1218,8 +1257,11 @@ Public Sub Test_WebNavDiagnosticRunner_‰Â‹ƒuƒ‰ƒEƒUf’f’†‚ÌƒGƒ‰[‚Å‚Íƒuƒ‰ƒEƒU‚ğ
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -1305,8 +1347,11 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×ƒy[ƒWŒã‚Éˆê——•œ‹AƒŠƒ“ƒN‚Å–ß‚é(ByVal 
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
@@ -1389,8 +1434,11 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——•œ‹A¸”s‚Í•œ‹A•s”\ƒGƒ‰[‚É‚·‚é(ByVal 
     Dim process As WebDriverProcessTestDouble
     Set process = New WebDriverProcessTestDouble
 
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings, KeepVisibleBrowserOnError:=True)
+
     Dim runner As WebNavDiagnosticRunner
-    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+    Set runner = New_WebNavDiagnosticRunner(lifecycle, tool_settings)
 
     ' --- Act ---
     Call runner.Run
