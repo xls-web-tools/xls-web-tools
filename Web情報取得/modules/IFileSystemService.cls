@@ -64,6 +64,7 @@ End Function
 '* @details
 '* 指定されたディレクトリにあるファイルの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
 '* 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
+'* 列挙中に個別のファイルが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
 Public Function GetFileList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
 End Function
 
@@ -78,6 +79,7 @@ End Function
 '* @details
 '* 指定されたディレクトリにあるサブ ディレクトリの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
 '* 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
+'* 列挙中に個別のサブ ディレクトリが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
 Public Function GetDirectoryList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
 End Function
 

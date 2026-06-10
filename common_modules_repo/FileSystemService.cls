@@ -21,6 +21,9 @@ Implements IFileSystemService
 'Private pFSO As Object
 Private pFSO As Scripting.FileSystemObject
 
+Private Const C_ERR_FILE_NOT_FOUND As Long = 53
+Private Const C_ERR_PATH_NOT_FOUND As Long = 76
+
 Private Sub Class_Initialize()
     Set pFSO = CreateObject("Scripting.FileSystemObject")
     'Set pFSO = New Scripting.FileSystemObject
@@ -136,6 +139,7 @@ End Sub
 ' @details
 ' 指定されたディレクトリにあるファイルの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
 ' 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
+' 列挙中に個別のファイルが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
 Public Function GetFileList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
@@ -161,6 +165,7 @@ End Function
 ' @details
 ' 指定されたディレクトリにあるサブ ディレクトリの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
 ' 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
+' 列挙中に個別のサブ ディレクトリが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
 Public Function GetDirectoryList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
@@ -218,10 +223,14 @@ Private Function pFilterFiles(ByVal FileList As Object, ByVal CatchRegExp As Str
     Call pCreateRegExpObject(catch_re, ignore_re, CatchRegExp, IgnoreRegExp, IgnoreCase)
 
     Dim result_arr() As String
-    Dim arr_item As Object 'Scripting.File
+    Dim arr_item As Object 'Scripting.File / Scripting.Folder
     For Each arr_item In FileList
-        If pIsMatchRegExp(arr_item.Name, catch_re, ignore_re) Then
-            Call pAddItemToStringArray(result_arr, arr_item.Path)
+        Dim item_name As String
+        Dim item_path As String
+        If pTryReadFileListItem(item_name, item_path, arr_item) Then
+            If pIsMatchRegExp(item_name, catch_re, ignore_re) Then
+                Call pAddItemToStringArray(result_arr, item_path)
+            End If
         End If
     Next arr_item
 
@@ -230,6 +239,63 @@ Private Function pFilterFiles(ByVal FileList As Object, ByVal CatchRegExp As Str
     Else
         pFilterFiles = result_arr
     End If
+End Function
+
+Private Function pTryReadFileListItem(ByRef ItemName As String, ByRef ItemPath As String, ByVal FileListItem As Object) As Boolean
+    Dim err_num As Long
+    Dim err_source As String
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+
+    Err.Clear
+    On Error Resume Next
+    ItemName = FileListItem.Name
+    err_num = Err.Number
+    err_source = Err.Source
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+    Err.Clear
+    On Error GoTo 0
+
+    If err_num <> 0 Then
+        If pIsMissingEnumeratedItemError(err_num) Then
+            pTryReadFileListItem = False
+            Exit Function
+        End If
+        Err.Raise Number:=err_num, Source:=err_source, Description:=err_desc, HelpFile:=err_help_file, HelpContext:=err_help_context
+    End If
+
+    Err.Clear
+    On Error Resume Next
+    ItemPath = FileListItem.Path
+    err_num = Err.Number
+    err_source = Err.Source
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+    Err.Clear
+    On Error GoTo 0
+
+    If err_num <> 0 Then
+        If pIsMissingEnumeratedItemError(err_num) Then
+            pTryReadFileListItem = False
+            Exit Function
+        End If
+        Err.Raise Number:=err_num, Source:=err_source, Description:=err_desc, HelpFile:=err_help_file, HelpContext:=err_help_context
+    End If
+
+    pTryReadFileListItem = True
+End Function
+
+Private Function pIsMissingEnumeratedItemError(ByVal ErrorNumber As Long) As Boolean
+    Select Case ErrorNumber
+        Case C_ERR_FILE_NOT_FOUND, C_ERR_PATH_NOT_FOUND
+            pIsMissingEnumeratedItemError = True
+        Case Else
+            pIsMissingEnumeratedItemError = False
+    End Select
 End Function
 
 Private Sub pAddItemToStringArray(ByRef TargetArray() As String, ByVal ItemToBeAdded As String)
