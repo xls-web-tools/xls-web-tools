@@ -71,16 +71,19 @@ frame 内の要素を指定する場合は、`frame selector >> target selector`
 
 ## 詳細ページ列定義
 
-`settings` シート右側の `OutputColumnName` から `BlankMode` までの表に、詳細ページから抽出したい列を入力します。`output` へ出したい列は、`output` シート 1 行目の E 列以降に `OutputColumnName` と一致するヘッダーとして入力します。
+`settings` シート右側の `OutputColumnName`, `Selector`, `ExtractType`, `AttributeName`, `IsRequired`, `ValueExpression`, `BlankMode` の固定順テーブルに、詳細ページから抽出または派生したい列を入力します。`output` へ出したい列は、`output` シート 1 行目の E 列以降に `OutputColumnName` と一致するヘッダーとして入力します。
 
 | 列 | 説明 |
 | --- | --- |
-| `OutputColumnName` | 詳細ページから抽出する列名。重複しない名前にします。 |
-| `Selector` | 詳細ページ上の取得対象 CSS selector。 |
+| `OutputColumnName` | 詳細ページ列名。重複しない名前にします。 |
+| `Selector` | 通常の抽出列で使う、詳細ページ上の取得対象 CSS selector。派生列では空欄にします。 |
 | `ExtractType` | `InnerText`、`TextContent`、`Attribute` のいずれか。空欄なら `InnerText` です。 |
 | `AttributeName` | `ExtractType` が `Attribute` の場合に読む属性名。 |
-| `IsRequired` | `1` / `True` なら必須項目として扱います。 |
-| `BlankMode` | 必須項目が空欄のときにエラーにする場合は `ErrorIfBlank`、許容する場合は `AllowBlank`。 |
+| `IsRequired` | 通常の抽出列で `1` / `True` なら必須項目として扱います。派生列では `True` にできません。 |
+| `ValueExpression` | 派生列で使う値式。単純な別名は `[元列名]` の形式で指定します。通常の抽出列では空欄にします。 |
+| `BlankMode` | 必須項目または派生値が空欄のときにエラーにする場合は `ErrorIfBlank`、許容する場合は `AllowBlank`。 |
+
+通常の抽出列は `Selector` を指定して `ValueExpression` を空欄にします。派生列は `Selector` を空欄にして `ValueExpression` を指定します。両方空欄、または両方指定された非空行は settings エラーです。
 
 ## 出力対象条件
 

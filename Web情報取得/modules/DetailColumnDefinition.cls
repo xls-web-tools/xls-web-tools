@@ -23,6 +23,7 @@ Private pSelector As String
 Private pExtractType As String
 Private pAttributeName As String
 Private pIsRequired As Boolean
+Private pValueExpression As String
 Private pBlankMode As String
 
 '* 出力列名。
@@ -55,6 +56,18 @@ Public Property Get IsRequired() As Boolean
     IsRequired = pIsRequired
 End Property
 
+'* 値式。
+Public Property Get ValueExpression() As String
+    Call pCheckInit
+    ValueExpression = pValueExpression
+End Property
+
+'* 派生列か否か。
+Public Property Get IsDerived() As Boolean
+    Call pCheckInit
+    IsDerived = (Trim$(pValueExpression) <> "")
+End Property
+
 '* 空欄時の扱い。
 Public Property Get BlankMode() As String
     Call pCheckInit
@@ -68,24 +81,36 @@ End Property
 '* @param ExtractType 取得種別。
 '* @param AttributeName attribute 取得時の属性名。
 '* @param IsRequired True の場合は必須列として扱います。
+'* @param ValueExpression 値式。
 '* @param BlankMode 空欄時の扱い。
 '*
 '* @details
-'* OutputColumnName と Selector は必須です。ExtractType、AttributeName、IsRequired、BlankMode は
-'* DOM 抽出時の列ごとの振る舞いを指定するために保持します。
+'* OutputColumnName は必須です。通常の抽出列は Selector を、派生列は ValueExpression を指定します。
+'* ExtractType、AttributeName、IsRequired、BlankMode は DOM 抽出時の列ごとの振る舞いを指定するために保持します。
 Public Sub Initialize( _
         ByVal OutputColumnName As String, _
         ByVal Selector As String, _
         Optional ByVal ExtractType As String = "InnerText", _
         Optional ByVal AttributeName As String = "", _
         Optional ByVal IsRequired As Boolean = False, _
+        Optional ByVal ValueExpression As String = "", _
         Optional ByVal BlankMode As String = "AllowBlank")
 
     If Trim$(OutputColumnName) = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="OutputColumnName は必須です。"
     End If
-    If Trim$(Selector) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="Selector は必須です。(" & OutputColumnName & ")"
+
+    Dim has_selector As Boolean
+    has_selector = (Trim$(Selector) <> "")
+
+    Dim has_value_expression As Boolean
+    has_value_expression = (Trim$(ValueExpression) <> "")
+
+    If has_selector = has_value_expression Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="Selector と ValueExpression はどちらか一方だけを指定してください。(" & OutputColumnName & ")"
+    End If
+    If has_value_expression And IsRequired Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="派生列では IsRequired=True を指定できません。(" & OutputColumnName & ")"
     End If
 
     pOutputColumnName = OutputColumnName
@@ -93,6 +118,7 @@ Public Sub Initialize( _
     pExtractType = ExtractType
     pAttributeName = AttributeName
     pIsRequired = IsRequired
+    pValueExpression = ValueExpression
     pBlankMode = BlankMode
     pIsInitialized = True
 End Sub

@@ -266,6 +266,7 @@ Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_DownloadEnabledTrueÇ≈ÉäÉìÉNSelectorñ
     ' --- Assert ---
     Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
 End Sub
+
 Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_ëÄçÏíËã`Ç∆óÒíËã`Çì«Ç›éÊÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -316,6 +317,97 @@ End Sub
 
 
 
+
+Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_ValueExpressionïtÇ´óÒíËã`Çì«Ç›éÊÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetDetailColumnTableWithValueExpression(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    Dim normal_column As DetailColumnDefinition
+    Set normal_column = detail_columns.Item(0)
+
+    Dim derived_column As DetailColumnDefinition
+    Set derived_column = detail_columns.Item(1)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 2, detail_columns.Count
+    Assert.Equals "å≥óÒ", normal_column.OutputColumnName
+    Assert.Equals "#source", normal_column.Selector
+    Assert.Equals "", CStr(CallByName(normal_column, "ValueExpression", VbGet))
+    Assert.Equals "ï ñº", derived_column.OutputColumnName
+    Assert.Equals "", derived_column.Selector
+    Assert.Equals "[å≥óÒ]", CStr(CallByName(derived_column, "ValueExpression", VbGet))
+    Assert.IsFalse derived_column.IsRequired
+    Assert.Equals "AllowBlank", derived_column.BlankMode
+End Sub
+
+Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_óÒíËã`ÇÃSelectorÇ∆ValueExpressionÇ™óºï˚ãÛÇ»ÇÁÉGÉâÅ[(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetInvalidDetailColumnTable(ws_stub, "", "False", "")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+End Sub
+
+Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_óÒíËã`ÇÃSelectorÇ∆ValueExpressionÇ™óºï˚éwíËÇ»ÇÁÉGÉâÅ[(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetInvalidDetailColumnTable(ws_stub, "#alias", "False", "[å≥óÒ]")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+End Sub
+
+Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_îhê∂óÒIsRequiredTrueÇÕÉGÉâÅ[(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetInvalidDetailColumnTable(ws_stub, "", "True", "[å≥óÒ]")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim detail_columns As ObjectList
+    Set detail_columns = tool_settings.DetailColumnDefinitions
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+End Sub
 
 Public Sub Test_ToolSettings_SettingsÉVÅ[Ég_ïKê{ê›íËïsë´ÇÕÉGÉâÅ[(ByVal Assert As UnitTestAssert)
     On Error Resume Next
@@ -419,27 +511,83 @@ End Sub
 
 
 
-Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
+Private Sub pSetInvalidDetailColumnTable( _
+        ByVal WsStub As WorksheetServiceTestDouble, _
+        ByVal Selector As String, _
+        ByVal IsRequiredText As String, _
+        ByVal ValueExpression As String)
+
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=15, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=15, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
-    ReDim table_values(1 To 2, 1 To 6)
+    ReDim table_values(1 To 1, 1 To 7)
+    table_values(1, 1) = "ïsê≥óÒ"
+    table_values(1, 2) = Selector
+    table_values(1, 3) = "InnerText"
+    table_values(1, 4) = ""
+    table_values(1, 5) = IsRequiredText
+    table_values(1, 6) = ValueExpression
+    table_values(1, 7) = "AllowBlank"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTableWithValueExpression(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 2, 1 To 7)
+    table_values(1, 1) = "å≥óÒ"
+    table_values(1, 2) = "#source"
+    table_values(1, 3) = "InnerText"
+    table_values(1, 4) = ""
+    table_values(1, 5) = "False"
+    table_values(1, 6) = ""
+    table_values(1, 7) = "AllowBlank"
+    table_values(2, 1) = "ï ñº"
+    table_values(2, 2) = ""
+    table_values(2, 3) = ""
+    table_values(2, 4) = ""
+    table_values(2, 5) = "False"
+    table_values(2, 6) = "[å≥óÒ]"
+    table_values(2, 7) = "AllowBlank"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
+
+Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 2, 1 To 7)
     table_values(1, 1) = "ëŒè€ID"
     table_values(1, 2) = "#target-id"
     table_values(1, 3) = "InnerText"
     table_values(1, 4) = ""
     table_values(1, 5) = "True"
-    table_values(1, 6) = "ErrorIfBlank"
+    table_values(1, 6) = ""
+    table_values(1, 7) = "ErrorIfBlank"
     table_values(2, 1) = "åèñº"
     table_values(2, 2) = "#title"
     table_values(2, 3) = "TextContent"
     table_values(2, 4) = ""
     table_values(2, 5) = "False"
-    table_values(2, 6) = "AllowBlank"
+    table_values(2, 6) = ""
+    table_values(2, 7) = "AllowBlank"
 
     Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
     Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)

@@ -287,6 +287,87 @@ Public Sub Test_WebNavDiagnosticRunner_詳細列定義に基づく診断出力行を書く(ByVal 
     Call pAssertWrittenCell(Assert, ws_stub, 2, 6, "山田太郎")
 End Sub
 
+Public Sub Test_WebNavDiagnosticRunner_派生列ヘッダーに単純列参照の値を書く(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim wb_stub As WorkbookServiceTestDouble
+    Set wb_stub = New WorkbookServiceTestDouble
+    Set WbSrv = wb_stub
+
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = New WorksheetServiceTestDouble
+    Set WsSrv = ws_stub
+    Call pPrepareOutputHeaders(ws_stub, "件名別名")
+
+    Dim output_target_search_bounds As WorksheetRangeBounds
+    Set output_target_search_bounds = New_RangeBounds(Row:=2, Column:=1, FinishRow:=G_ROW_MAX, FinishColumn:=1, Sheet:="output")
+
+    Dim output_found_rows As ObjectList
+    Set output_found_rows = New_ObjectList("WorksheetRangeBounds")
+    Call ws_stub.Store.SetReturn("Find", output_found_rows, "T-001", output_target_search_bounds, True, True, True, True)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.OutputSheetName = "output"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#target-id"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#subject"))
+    Call detail_defs.Add(New_DetailColumnDefinition("件名別名", "", ValueExpression:="[件名]"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/url", "{""url"":""https://example.test/start""}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""auth-element""}}", "POST", "/session/abc/element", pCssFindBody("#top-ready"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", pCssFindBody("#open-list"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", pCssFindBody("#list-ready"))
+    Call pSetTextElement(client_double, "#list-item-target-id", "list-target-element", "T-001")
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""detail-link-element""}}", "POST", "/session/abc/element", pCssFindBody(".first-detail-link"))
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/detail-link-element/click", "{}")
+    Call pSetTextElement(client_double, "#target-id", "target-element", "T-001")
+    Call pSetTextElement(client_double, "#subject", "subject-element", "案件A")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", "{""id"":null}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim runner As WebNavDiagnosticRunner
+    Set runner = New_WebNavDiagnosticRunner(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Call runner.Run
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCell(Assert, ws_stub, 2, 5, "案件A")
+End Sub
+
 Public Sub Test_WebNavDiagnosticRunner_詳細列定義なしでも固定管理列だけの診断行を書く(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -656,6 +737,7 @@ Public Sub Test_WebNavDiagnosticRunner_条件不一致なら診断出力行を書かない(ByVal 
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+
 Public Sub Test_WebNavDiagnosticRunner_必須詳細列が見つからない場合はERROR行を書く(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -976,6 +1058,7 @@ Public Sub Test_WebNavDiagnosticRunner_詳細ページ後に一覧復帰リンクで戻る(ByVal 
     Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+
 Public Sub Test_WebNavDiagnosticRunner_一覧復帰失敗は復帰不能エラーにする(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -1060,16 +1143,31 @@ Public Sub Test_WebNavDiagnosticRunner_一覧復帰失敗は復帰不能エラーにする(ByVal 
     Assert.EqualsNumeric 1, process.Store.GetCallCount("StopProcess")
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
+
 Private Sub pPrepareEmptyOutput(ByVal WsStub As WorksheetServiceTestDouble)
+    Call pPrepareOutputHeaders(WsStub, "件名", "申請者")
+End Sub
+
+Private Sub pPrepareOutputHeaders( _
+        ByVal WsStub As WorksheetServiceTestDouble, _
+        ParamArray Headers() As Variant)
+
+    Dim header_count As Long
+    header_count = UBound(Headers) - LBound(Headers) + 1
+
     Dim header_search_bounds As WorksheetRangeBounds
     Set header_search_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=G_COL_MAX, Sheet:="output")
 
     Dim header_used_bounds As WorksheetRangeBounds
-    Set header_used_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=6, Sheet:="output")
+    Set header_used_bounds = New_RangeBounds(Row:=1, Column:=5, FinishRow:=1, FinishColumn:=4 + header_count, Sheet:="output")
 
-    Dim header_values(1 To 1, 1 To 2) As Variant
-    header_values(1, 1) = "件名"
-    header_values(1, 2) = "申請者"
+    Dim header_values() As Variant
+    ReDim header_values(1 To 1, 1 To header_count)
+
+    Dim header_idx As Long
+    For header_idx = 1 To header_count
+        header_values(1, header_idx) = CStr(Headers(LBound(Headers) + header_idx - 1))
+    Next header_idx
 
     Call WsStub.Store.SetReturn("GetUsedRangeBounds", header_used_bounds, header_search_bounds, True, True, True, False)
     Call WsStub.Store.SetReturn("ReadRange", header_values, header_used_bounds)

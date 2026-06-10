@@ -158,7 +158,21 @@ Private Function pReadDetailValues() As ArrayObject
         Exit Function
     End If
 
-    Set pReadDetailValues = pSessionClient.ReadDetailColumnValues(detail_defs)
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+    Call resolver.Initialize(detail_defs)
+
+    Dim extraction_defs As ObjectList
+    Set extraction_defs = resolver.ExtractionColumnDefinitions
+
+    Dim extraction_values As ArrayObject
+    If extraction_defs.Count = 0 Then
+        Set extraction_values = pCreateBlankDetailValues(extraction_defs)
+    Else
+        Set extraction_values = pSessionClient.ReadDetailColumnValues(extraction_defs)
+    End If
+
+    Set pReadDetailValues = resolver.ResolveValues(extraction_values)
 End Function
 
 Private Function pDownloadCurrentDetailFile( _
