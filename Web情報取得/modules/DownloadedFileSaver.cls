@@ -32,6 +32,13 @@ Public Property Get LastErrorDescription() As String
 End Property
 
 '* DownloadedFileSaver を初期化します。
+'*
+'* @param Settings Web情報取得の設定。
+'* @param FileSystem ファイルシステム操作サービス。
+'* @param ZipExtractor ZIP 展開処理。
+'*
+'* @details
+'* ダウンロード保存先、ZIP flatten、ファイル衝突判定を設定に従って実行できるよう、ファイル操作と ZIP 展開を外部から受け取ります。
 Public Sub Initialize( _
         ByVal Settings As IToolSettings, _
         ByVal FileSystem As IFileSystemService, _
@@ -55,6 +62,13 @@ Public Sub Initialize( _
 End Sub
 
 '* ダウンロード済みファイルを保存し、ダウンロード状態を返します。
+'*
+'* @param DownloadedFilePath staging 領域に取得済みのファイルパス。
+'* @param TargetId 保存先ファイル名の決定に使う対象ID。
+'* @return ダウンロード状態。
+'*
+'* @details
+'* DownloadRootPath 配下へファイルを保存します。ZIP flatten 設定時は展開結果を保存し、保存できない理由は LastErrorDescription に保持します。
 Public Function SaveDownloadedFile( _
         ByVal DownloadedFilePath As String, _
         ByVal TargetId As String) As String
@@ -159,6 +173,34 @@ ON_ERROR:
     pSaveZipFile = G_WEB_DOWNLOAD_STATUS_ERROR
 End Function
 
+Private Sub pValidateTargetId(ByVal TargetId As String)
+    If TargetId = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが空です。"
+    End If
+
+    If pContainsInvalidFolderNameCharacter(TargetId) Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDを Windows フォルダー名として使えません。(" & TargetId & ")"
+    End If
+
+    If Right$(TargetId, 1) = "." Or Right$(TargetId, 1) = " " Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDの末尾が Windows フォルダー名として使えません。(" & TargetId & ")"
+    End If
+
+    If pIsReservedFolderName(TargetId) Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが Windows の予約名です。(" & TargetId & ")"
+    End If
+End Sub
+
+Private Function pIsZipFile(ByVal FilePath As String) As Boolean
+    pIsZipFile = (StrComp(GetLeafFromPath(FilePath, BaseName:=False, Extension:=True), ".zip", vbTextCompare) = 0)
+End Function
+
+Private Sub pCheckInit()
+    If Not pIsInitialized Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="初期化されていません。"
+    End If
+End Sub
+
 Private Function pResolveZipSourceRoot(ByVal ExtractDirectoryPath As String) As String
     Dim root_files() As String
     root_files = pFileSystem.GetFileList(ExtractDirectoryPath)
@@ -255,24 +297,6 @@ Private Function pBuildTargetIdPrefix(ByVal TargetId As String) As String
     End If
 End Function
 
-Private Sub pValidateTargetId(ByVal TargetId As String)
-    If TargetId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが空です。"
-    End If
-
-    If pContainsInvalidFolderNameCharacter(TargetId) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDを Windows フォルダー名として使えません。(" & TargetId & ")"
-    End If
-
-    If Right$(TargetId, 1) = "." Or Right$(TargetId, 1) = " " Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDの末尾が Windows フォルダー名として使えません。(" & TargetId & ")"
-    End If
-
-    If pIsReservedFolderName(TargetId) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが Windows の予約名です。(" & TargetId & ")"
-    End If
-End Sub
-
 Private Function pContainsInvalidFolderNameCharacter(ByVal FolderName As String) As Boolean
     Dim invalid_chars As Variant
     invalid_chars = Array("\", "/", ":", "*", "?", Chr$(34), "<", ">", "|")
@@ -307,9 +331,6 @@ Private Function pIsReservedFolderName(ByVal FolderName As String) As Boolean
         pIsReservedFolderName = False
     End Select
 End Function
-Private Function pIsZipFile(ByVal FilePath As String) As Boolean
-    pIsZipFile = (StrComp(GetLeafFromPath(FilePath, BaseName:=False, Extension:=True), ".zip", vbTextCompare) = 0)
-End Function
 
 Private Function pStringArrayCount(ByRef Values() As String) As Long
     If IsEmptyArray(Values) Then
@@ -325,10 +346,4 @@ Private Sub pTryRemoveDirectory(ByVal DirectoryPath As String)
     On Error Resume Next
     Call pFileSystem.RemoveDirectory(DirectoryPath, Force:=True)
     On Error GoTo 0
-End Sub
-
-Private Sub pCheckInit()
-    If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="初期化されていません。"
-    End If
 End Sub

@@ -24,6 +24,12 @@ Private Sub Class_Initialize()
 End Sub
 
 '* ZIP ファイルを指定ディレクトリへ展開します。
+'*
+'* @param ZipFilePath 展開対象の ZIP ファイルパス。
+'* @param DestinationDirectoryPath 展開先ディレクトリパス。
+'*
+'* @details
+'* 実装は UI 操作なしで展開を完了させ、展開できない場合は原因が分かるエラーとして呼び出し元へ通知します。
 Public Sub ExtractZip( _
         ByVal ZipFilePath As String, _
         ByVal DestinationDirectoryPath As String)

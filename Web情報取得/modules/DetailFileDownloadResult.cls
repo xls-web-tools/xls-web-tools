@@ -41,6 +41,13 @@ Public Property Get RequiresDetailError() As Boolean
 End Property
 
 '* 詳細ページのダウンロード処理結果を初期化します。
+'*
+'* @param DownloadStatus ダウンロード状態。
+'* @param ErrorDescription ダウンロード処理のエラー内容。
+'* @param RequiresDetailError 詳細ページ単位の取得状態を ERROR にする必要がある場合は True。
+'*
+'* @details
+'* DownloadRequired の設定により、ダウンロード失敗を詳細ページ行の ERROR として扱うかを呼び出し側へ伝えます。
 Public Sub Initialize( _
         ByVal DownloadStatus As String, _
         ByVal ErrorDescription As String, _

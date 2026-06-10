@@ -22,6 +22,12 @@ Implements IZipExtractor
 Private Const C_COPY_HERE_NO_UI As Long = 16
 
 '* ZIP ファイルを指定ディレクトリへ展開します。
+'*
+'* @param ZipFilePath 展開対象の ZIP ファイルパス。
+'* @param DestinationDirectoryPath 展開先ディレクトリパス。
+'*
+'* @details
+'* Windows Shell.Application の CopyHere を UI なしで使い、DownloadedFileSaver から ZIP flatten 保存を実行できるようにします。
 Public Sub ExtractZip( _
         ByVal ZipFilePath As String, _
         ByVal DestinationDirectoryPath As String)

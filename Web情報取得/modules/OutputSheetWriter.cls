@@ -59,12 +59,20 @@ Public Sub EnsureHeaders()
     Call pWriteOutputCell(C_HEADER_ROW, C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
 End Sub
 
+Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
+    Call WsSrv.WriteCell( _
+            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
+            CellValue, _
+            TypeConvert:=False)
+End Sub
+
 '* 診断用の出力行を書き込みます。
 '*
 '* @param TargetId 対象ID。
 '* @param Status 取得状態。
 '* @param ErrorDescription エラー内容。
 '* @param DetailValues 詳細ページ列定義に対応する抽出値。
+'* @param DownloadStatus ダウンロード状態。
 '*
 '* @details
 '* TargetId の既存行があればその行へ上書きし、見つからない場合は 2 行目へ書き込みます。
@@ -103,6 +111,7 @@ End Function
 '* @param Status 取得状態。
 '* @param ErrorDescription エラー内容。
 '* @param DetailValues 詳細ページ列定義に対応する抽出値。
+'* @param DownloadStatus ダウンロード状態。
 '*
 '* @details
 '* TargetId の既存行があればその行へ上書きし、見つからない場合は出力先シートの末尾へ追加します。
@@ -325,13 +334,6 @@ Private Function pResolveNextOutputRow() As Long
 
     pResolveNextOutputRow = result_row
 End Function
-
-Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
-    Call WsSrv.WriteCell( _
-            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
-            CellValue, _
-            TypeConvert:=False)
-End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then

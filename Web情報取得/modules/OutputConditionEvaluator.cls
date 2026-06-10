@@ -73,6 +73,9 @@ End Property
 '*
 '* @param Expression 条件式。空の場合は常に出力対象です。
 '* @param DetailColumnDefinitions 詳細ページ列定義。
+'*
+'* @details
+'* OutputConditionExpression で参照される OutputColumnName を検証し、詳細ページ値の一部だけで条件判定できるよう参照列定義を準備します。
 Public Sub Initialize(ByVal Expression As String, ByVal DetailColumnDefinitions As ObjectList)
     If DetailColumnDefinitions Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="DetailColumnDefinitions は必須です。"
@@ -120,6 +123,12 @@ Private Sub pValidateExpression()
 End Sub
 
 '* 詳細ページ列値に基づき、出力対象か否かを返します。
+'*
+'* @param DetailColumnValues 詳細ページ列定義と同じ順序の値。
+'* @return 出力対象の場合は True。
+'*
+'* @details
+'* 条件式が空の場合は常に True を返し、条件式がある場合は全詳細ページ値を使って OutputConditionExpression を評価します。
 Public Function ShouldOutput(ByVal DetailColumnValues As ArrayObject) As Boolean
     Call pCheckInit
 
@@ -141,11 +150,24 @@ Public Function ShouldOutput(ByVal DetailColumnValues As ArrayObject) As Boolean
 End Function
 
 '* 参照列だけを読み取った値に基づき、出力対象か否かを返します。
+'*
+'* @param ReferencedValues ReferencedColumnDefinitions と同じ順序の値。
+'* @return 出力対象の場合は True。
+'*
+'* @details
+'* 出力条件だけを先に判定したい場合に、条件式が参照する列だけの値で OutputConditionExpression を評価します。
 Public Function ShouldOutputByReferencedValues(ByVal ReferencedValues As ArrayObject) As Boolean
     ShouldOutputByReferencedValues = ShouldOutputByColumnValues(ReferencedValues, pReferencedDefinitions)
 End Function
 
 '* 指定された列定義に対応する値に基づき、出力対象か否かを返します。
+'*
+'* @param ReferencedValues ValueDefinitions と同じ順序の値。
+'* @param ValueDefinitions ReferencedValues に対応する詳細ページ列定義。
+'* @return 出力対象の場合は True。
+'*
+'* @details
+'* 条件式で使う列定義と値を明示して評価することで、直接抽出値と派生値のどちらからでも同じ条件判定を実行します。
 Public Function ShouldOutputByColumnValues( _
         ByVal ReferencedValues As ArrayObject, _
         ByVal ValueDefinitions As ObjectList) As Boolean
@@ -182,7 +204,6 @@ Private Sub pCheckInit()
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="初期化されていません。"
     End If
 End Sub
-
 
 Private Function pParseOrExpression() As Boolean
     Dim result_value As Boolean

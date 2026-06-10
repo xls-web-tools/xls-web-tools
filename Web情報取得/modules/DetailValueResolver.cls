@@ -40,7 +40,65 @@ Public Property Get ExtractionColumnDefinitions() As ObjectList
     Set ExtractionColumnDefinitions = pExtractionDefinitions
 End Property
 
+'* 値解決を初期化します。
+'*
+'* @param DetailColumnDefinitions 詳細ページ列定義の一覧。
+'*
+'* @details
+'* 詳細ページ列定義を保持し、WebDriver から直接抽出が必要な列と派生式で解決する列を分けて扱えるようにします。
+Public Sub Initialize(ByVal DetailColumnDefinitions As ObjectList)
+    If DetailColumnDefinitions Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="DetailColumnDefinitions は必須です。"
+    End If
+
+    Set pDefinitions = DetailColumnDefinitions
+    Set pExtractionDefinitions = New_ObjectList("DetailColumnDefinition")
+    Set pResolvedValues = Nothing
+    Set pCurrentReferences = Nothing
+    pExpression = ""
+    pPosition = 1
+    pCurrentDefinitionIndex = -1
+
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If Not detail_def.IsDerived Then Call pExtractionDefinitions.Add(detail_def)
+    Next def_idx
+
+    Call pValidateDerivedExpressions
+
+    pIsInitialized = True
+End Sub
+
+Private Sub pValidateDerivedExpressions()
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If detail_def.IsDerived Then Call pValidateExpressionReferences(def_idx)
+    Next def_idx
+
+    If pDefinitions.Count = 0 Then Exit Sub
+
+    Dim visit_state() As Long
+    ReDim visit_state(0 To pDefinitions.Count - 1)
+
+    For def_idx = 0 To pDefinitions.Count - 1
+        Set detail_def = pDefinitions.Item(def_idx)
+        If detail_def.IsDerived Then Call pVisitDerivedDefinition(def_idx, visit_state)
+    Next def_idx
+End Sub
+
 '* 指定列の解決に必要な列定義を、元の settings 行順で返します。
+'*
+'* @param TargetDefinitions 解決対象の詳細ページ列定義。
+'* @param OptionalExtraction True の場合、直接抽出列を必須扱いにしません。
+'* @param IgnoreDerivedBlankMode True の場合、派生列の空欄検証設定を無視します。
+'* @return 解決に必要な詳細ページ列定義。
+'*
+'* @details
+'* 派生列は他の列を参照できるため、対象列だけでなく依存する直接抽出列と派生列を settings 上の順序で集めます。
 Public Function BuildDependentDefinitions( _
         ByVal TargetDefinitions As ObjectList, _
         Optional ByVal OptionalExtraction As Boolean = False, _
@@ -141,52 +199,110 @@ Private Function pCopyDefinition( _
             BlankMode:=blank_mode)
 End Function
 
-'* 値解決を初期化します。
+Private Function pFindDefinitionIndex(ByVal OutputColumnName As String) As Long
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If StrComp(detail_def.OutputColumnName, OutputColumnName, vbBinaryCompare) = 0 Then
+            pFindDefinitionIndex = def_idx
+            Exit Function
+        End If
+    Next def_idx
+
+    pFindDefinitionIndex = -1
+End Function
+
+'* 通常抽出値から、列定義順の詳細値を解決します。
 '*
-'* @param DetailColumnDefinitions 詳細ページ列定義の一覧。
-Public Sub Initialize(ByVal DetailColumnDefinitions As ObjectList)
-    If DetailColumnDefinitions Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="DetailColumnDefinitions は必須です。"
+'* @param ExtractionValues ExtractionColumnDefinitions と同じ順序の抽出値。
+'* @param ValidateDerivedBlankMode True の場合、派生列の空欄検証設定を適用します。
+'* @return 元の詳細ページ列定義と同じ順序の値。
+'*
+'* @details
+'* WebDriver から直接読んだ値と派生式の評価結果を統合し、output シートへ渡せる列定義順の値配列に戻します。
+Public Function ResolveValues( _
+        ByVal ExtractionValues As ArrayObject, _
+        Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ArrayObject
+    Call pCheckInit
+    If ExtractionValues Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ExtractionValues は必須です。"
     End If
 
-    Set pDefinitions = DetailColumnDefinitions
-    Set pExtractionDefinitions = New_ObjectList("DetailColumnDefinition")
+    Set pResolvedValues = New ArrayObject
+    If 0 < pDefinitions.Count Then
+        Call pResolvedValues.ReDimArray(0, pDefinitions.Count - 1)
+        ReDim pResolveState(0 To pDefinitions.Count - 1)
+    End If
+
+    Dim extraction_idx As Long
+    extraction_idx = 0
+
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If detail_def.IsDerived Then
+            Call pResolvedValues.Update(def_idx, "")
+        Else
+            Call pResolvedValues.Update(def_idx, CStr(ExtractionValues.Item(extraction_idx)))
+            pResolveState(def_idx) = C_STATE_RESOLVED
+            extraction_idx = extraction_idx + 1
+        End If
+    Next def_idx
+
+    For def_idx = 0 To pDefinitions.Count - 1
+        Set detail_def = pDefinitions.Item(def_idx)
+        If detail_def.IsDerived Then
+            Dim derived_value As String
+            derived_value = pResolveDefinitionValue(def_idx)
+            If ValidateDerivedBlankMode Then Call pValidateDerivedBlankMode(detail_def, derived_value)
+        End If
+    Next def_idx
+
+    Set ResolveValues = pResolvedValues
     Set pResolvedValues = Nothing
-    Set pCurrentReferences = Nothing
-    pExpression = ""
+End Function
+
+Private Sub pValidateDerivedBlankMode( _
+        ByVal DetailDefinition As DetailColumnDefinition, _
+        ByVal DerivedValue As String)
+
+    If StrComp(DetailDefinition.BlankMode, "ErrorIfBlank", vbTextCompare) <> 0 Then Exit Sub
+    If DerivedValue <> "" Then Exit Sub
+
+    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列の値が空欄です。(" & DetailDefinition.OutputColumnName & ")"
+End Sub
+
+Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As String
+    If pResolveState(DefinitionIndex) = C_STATE_RESOLVED Then
+        pResolveDefinitionValue = CStr(pResolvedValues.Item(DefinitionIndex))
+        Exit Function
+    End If
+    If pResolveState(DefinitionIndex) = C_STATE_VISITING Then
+        Dim loop_def As DetailColumnDefinition
+        Set loop_def = pDefinitions.Item(DefinitionIndex)
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & loop_def.OutputColumnName & ")"
+    End If
+
+    Dim detail_def As DetailColumnDefinition
+    Set detail_def = pDefinitions.Item(DefinitionIndex)
+
+    pResolveState(DefinitionIndex) = C_STATE_VISITING
+    pCurrentDefinitionIndex = DefinitionIndex
+    pParseMode = C_PARSE_MODE_EVALUATE
+    pExpression = Trim$(detail_def.ValueExpression)
     pPosition = 1
-    pCurrentDefinitionIndex = -1
 
-    Dim def_idx As Long
-    For def_idx = 0 To pDefinitions.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = pDefinitions.Item(def_idx)
-        If Not detail_def.IsDerived Then Call pExtractionDefinitions.Add(detail_def)
-    Next def_idx
+    Dim result_value As String
+    result_value = pParseValueExpression()
+    Call pRequireExpressionEnd
 
-    Call pValidateDerivedExpressions
+    Call pResolvedValues.Update(DefinitionIndex, result_value)
+    pResolveState(DefinitionIndex) = C_STATE_RESOLVED
 
-    pIsInitialized = True
-End Sub
-
-Private Sub pValidateDerivedExpressions()
-    Dim def_idx As Long
-    For def_idx = 0 To pDefinitions.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then Call pValidateExpressionReferences(def_idx)
-    Next def_idx
-
-    If pDefinitions.Count = 0 Then Exit Sub
-
-    Dim visit_state() As Long
-    ReDim visit_state(0 To pDefinitions.Count - 1)
-
-    For def_idx = 0 To pDefinitions.Count - 1
-        Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then Call pVisitDerivedDefinition(def_idx, visit_state)
-    Next def_idx
-End Sub
+    pResolveDefinitionValue = result_value
+End Function
 
 Private Sub pValidateExpressionReferences(ByVal DefinitionIndex As Long)
     Dim references As Collection
@@ -259,94 +375,6 @@ Private Function pCollectReferences(ByVal DefinitionIndex As Long) As Collection
 
     Set pCollectReferences = pCurrentReferences
     Set pCurrentReferences = Nothing
-End Function
-
-'* 通常抽出値から、列定義順の詳細値を解決します。
-'*
-'* @param ExtractionValues ExtractionColumnDefinitions と同じ順序の抽出値。
-'* @return 元の詳細ページ列定義と同じ順序の値。
-Public Function ResolveValues( _
-        ByVal ExtractionValues As ArrayObject, _
-        Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ArrayObject
-    Call pCheckInit
-    If ExtractionValues Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ExtractionValues は必須です。"
-    End If
-
-    Set pResolvedValues = New ArrayObject
-    If 0 < pDefinitions.Count Then
-        Call pResolvedValues.ReDimArray(0, pDefinitions.Count - 1)
-        ReDim pResolveState(0 To pDefinitions.Count - 1)
-    End If
-
-    Dim extraction_idx As Long
-    extraction_idx = 0
-
-    Dim def_idx As Long
-    For def_idx = 0 To pDefinitions.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then
-            Call pResolvedValues.Update(def_idx, "")
-        Else
-            Call pResolvedValues.Update(def_idx, CStr(ExtractionValues.Item(extraction_idx)))
-            pResolveState(def_idx) = C_STATE_RESOLVED
-            extraction_idx = extraction_idx + 1
-        End If
-    Next def_idx
-
-    For def_idx = 0 To pDefinitions.Count - 1
-        Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then
-            Dim derived_value As String
-            derived_value = pResolveDefinitionValue(def_idx)
-            If ValidateDerivedBlankMode Then Call pValidateDerivedBlankMode(detail_def, derived_value)
-        End If
-    Next def_idx
-
-    Set ResolveValues = pResolvedValues
-    Set pResolvedValues = Nothing
-End Function
-
-
-Private Sub pValidateDerivedBlankMode( _
-        ByVal DetailDefinition As DetailColumnDefinition, _
-        ByVal DerivedValue As String)
-
-    If StrComp(DetailDefinition.BlankMode, "ErrorIfBlank", vbTextCompare) <> 0 Then Exit Sub
-    If DerivedValue <> "" Then Exit Sub
-
-    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列の値が空欄です。(" & DetailDefinition.OutputColumnName & ")"
-End Sub
-
-Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As String
-    If pResolveState(DefinitionIndex) = C_STATE_RESOLVED Then
-        pResolveDefinitionValue = CStr(pResolvedValues.Item(DefinitionIndex))
-        Exit Function
-    End If
-    If pResolveState(DefinitionIndex) = C_STATE_VISITING Then
-        Dim loop_def As DetailColumnDefinition
-        Set loop_def = pDefinitions.Item(DefinitionIndex)
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & loop_def.OutputColumnName & ")"
-    End If
-
-    Dim detail_def As DetailColumnDefinition
-    Set detail_def = pDefinitions.Item(DefinitionIndex)
-
-    pResolveState(DefinitionIndex) = C_STATE_VISITING
-    pCurrentDefinitionIndex = DefinitionIndex
-    pParseMode = C_PARSE_MODE_EVALUATE
-    pExpression = Trim$(detail_def.ValueExpression)
-    pPosition = 1
-
-    Dim result_value As String
-    result_value = pParseValueExpression()
-    Call pRequireExpressionEnd
-
-    Call pResolvedValues.Update(DefinitionIndex, result_value)
-    pResolveState(DefinitionIndex) = C_STATE_RESOLVED
-
-    pResolveDefinitionValue = result_value
 End Function
 
 Private Function pParseValueExpression() As String
@@ -589,20 +617,6 @@ Private Function pEvaluateComparison( _
     End Select
 
     pEvaluateComparison = result_value
-End Function
-
-Private Function pFindDefinitionIndex(ByVal OutputColumnName As String) As Long
-    Dim def_idx As Long
-    For def_idx = 0 To pDefinitions.Count - 1
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = pDefinitions.Item(def_idx)
-        If StrComp(detail_def.OutputColumnName, OutputColumnName, vbBinaryCompare) = 0 Then
-            pFindDefinitionIndex = def_idx
-            Exit Function
-        End If
-    Next def_idx
-
-    pFindDefinitionIndex = -1
 End Function
 
 Private Function pConsumeKeyword(ByVal Keyword As String) As Boolean

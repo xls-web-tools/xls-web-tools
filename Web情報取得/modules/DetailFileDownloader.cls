@@ -26,6 +26,14 @@ Private pFileSaver As DownloadedFileSaver
 Private pIsInitialized As Boolean
 
 '* 詳細ページのダウンロード処理を初期化します。
+'*
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @param FileSystem ファイルシステム操作サービス。
+'* @param FileSaver ダウンロード済みファイル保存処理。
+'*
+'* @details
+'* browser 上のリンク操作、staging 領域の監視、最終保存処理を差し替えてテストできるよう依存を外部から受け取ります。
 Public Sub Initialize( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
@@ -53,6 +61,12 @@ Public Sub Initialize( _
 End Sub
 
 '* 詳細ページ上のダウンロード対象ファイルを取得して保存します。
+'*
+'* @param TargetId 保存先ファイル名の決定に使う対象ID。
+'* @return 詳細ページのダウンロード処理結果。
+'*
+'* @details
+'* ダウンロードリンク数を判定し、1 件だけ存在する場合は browser-resolved href またはクリックで staging 領域へ取得して保存処理へ渡します。
 Public Function DownloadForDetail(ByVal TargetId As String) As DetailFileDownloadResult
     Call pCheckInit
 
@@ -100,6 +114,17 @@ ON_ERROR:
 
     pDownloadCurrentDetailFile = G_WEB_DOWNLOAD_STATUS_ERROR
 End Function
+
+Private Function pDownloadStatusRequiresDetailError(ByVal DownloadStatus As String) As Boolean
+    pDownloadStatusRequiresDetailError = (pSettings.DownloadRequired _
+            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
+End Function
+
+Private Sub pCheckInit()
+    If Not pIsInitialized Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="初期化されていません。"
+    End If
+End Sub
 
 Private Function pDownloadToStaging( _
         ByRef DownloadedFilePath As String, _
@@ -223,11 +248,6 @@ Private Sub pRequireDownloadDirectory()
     End If
 End Sub
 
-Private Function pDownloadStatusRequiresDetailError(ByVal DownloadStatus As String) As Boolean
-    pDownloadStatusRequiresDetailError = (pSettings.DownloadRequired _
-            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
-End Function
-
 Private Function pStringArrayCount(ByRef Values() As String) As Long
     If IsEmptyArray(Values) Then
         pStringArrayCount = 0
@@ -235,9 +255,3 @@ Private Function pStringArrayCount(ByRef Values() As String) As Long
         pStringArrayCount = UBound(Values) - LBound(Values) + 1
     End If
 End Function
-
-Private Sub pCheckInit()
-    If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="初期化されていません。"
-    End If
-End Sub

@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "DetailPageRun"
+Attribute VB_Name = "DetailPageRunner"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
@@ -24,20 +24,27 @@ Private pValueResolver As DetailValueResolver
 Private pFileDownloader As DetailFileDownloader
 Private pIsInitialized As Boolean
 
-'* 詳細ページ run を初期化します。
+'* 詳細ページ runner を初期化します。
+'*
+'* @param SessionClient WebDriver session client。
+'* @param Settings Web情報取得の設定。
+'* @param FileDownloader 詳細ページ上のファイルダウンロード処理。DownloadEnabled=True の場合は必須。
+'*
+'* @details
+'* 一覧収集とナビゲーション診断で同じ詳細ページ 1 件分の処理を共有するため、browser session と設定を外部から受け取ります。
 Public Sub Initialize( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
         Optional ByVal FileDownloader As DetailFileDownloader = Nothing)
 
     If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="SessionClient は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="SessionClient は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="Settings は必須です。"
     End If
     If Settings.DownloadEnabled And (FileDownloader Is Nothing) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="FileDownloader は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="FileDownloader は必須です。"
     End If
 
     Set pSessionClient = SessionClient
@@ -53,6 +60,15 @@ Public Sub Initialize( _
 End Sub
 
 '* 詳細ページ 1 件分を処理します。
+'*
+'* @param ListTargetId 一覧上で取得した対象ID。
+'* @param DetailOperationName 詳細ページへ遷移する画面遷移操作名。
+'* @param ItemIndex 一覧上の項目インデックス。locator template の {{index}} と {{rowNumber}} に使用します。
+'* @param IsDiagnosticMode True の場合、対象ID確認前のエラーは診断 runner へ再送出します。
+'* @return 詳細ページ 1 件分の処理結果。
+'*
+'* @details
+'* 詳細ページへ遷移し、対象ID照合、出力条件判定、詳細値抽出、ダウンロード処理を実行してから一覧へ戻ります。
 Public Function Run( _
         ByVal ListTargetId As String, _
         ByVal DetailOperationName As String, _
@@ -82,12 +98,12 @@ Public Function Run( _
     Dim detail_target_id As String
     detail_target_id = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
     If detail_target_id = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="詳細ページ上の対象IDを取得できません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="詳細ページ上の対象IDを取得できません。"
     End If
 
     output_target_id = detail_target_id
     If StrComp(ListTargetId, detail_target_id, vbBinaryCompare) <> 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & ListTargetId & " / " & detail_target_id & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & ListTargetId & " / " & detail_target_id & ")"
     End If
     has_valid_detail_target = True
 
@@ -188,7 +204,7 @@ Private Function pDownloadCurrentDetailFile(ByVal TargetId As String) As DetailF
     End If
 
     If pFileDownloader Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="FileDownloader は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="FileDownloader は必須です。"
     End If
 
     Set pDownloadCurrentDetailFile = pFileDownloader.DownloadForDetail(TargetId)
@@ -241,15 +257,6 @@ Private Function pBuildIndexedTransitionOperation( _
             WaitConditionName:=base_operation.WaitConditionName)
 End Function
 
-Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex As Long) As String
-    Dim result_value As String
-    result_value = TargetText
-    result_value = Replace(result_value, "{{index}}", CStr(ItemIndex))
-    result_value = Replace(result_value, "{{rowNumber}}", CStr(ItemIndex + 1))
-
-    pApplyIndexTemplate = result_value
-End Function
-
 Private Sub pReturnToListIfNeeded(ByVal NeedsReturn As Boolean)
     If Not NeedsReturn Then Exit Sub
     If Trim$(pSettings.ReturnToListOperationName) = "" Then Exit Sub
@@ -295,6 +302,21 @@ Private Function pCreateBlankDetailValues(ByVal DetailDefinitions As ObjectList)
     Set pCreateBlankDetailValues = result_values
 End Function
 
+Private Sub pCheckInit()
+    If Not pIsInitialized Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="初期化されていません。"
+    End If
+End Sub
+
+Private Function pApplyIndexTemplate(ByVal TargetText As String, ByVal ItemIndex As Long) As String
+    Dim result_value As String
+    result_value = TargetText
+    result_value = Replace(result_value, "{{index}}", CStr(ItemIndex))
+    result_value = Replace(result_value, "{{rowNumber}}", CStr(ItemIndex + 1))
+
+    pApplyIndexTemplate = result_value
+End Function
+
 Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation
     Dim operations As ObjectList
     Set operations = pSettings.TransitionOperations
@@ -309,11 +331,5 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
         End If
     Next operation_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
 End Function
-
-Private Sub pCheckInit()
-    If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="初期化されていません。"
-    End If
-End Sub

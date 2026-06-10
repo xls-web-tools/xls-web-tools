@@ -89,8 +89,8 @@ Public Function Run() As String
     pTargetId = ""
     pIsOutputExcluded = False
 
-    Dim detail_run As DetailPageRun
-    Set detail_run = New_DetailPageRun(pSessionClient, pSettings)
+    Dim detail_runner As DetailPageRunner
+    Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
     Call pProcess.Start(pSettings)
@@ -103,7 +103,7 @@ Public Function Run() As String
     Set list_operation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
     Call pSessionClient.RunTransitionOperation(list_operation)
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
-    Call pRunFirstDetail(detail_run)
+    Call pRunFirstDetail(detail_runner)
 
     Call pSessionClient.QuitSession(result_value)
     Call pProcess.StopProcess
@@ -142,13 +142,13 @@ Private Sub pCheckInit()
     End If
 End Sub
 
-Private Sub pRunFirstDetail(ByVal DetailRun As DetailPageRun)
+Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
     If Trim$(pSettings.DetailTransitionOperationName) = "" Then Exit Sub
 
     pListItemTargetId = pReadFirstListItemTargetId()
 
     Dim run_result As DetailPageRunResult
-    Set run_result = DetailRun.Run( _
+    Set run_result = DetailRunner.Run( _
             pListItemTargetId, _
             pSettings.DetailTransitionOperationName, _
             ItemIndex:=0, _
@@ -171,16 +171,6 @@ Private Sub pRunFirstDetail(ByVal DetailRun As DetailPageRun)
             run_result.DownloadStatus)
 End Sub
 
-Private Function pReadFirstListItemTargetId() As String
-    Dim result_value As String
-    result_value = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
-    If result_value = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="ˆê——ã‚Ì‘ÎÛID‚ğæ“¾‚Å‚«‚Ü‚¹‚ñB"
-    End If
-
-    pReadFirstListItemTargetId = result_value
-End Function
-
 Private Function pShouldKeepBrowserForDiagnostic(ByVal SessionId As String) As Boolean
     pShouldKeepBrowserForDiagnostic = ((Not pSettings.Headless) And SessionId <> "")
 End Function
@@ -200,4 +190,14 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
     Next operation_idx
 
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="‰æ–Ê‘JˆÚ‘€ì‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñB(" & OperationName & ")"
+End Function
+
+Private Function pReadFirstListItemTargetId() As String
+    Dim result_value As String
+    result_value = Trim$(pSessionClient.ReadElementText(pSettings.ListItemTargetIdSelector))
+    If result_value = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="ˆê——ã‚Ì‘ÎÛID‚ğæ“¾‚Å‚«‚Ü‚¹‚ñB"
+    End If
+
+    pReadFirstListItemTargetId = result_value
 End Function

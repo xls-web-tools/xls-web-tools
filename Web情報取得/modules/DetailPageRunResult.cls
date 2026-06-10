@@ -62,6 +62,16 @@ Public Property Get IsOutputExcluded() As Boolean
 End Property
 
 '* 詳細ページ処理結果を初期化します。
+'*
+'* @param TargetId 出力行の対象ID。
+'* @param Status 取得状態。
+'* @param ErrorDescription エラー内容。
+'* @param DetailValues 詳細ページ列定義に対応する抽出値。
+'* @param DownloadStatus ダウンロード状態。
+'* @param IsOutputExcluded 出力対象条件により output シートへ書かない場合は True。
+'*
+'* @details
+'* 詳細ページ runner は行書き込みを行わないため、出力判断と書き込みに必要な値をこの結果オブジェクトへまとめます。
 Public Sub Initialize( _
         ByVal TargetId As String, _
         ByVal Status As String, _

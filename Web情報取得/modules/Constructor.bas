@@ -125,23 +125,24 @@ Public Function New_DetailFileDownloadResult( _
     Set New_DetailFileDownloadResult = result_value
 End Function
 
-'* 詳細ページ run を生成します。
+'* 詳細ページ runner を生成します。
 '*
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
-'* @return 初期化済みの詳細ページ run。
+'* @param FileSystem ファイルシステム操作サービス。DownloadEnabled=True の場合に使用します。
+'* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
+'* @return 初期化済みの詳細ページ runner。
 '*
 '* @details
-'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DetailPageRun に委譲します。
-Public Function New_DetailPageRun( _
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、DownloadEnabled=True の場合だけ詳細ページダウンロード処理を組み立てます。
+Public Function New_DetailPageRunner( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
         Optional ByVal FileSystem As IFileSystemService = Nothing, _
-        Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DetailPageRun
+        Optional ByVal ZipExtractor As IZipExtractor = Nothing) As DetailPageRunner
 
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function New_DetailPageRun", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function New_DetailPageRunner", Description:="Settings は必須です。"
     End If
 
     Dim file_downloader As DetailFileDownloader
@@ -149,11 +150,11 @@ Public Function New_DetailPageRun( _
         Set file_downloader = New_DetailFileDownloader(SessionClient, Settings, FileSystem, ZipExtractor)
     End If
 
-    Dim result_value As DetailPageRun
-    Set result_value = New DetailPageRun
+    Dim result_value As DetailPageRunner
+    Set result_value = New DetailPageRunner
     Call result_value.Initialize(SessionClient, Settings, file_downloader)
 
-    Set New_DetailPageRun = result_value
+    Set New_DetailPageRunner = result_value
 End Function
 
 '* 出力先シート書き込みを生成します。
@@ -175,11 +176,12 @@ End Function
 '*
 '* @param SessionClient WebDriver session client。
 '* @param Settings Web情報取得の設定。
-'* @param FileSystem ファイルシステム操作サービス。
+'* @param FileSystem ファイルシステム操作サービス。省略時は FsSrv を使用します。
+'* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
 '* @return 初期化済みの詳細ページのダウンロード処理。
 '*
 '* @details
-'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DetailFileDownloader に委譲します。
+'* staging 領域の監視と最終保存を分けて扱うため、ファイル保存処理を組み立てて DetailFileDownloader へ渡します。
 Public Function New_DetailFileDownloader( _
         ByVal SessionClient As WebDriverSessionClient, _
         ByVal Settings As IToolSettings, _
@@ -203,10 +205,11 @@ End Function
 '*
 '* @param Settings Web情報取得の設定。
 '* @param FileSystem ファイルシステム操作サービス。
+'* @param ZipExtractor ZIP 展開処理。省略時は ShellZipExtractor を使用します。
 '* @return 初期化済みのダウンロード済みファイル保存。
 '*
 '* @details
-'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は DownloadedFileSaver に委譲します。
+'* ZIP ファイルの flatten 保存を通常保存と同じ入口で扱うため、ZIP 展開処理を注入して保存処理を生成します。
 Public Function New_DownloadedFileSaver( _
         ByVal Settings As IToolSettings, _
         ByVal FileSystem As IFileSystemService, _

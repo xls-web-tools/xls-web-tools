@@ -114,8 +114,8 @@ Public Function Run() As String
     pPageCount = 0
     pProgressStarted = False
 
-    Dim detail_run As DetailPageRun
-    Set detail_run = New_DetailPageRun(pSessionClient, pSettings)
+    Dim detail_runner As DetailPageRunner
+    Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
     On Error GoTo ON_ERROR
 
     Call pProcess.Start(pSettings)
@@ -128,7 +128,7 @@ Public Function Run() As String
     Dim output_writer As OutputSheetWriter
     Set output_writer = New_OutputSheetWriter(pSettings)
     Call output_writer.EnsureHeaders
-    Call pCollectPages(output_writer, detail_run)
+    Call pCollectPages(output_writer, detail_runner)
     Call pMarkProgressComplete
 
     Call pSessionClient.QuitSession(result_value)
@@ -166,7 +166,7 @@ Private Sub pOpenListPage()
     Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
 End Sub
 
-Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailRun As DetailPageRun)
+Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailRunner As DetailPageRunner)
     Dim first_target_ids As ObjectSet
     Set first_target_ids = New ObjectSet
 
@@ -193,13 +193,33 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailR
 
         Dim item_idx As Long
         For item_idx = 0 To item_count - 1
-            Call pCollectListItem(OutputWriter, target_snapshot, item_idx, DetailRun)
+            Call pCollectListItem(OutputWriter, target_snapshot, item_idx, DetailRunner)
             Call pIncrementProgress
         Next item_idx
 
         If Not pHasNextPage() Then Exit Do
         Call pMoveToNextPage(first_target_id)
     Loop
+End Sub
+
+Private Sub pMarkProgressComplete()
+    If ProgStat Is Nothing Then Exit Sub
+    If Not pProgressStarted Then Exit Sub
+
+    Call ProgStat.MarkAsComplete
+End Sub
+
+Private Sub pClearProgress()
+    If ProgStat Is Nothing Then Exit Sub
+    If Not pProgressStarted Then Exit Sub
+
+    Call ProgStat.Reset(ResetTaskName:=False, ResetStartAndTotalValue:=False)
+End Sub
+
+Private Sub pCheckInit()
+    If Not pIsInitialized Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="èâä˙âªÇ≥ÇÍÇƒÇ¢Ç‹ÇπÇÒÅB"
+    End If
 End Sub
 
 Private Sub pAddProgressTotal(ByVal ItemCount As Long)
@@ -225,20 +245,6 @@ Private Sub pIncrementProgress()
     ProgStat.ProcessedValue = ProgStat.ProcessedValue + 1
 End Sub
 
-Private Sub pMarkProgressComplete()
-    If ProgStat Is Nothing Then Exit Sub
-    If Not pProgressStarted Then Exit Sub
-
-    Call ProgStat.MarkAsComplete
-End Sub
-
-Private Sub pClearProgress()
-    If ProgStat Is Nothing Then Exit Sub
-    If Not pProgressStarted Then Exit Sub
-
-    Call ProgStat.Reset(ResetTaskName:=False, ResetStartAndTotalValue:=False)
-End Sub
-
 Private Function pBuildListTargetSnapshot(ByVal ItemCount As Long) As ArrayObject
     Dim result_values As ArrayObject
     Set result_values = New ArrayObject
@@ -261,7 +267,7 @@ Private Sub pCollectListItem( _
         ByVal OutputWriter As OutputSheetWriter, _
         ByVal TargetSnapshot As ArrayObject, _
         ByVal ItemIndex As Long, _
-        ByVal DetailRun As DetailPageRun)
+        ByVal DetailRunner As DetailPageRunner)
 
     Dim expected_target_id As String
     expected_target_id = CStr(TargetSnapshot.Item(ItemIndex))
@@ -276,7 +282,7 @@ Private Sub pCollectListItem( _
     End If
 
     Dim run_result As DetailPageRunResult
-    Set run_result = DetailRun.Run(current_target_id, pSettings.DetailTransitionOperationName, ItemIndex:=ItemIndex)
+    Set run_result = DetailRunner.Run(current_target_id, pSettings.DetailTransitionOperationName, ItemIndex:=ItemIndex)
 
     If run_result.IsOutputExcluded Then
         pOutputExcludedCount = pOutputExcludedCount + 1
@@ -396,9 +402,3 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
 
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="âÊñ ëJà⁄ëÄçÏÇ™å©Ç¬Ç©ÇËÇ‹ÇπÇÒÅB(" & OperationName & ")"
 End Function
-
-Private Sub pCheckInit()
-    If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="èâä˙âªÇ≥ÇÍÇƒÇ¢Ç‹ÇπÇÒÅB"
-    End If
-End Sub

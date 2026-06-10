@@ -38,7 +38,6 @@ Public Property Get DownloadDirectoryPath() As String
     DownloadDirectoryPath = pDownloadDirectoryPath
 End Property
 
-
 '* WebDriver session client を初期化します。
 '*
 '* @param Client WebDriver HTTP API 呼び出しクライアント。
@@ -110,30 +109,6 @@ Private Function pBuildCreateSessionBody() As String
     End If
 
     pBuildCreateSessionBody = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{" & edge_options_text & "}}}}"
-End Function
-
-Private Function pCreateTemporaryDownloadDirectory() As String
-    If pFileSystem Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
-    End If
-
-    pCreateTemporaryDownloadDirectory = pFileSystem.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
-End Function
-
-Private Function pExtractJsonString(ByVal JsonText As String, ByVal KeyName As String) As String
-    Dim target_re As RegExp
-    Set target_re = New RegExp
-    target_re.Global = False
-    target_re.IgnoreCase = False
-    target_re.Pattern = """" & KeyName & """\s*:\s*""([^""]*)"""
-
-    Dim result_value As String
-    result_value = ""
-    If target_re.Test(JsonText) Then
-        result_value = target_re.Execute(JsonText)(0).SubMatches(0)
-    End If
-
-    pExtractJsonString = result_value
 End Function
 
 '* 取得開始 URL へ遷移します。
@@ -208,6 +183,69 @@ Public Function WaitForSelector(ByVal Selector As String) As String
     Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="selector が見つかりません。(" & Selector & ")"
 End Function
 
+Private Function pExtractElementId(ByVal ResponseBody As String) As String
+    Dim result_value As String
+    result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")
+    If result_value = "" Then result_value = pExtractJsonString(ResponseBody, "ELEMENT")
+
+    pExtractElementId = result_value
+End Function
+
+Private Function pIsWebDriverError(ByVal ResponseBody As String) As Boolean
+    pIsWebDriverError = (pExtractJsonString(ResponseBody, "error") <> "")
+End Function
+
+Private Function pIsNoSuchElement(ByVal ResponseBody As String) As Boolean
+    pIsNoSuchElement = (LCase$(pExtractJsonString(ResponseBody, "error")) = "no such element")
+End Function
+
+Private Function pFindElementResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
+    Dim target_locator_type As String
+    target_locator_type = LocatorType
+
+    Dim target_locator_value As String
+    target_locator_value = LocatorValue
+
+    Call pSwitchToTopLevelContext
+
+    If pIsFrameChainLocator(LocatorType, LocatorValue) Then
+        Dim locator_parts As Variant
+        locator_parts = pSplitFrameChain(LocatorValue)
+
+        Dim part_idx As Long
+        For part_idx = LBound(locator_parts) To UBound(locator_parts) - 1
+            Dim frame_selector As String
+            frame_selector = Trim$(CStr(locator_parts(part_idx)))
+            If frame_selector = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
+            End If
+
+            Dim frame_response As String
+            frame_response = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody("css selector", frame_selector))
+            If pIsWebDriverError(frame_response) Then
+                pFindElementResponse = frame_response
+                Exit Function
+            End If
+
+            Dim frame_element_id As String
+            frame_element_id = pExtractElementId(frame_response)
+            If frame_element_id = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
+            End If
+
+            Call pSwitchToFrame(frame_element_id)
+        Next part_idx
+
+        target_locator_type = "css selector"
+        target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
+        If target_locator_value = "" Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
+        End If
+    End If
+
+    pFindElementResponse = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody(target_locator_type, target_locator_value))
+End Function
+
 '* selector に一致する要素数を数えます。
 '*
 '* @param Selector CSS selector。
@@ -232,11 +270,89 @@ Public Function CountElements(ByVal Selector As String) As Long
     Call pSwitchToTopLevelContext
 End Function
 
+Private Function pCountElementIds(ByVal ResponseBody As String) As Long
+    Dim key_idx As Long
+    key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
+    If key_idx = 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim open_idx As Long
+    open_idx = InStr(key_idx, ResponseBody, "[", vbBinaryCompare)
+
+    Dim close_idx As Long
+    close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
+    If open_idx = 0 Or close_idx < open_idx Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim array_text As String
+    array_text = Mid$(ResponseBody, open_idx + 1, close_idx - open_idx - 1)
+
+    Dim element_re As RegExp
+    Set element_re = New RegExp
+    element_re.Global = True
+    element_re.IgnoreCase = False
+    element_re.Pattern = """(element-6066-11e4-a52e-4f735466cecf|ELEMENT)""\s*:"
+
+    pCountElementIds = element_re.Execute(array_text).Count
+End Function
+
+Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
+    Dim target_locator_type As String
+    target_locator_type = LocatorType
+
+    Dim target_locator_value As String
+    target_locator_value = LocatorValue
+
+    Call pSwitchToTopLevelContext
+
+    If pIsFrameChainLocator(LocatorType, LocatorValue) Then
+        Dim locator_parts As Variant
+        locator_parts = pSplitFrameChain(LocatorValue)
+
+        Dim part_idx As Long
+        For part_idx = LBound(locator_parts) To UBound(locator_parts) - 1
+            Dim frame_selector As String
+            frame_selector = Trim$(CStr(locator_parts(part_idx)))
+            If frame_selector = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
+            End If
+
+            Dim frame_response As String
+            frame_response = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody("css selector", frame_selector))
+            If pIsWebDriverError(frame_response) Then
+                pFindElementsResponse = frame_response
+                Exit Function
+            End If
+
+            Dim frame_element_id As String
+            frame_element_id = pExtractElementId(frame_response)
+            If frame_element_id = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
+            End If
+
+            Call pSwitchToFrame(frame_element_id)
+        Next part_idx
+
+        target_locator_type = "css selector"
+        target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
+        If target_locator_value = "" Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
+        End If
+    End If
+
+    pFindElementsResponse = pClient.Execute("POST", "/session/" & pSessionId & "/elements", pBuildFindElementBody(target_locator_type, target_locator_value))
+End Function
+
 '* ダウンロードリンクの browser-resolved href が HTTP(S) URL なら遷移します。
 '*
 '* @param LocatorType locator 種別。
 '* @param LocatorValue locator 値。
-'* @return URL 遷移を実行したか。
+'* @return URL 遷移を実行した場合は True。
+'*
+'* @details
+'* HTML 上の href 文字列ではなく browser が解決した href を使い、HTTP(S) URL でない場合はクリック処理へフォールバックできるよう False を返します。
 Public Function TryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
     Call pCheckInit
     Call pRequireSession
@@ -244,10 +360,29 @@ Public Function TryNavigateDownloadLink(ByVal LocatorType As String, ByVal Locat
     TryNavigateDownloadLink = pTryNavigateDownloadLink(LocatorType, LocatorValue)
 End Function
 
+Private Function pTryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
+    Dim download_href As String
+    download_href = pReadElementHref(LocatorType, LocatorValue)
+
+    If Not pIsNavigableDownloadHref(download_href) Then
+        pTryNavigateDownloadLink = False
+        Exit Function
+    End If
+
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/url", "{""url"":""" & pJsonEscape(download_href) & """}")
+    Call pRaiseIfWebDriverError(response_body)
+
+    pTryNavigateDownloadLink = True
+End Function
+
 '* 要素をクリックします。
 '*
 '* @param LocatorType locator 種別。
 '* @param LocatorValue locator 値。
+'*
+'* @details
+'* WebDriver の現在の browsing context で要素を特定して click command を実行し、失敗した場合は WebDriver のエラーを呼び出し元へ伝えます。
 Public Sub ClickElement(ByVal LocatorType As String, ByVal LocatorValue As String)
     Call pCheckInit
     Call pRequireSession
@@ -284,6 +419,32 @@ Public Function ReadElementText(ByVal Selector As String) As String
     Call pSwitchToTopLevelContext
 
     ReadElementText = result_value
+End Function
+
+Private Function pFindElement(ByVal LocatorType As String, ByVal LocatorValue As String) As String
+    On Error GoTo FIND_ERROR
+
+    Dim response_body As String
+    response_body = pFindElementResponse(LocatorType, LocatorValue)
+    Call pRaiseIfWebDriverError(response_body)
+
+    pFindElement = pExtractElementId(response_body)
+    If pFindElement = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver element id を取得できません。(" & response_body & ")"
+    End If
+    Exit Function
+
+FIND_ERROR:
+    Dim err_num As Long
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+    err_num = Err.Number
+    err_desc = Err.Description
+    err_help_file = Err.HelpFile
+    err_help_context = Err.HelpContext
+
+    Err.Raise err_num, "Class WebDriverSessionClient", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
 End Function
 
 '* 詳細ページ列定義に対応する値を読み取ります。
@@ -339,49 +500,6 @@ Private Function pBuildDetailExtractionScriptBody(ByVal DetailColumnDefinitions 
     pBuildDetailExtractionScriptBody = "{""script"":""" & pJsonEscape(pDetailExtractionScript()) & """,""args"":[" & pBuildDetailDefinitionJson(DetailColumnDefinitions) & "]}"
 End Function
 
-Private Function pDetailExtractionScript() As String
-    Dim script_text As String
-    script_text = "return (function(defs) {"
-    script_text = script_text & "function trimValue(value) { if (value === null || value === undefined) { return ''; } return String(value).replace(/^\s+|\s+$/g, ''); }"
-    script_text = script_text & "function findElement(selector) { var parts = String(selector).split('>>'); var root = document; for (var i = 0; i < parts.length - 1; i++) { var frame = root.querySelector(trimValue(parts[i])); if (!frame || !frame.contentDocument) { return null; } root = frame.contentDocument; } return root.querySelector(trimValue(parts[parts.length - 1])); }"
-    script_text = script_text & "return defs.map(function(def) { var element = findElement(def.selector); if (!element) { if (def.isRequired) { throw new Error('Required selector not found: ' + def.outputColumnName); } return ''; } var extractType = String(def.extractType || 'InnerText').toLowerCase(); var value = ''; if (extractType === 'attribute') { value = element.getAttribute(def.attributeName); } else if (extractType === 'textcontent') { value = element.textContent; } else { value = element.innerText; } value = trimValue(value); if (value === '' && def.isRequired && String(def.blankMode || '').toLowerCase() === 'errorifblank') { throw new Error('Required value is blank: ' + def.outputColumnName); } return value; });"
-    script_text = script_text & "})(arguments[0]);"
-
-    pDetailExtractionScript = script_text
-End Function
-
-Private Function pBuildDetailDefinitionJson(ByVal DetailColumnDefinitions As ObjectList) As String
-    Dim result_text As String
-    result_text = "["
-
-    Dim def_idx As Long
-    For def_idx = 0 To DetailColumnDefinitions.Count - 1
-        If 0 < def_idx Then result_text = result_text & ","
-
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = DetailColumnDefinitions.Item(def_idx)
-
-        result_text = result_text & "{" _
-                & """outputColumnName"":""" & pJsonEscape(detail_def.OutputColumnName) & """," _
-                & """selector"":""" & pJsonEscape(detail_def.Selector) & """," _
-                & """extractType"":""" & pJsonEscape(detail_def.ExtractType) & """," _
-                & """attributeName"":""" & pJsonEscape(detail_def.AttributeName) & """," _
-                & """isRequired"":" & pJsonBoolean(detail_def.IsRequired) & "," _
-                & """blankMode"":""" & pJsonEscape(detail_def.BlankMode) & """}"
-    Next def_idx
-
-    result_text = result_text & "]"
-    pBuildDetailDefinitionJson = result_text
-End Function
-
-Private Function pJsonBoolean(ByVal TargetValue As Boolean) As String
-    If TargetValue Then
-        pJsonBoolean = "true"
-    Else
-        pJsonBoolean = "false"
-    End If
-End Function
-
 Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName As String) As ArrayObject
     Dim key_idx As Long
     key_idx = InStr(1, JsonText, """" & KeyName & """", vbBinaryCompare)
@@ -423,163 +541,6 @@ Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName
 
     Set pExtractJsonStringArray = result_values
 End Function
-
-Private Function pJsonUnescape(ByVal TargetText As String) As String
-    Dim result_value As String
-    result_value = TargetText
-    result_value = Replace(result_value, "\n", vbLf)
-    result_value = Replace(result_value, "\r", vbCr)
-    result_value = Replace(result_value, "\t", vbTab)
-    result_value = Replace(result_value, "\" & Chr$(34), Chr$(34))
-    result_value = Replace(result_value, "\\", "\")
-
-    pJsonUnescape = result_value
-End Function
-
-Private Function pCountElementIds(ByVal ResponseBody As String) As Long
-    Dim key_idx As Long
-    key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
-    If key_idx = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
-    End If
-
-    Dim open_idx As Long
-    open_idx = InStr(key_idx, ResponseBody, "[", vbBinaryCompare)
-
-    Dim close_idx As Long
-    close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
-    If open_idx = 0 Or close_idx < open_idx Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
-    End If
-
-    Dim array_text As String
-    array_text = Mid$(ResponseBody, open_idx + 1, close_idx - open_idx - 1)
-
-    Dim element_re As RegExp
-    Set element_re = New RegExp
-    element_re.Global = True
-    element_re.IgnoreCase = False
-    element_re.Pattern = """(element-6066-11e4-a52e-4f735466cecf|ELEMENT)""\s*:"
-
-    pCountElementIds = element_re.Execute(array_text).Count
-End Function
-
-Private Function pExtractElementId(ByVal ResponseBody As String) As String
-    Dim result_value As String
-    result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")
-    If result_value = "" Then result_value = pExtractJsonString(ResponseBody, "ELEMENT")
-
-    pExtractElementId = result_value
-End Function
-
-Private Function pIsWebDriverError(ByVal ResponseBody As String) As Boolean
-    pIsWebDriverError = (pExtractJsonString(ResponseBody, "error") <> "")
-End Function
-
-Private Function pIsNoSuchElement(ByVal ResponseBody As String) As Boolean
-    pIsNoSuchElement = (LCase$(pExtractJsonString(ResponseBody, "error")) = "no such element")
-End Function
-
-
-Private Function pFindElementResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
-    Dim target_locator_type As String
-    target_locator_type = LocatorType
-
-    Dim target_locator_value As String
-    target_locator_value = LocatorValue
-
-    Call pSwitchToTopLevelContext
-
-    If pIsFrameChainLocator(LocatorType, LocatorValue) Then
-        Dim locator_parts As Variant
-        locator_parts = pSplitFrameChain(LocatorValue)
-
-        Dim part_idx As Long
-        For part_idx = LBound(locator_parts) To UBound(locator_parts) - 1
-            Dim frame_selector As String
-            frame_selector = Trim$(CStr(locator_parts(part_idx)))
-            If frame_selector = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
-            End If
-
-            Dim frame_response As String
-            frame_response = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody("css selector", frame_selector))
-            If pIsWebDriverError(frame_response) Then
-                pFindElementResponse = frame_response
-                Exit Function
-            End If
-
-            Dim frame_element_id As String
-            frame_element_id = pExtractElementId(frame_response)
-            If frame_element_id = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
-            End If
-
-            Call pSwitchToFrame(frame_element_id)
-        Next part_idx
-
-        target_locator_type = "css selector"
-        target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
-        If target_locator_value = "" Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
-        End If
-    End If
-
-    pFindElementResponse = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody(target_locator_type, target_locator_value))
-End Function
-
-Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
-    Dim target_locator_type As String
-    target_locator_type = LocatorType
-
-    Dim target_locator_value As String
-    target_locator_value = LocatorValue
-
-    Call pSwitchToTopLevelContext
-
-    If pIsFrameChainLocator(LocatorType, LocatorValue) Then
-        Dim locator_parts As Variant
-        locator_parts = pSplitFrameChain(LocatorValue)
-
-        Dim part_idx As Long
-        For part_idx = LBound(locator_parts) To UBound(locator_parts) - 1
-            Dim frame_selector As String
-            frame_selector = Trim$(CStr(locator_parts(part_idx)))
-            If frame_selector = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
-            End If
-
-            Dim frame_response As String
-            frame_response = pClient.Execute("POST", "/session/" & pSessionId & "/element", pBuildFindElementBody("css selector", frame_selector))
-            If pIsWebDriverError(frame_response) Then
-                pFindElementsResponse = frame_response
-                Exit Function
-            End If
-
-            Dim frame_element_id As String
-            frame_element_id = pExtractElementId(frame_response)
-            If frame_element_id = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
-            End If
-
-            Call pSwitchToFrame(frame_element_id)
-        Next part_idx
-
-        target_locator_type = "css selector"
-        target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
-        If target_locator_value = "" Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
-        End If
-    End If
-
-    pFindElementsResponse = pClient.Execute("POST", "/session/" & pSessionId & "/elements", pBuildFindElementBody(target_locator_type, target_locator_value))
-End Function
-
-Private Sub pSwitchToTopLevelContext()
-    Dim response_body As String
-    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/frame", "{""id"":null}")
-    Call pRaiseIfWebDriverError(response_body)
-End Sub
 
 '* 画面遷移操作を実行します。
 '*
@@ -626,21 +587,124 @@ CLICK_ERROR:
     Call pExecuteScript(Operation.Script)
 End Sub
 
-Private Function pTryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
-    Dim download_href As String
-    download_href = pReadElementHref(LocatorType, LocatorValue)
-
-    If Not pIsNavigableDownloadHref(download_href) Then
-        pTryNavigateDownloadLink = False
-        Exit Function
+Private Sub pExecuteScript(ByVal Script As String)
+    If Trim$(Script) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Script は必須です。"
     End If
 
     Dim response_body As String
-    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/url", "{""url"":""" & pJsonEscape(download_href) & """}")
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", "{""script"":""" & pJsonEscape(Script) & """,""args"":[]}")
+    Call pRaiseIfWebDriverError(response_body)
+End Sub
+
+'* Edge WebDriver session を終了します。
+'*
+'* @param SessionId [省略可] 終了する session id。省略時は CreateSession で保持した session id を使います。
+'*
+'* @details
+'* `DELETE /session/{id}` を送信します。session id がない場合は終了対象不足としてエラーにします。
+Public Sub QuitSession(Optional ByVal SessionId As String = "")
+    Call pCheckInit
+
+    Dim target_session_id As String
+    target_session_id = SessionId
+    If target_session_id = "" Then target_session_id = pSessionId
+
+    If target_session_id = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="終了対象の WebDriver session id がありません。"
+    End If
+
+    Dim response_body As String
+    response_body = pClient.Execute("DELETE", "/session/" & target_session_id, "")
     Call pRaiseIfWebDriverError(response_body)
 
-    pTryNavigateDownloadLink = True
+    If pSessionId = target_session_id Then pSessionId = ""
+End Sub
+
+Private Function pCreateTemporaryDownloadDirectory() As String
+    If pFileSystem Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
+    End If
+
+    pCreateTemporaryDownloadDirectory = pFileSystem.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
 End Function
+
+Private Function pExtractJsonString(ByVal JsonText As String, ByVal KeyName As String) As String
+    Dim target_re As RegExp
+    Set target_re = New RegExp
+    target_re.Global = False
+    target_re.IgnoreCase = False
+    target_re.Pattern = """" & KeyName & """\s*:\s*""([^""]*)"""
+
+    Dim result_value As String
+    result_value = ""
+    If target_re.Test(JsonText) Then
+        result_value = target_re.Execute(JsonText)(0).SubMatches(0)
+    End If
+
+    pExtractJsonString = result_value
+End Function
+
+Private Function pDetailExtractionScript() As String
+    Dim script_text As String
+    script_text = "return (function(defs) {"
+    script_text = script_text & "function trimValue(value) { if (value === null || value === undefined) { return ''; } return String(value).replace(/^\s+|\s+$/g, ''); }"
+    script_text = script_text & "function findElement(selector) { var parts = String(selector).split('>>'); var root = document; for (var i = 0; i < parts.length - 1; i++) { var frame = root.querySelector(trimValue(parts[i])); if (!frame || !frame.contentDocument) { return null; } root = frame.contentDocument; } return root.querySelector(trimValue(parts[parts.length - 1])); }"
+    script_text = script_text & "return defs.map(function(def) { var element = findElement(def.selector); if (!element) { if (def.isRequired) { throw new Error('Required selector not found: ' + def.outputColumnName); } return ''; } var extractType = String(def.extractType || 'InnerText').toLowerCase(); var value = ''; if (extractType === 'attribute') { value = element.getAttribute(def.attributeName); } else if (extractType === 'textcontent') { value = element.textContent; } else { value = element.innerText; } value = trimValue(value); if (value === '' && def.isRequired && String(def.blankMode || '').toLowerCase() === 'errorifblank') { throw new Error('Required value is blank: ' + def.outputColumnName); } return value; });"
+    script_text = script_text & "})(arguments[0]);"
+
+    pDetailExtractionScript = script_text
+End Function
+
+Private Function pBuildDetailDefinitionJson(ByVal DetailColumnDefinitions As ObjectList) As String
+    Dim result_text As String
+    result_text = "["
+
+    Dim def_idx As Long
+    For def_idx = 0 To DetailColumnDefinitions.Count - 1
+        If 0 < def_idx Then result_text = result_text & ","
+
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = DetailColumnDefinitions.Item(def_idx)
+
+        result_text = result_text & "{" _
+                & """outputColumnName"":""" & pJsonEscape(detail_def.OutputColumnName) & """," _
+                & """selector"":""" & pJsonEscape(detail_def.Selector) & """," _
+                & """extractType"":""" & pJsonEscape(detail_def.ExtractType) & """," _
+                & """attributeName"":""" & pJsonEscape(detail_def.AttributeName) & """," _
+                & """isRequired"":" & pJsonBoolean(detail_def.IsRequired) & "," _
+                & """blankMode"":""" & pJsonEscape(detail_def.BlankMode) & """}"
+    Next def_idx
+
+    result_text = result_text & "]"
+    pBuildDetailDefinitionJson = result_text
+End Function
+
+Private Function pJsonBoolean(ByVal TargetValue As Boolean) As String
+    If TargetValue Then
+        pJsonBoolean = "true"
+    Else
+        pJsonBoolean = "false"
+    End If
+End Function
+
+Private Function pJsonUnescape(ByVal TargetText As String) As String
+    Dim result_value As String
+    result_value = TargetText
+    result_value = Replace(result_value, "\n", vbLf)
+    result_value = Replace(result_value, "\r", vbCr)
+    result_value = Replace(result_value, "\t", vbTab)
+    result_value = Replace(result_value, "\" & Chr$(34), Chr$(34))
+    result_value = Replace(result_value, "\\", "\")
+
+    pJsonUnescape = result_value
+End Function
+
+Private Sub pSwitchToTopLevelContext()
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/frame", "{""id"":null}")
+    Call pRaiseIfWebDriverError(response_body)
+End Sub
 
 Private Function pReadElementHref(ByVal LocatorType As String, ByVal LocatorValue As String) As String
     Dim element_id As String
@@ -684,40 +748,6 @@ Private Sub pClickElement(ByVal LocatorType As String, ByVal LocatorValue As Str
     Loop While Now < deadline_time
 
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
-End Sub
-
-Private Sub pExecuteScript(ByVal Script As String)
-    If Trim$(Script) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Script は必須です。"
-    End If
-
-    Dim response_body As String
-    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", "{""script"":""" & pJsonEscape(Script) & """,""args"":[]}")
-    Call pRaiseIfWebDriverError(response_body)
-End Sub
-
-'* Edge WebDriver session を終了します。
-'*
-'* @param SessionId [省略可] 終了する session id。省略時は CreateSession で保持した session id を使います。
-'*
-'* @details
-'* `DELETE /session/{id}` を送信します。session id がない場合は終了対象不足としてエラーにします。
-Public Sub QuitSession(Optional ByVal SessionId As String = "")
-    Call pCheckInit
-
-    Dim target_session_id As String
-    target_session_id = SessionId
-    If target_session_id = "" Then target_session_id = pSessionId
-
-    If target_session_id = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="終了対象の WebDriver session id がありません。"
-    End If
-
-    Dim response_body As String
-    response_body = pClient.Execute("DELETE", "/session/" & target_session_id, "")
-    Call pRaiseIfWebDriverError(response_body)
-
-    If pSessionId = target_session_id Then pSessionId = ""
 End Sub
 
 Private Function pBuildFindElementBody(ByVal LocatorType As String, ByVal LocatorValue As String) As String
@@ -783,32 +813,6 @@ Private Sub pRequireSession()
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver session が作成されていません。"
     End If
 End Sub
-
-Private Function pFindElement(ByVal LocatorType As String, ByVal LocatorValue As String) As String
-    On Error GoTo FIND_ERROR
-
-    Dim response_body As String
-    response_body = pFindElementResponse(LocatorType, LocatorValue)
-    Call pRaiseIfWebDriverError(response_body)
-
-    pFindElement = pExtractElementId(response_body)
-    If pFindElement = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver element id を取得できません。(" & response_body & ")"
-    End If
-    Exit Function
-
-FIND_ERROR:
-    Dim err_num As Long
-    Dim err_desc As String
-    Dim err_help_file As String
-    Dim err_help_context As Long
-    err_num = Err.Number
-    err_desc = Err.Description
-    err_help_file = Err.HelpFile
-    err_help_context = Err.HelpContext
-
-    Err.Raise err_num, "Class WebDriverSessionClient", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
-End Function
 
 Private Function pIsFrameChainLocator(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
     pIsFrameChainLocator = (LCase$(Trim$(LocatorType)) = "css selector" _
