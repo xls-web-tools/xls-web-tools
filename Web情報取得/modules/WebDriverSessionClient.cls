@@ -18,13 +18,12 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_DOWNLOAD_DIRECTORY_PREFIX As String = "xls-web-tools_"
-Private Const C_INCOMPLETE_DOWNLOAD_FILE_REGEX As String = "\.(crdownload|tmp)$"
 
 Private pClient As IWebDriverClient
 Private pSettings As IToolSettings
 Private pSessionId As String
 Private pDownloadDirectoryPath As String
-Private pLastDownloadErrorDescription As String
+Private pFileSystem As IFileSystemService
 Private pIsInitialized As Boolean
 
 '* 作成済み session id。
@@ -39,32 +38,35 @@ Public Property Get DownloadDirectoryPath() As String
     DownloadDirectoryPath = pDownloadDirectoryPath
 End Property
 
-'* 直近のダウンロードエラー内容。
-Public Property Get LastDownloadErrorDescription() As String
-    Call pCheckInit
-    LastDownloadErrorDescription = pLastDownloadErrorDescription
-End Property
 
 '* WebDriver session client を初期化します。
 '*
 '* @param Client WebDriver HTTP API 呼び出しクライアント。
 '* @param Settings Web情報取得の設定。
+'* @param FileSystem ファイルシステム操作サービス。
 '*
 '* @details
 '* Client と Settings は Nothing にできません。session 作成時の capabilities は Settings から組み立てます。
-Public Sub Initialize(ByVal Client As IWebDriverClient, ByVal Settings As IToolSettings)
+Public Sub Initialize( _
+        ByVal Client As IWebDriverClient, _
+        ByVal Settings As IToolSettings, _
+        Optional ByVal FileSystem As IFileSystemService = Nothing)
+
     If Client Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Client は必須です。"
     End If
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Settings は必須です。"
     End If
+    If Settings.DownloadEnabled And (FileSystem Is Nothing) Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
+    End If
 
     Set pClient = Client
     Set pSettings = Settings
+    Set pFileSystem = FileSystem
     pSessionId = ""
     pDownloadDirectoryPath = ""
-    pLastDownloadErrorDescription = ""
     pIsInitialized = True
 End Sub
 
@@ -111,11 +113,11 @@ Private Function pBuildCreateSessionBody() As String
 End Function
 
 Private Function pCreateTemporaryDownloadDirectory() As String
-    If FsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystemService が初期化されていません。"
+    If pFileSystem Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
     End If
 
-    pCreateTemporaryDownloadDirectory = FsSrv.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
+    pCreateTemporaryDownloadDirectory = pFileSystem.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
 End Function
 
 Private Function pExtractJsonString(ByVal JsonText As String, ByVal KeyName As String) As String
@@ -229,50 +231,30 @@ Public Function CountElements(ByVal Selector As String) As Long
     CountElements = pCountElementIds(response_body)
     Call pSwitchToTopLevelContext
 End Function
-'* ダウンロードリンクをクリックし、ダウンロード済みファイルパスを返します。
+
+'* ダウンロードリンクの browser-resolved href が HTTP(S) URL なら遷移します。
 '*
-'* @param DownloadedFilePath [出力] ダウンロード完了ファイルのパス。
-'* @return ダウンロード状態。
-Public Function DownloadLinkedFile(ByRef DownloadedFilePath As String) As String
+'* @param LocatorType locator 種別。
+'* @param LocatorValue locator 値。
+'* @return URL 遷移を実行したか。
+Public Function TryNavigateDownloadLink(ByVal LocatorType As String, ByVal LocatorValue As String) As Boolean
     Call pCheckInit
     Call pRequireSession
 
-    DownloadedFilePath = ""
-    pLastDownloadErrorDescription = ""
-
-    On Error GoTo ON_ERROR
-
-    Dim link_count As Long
-    link_count = CountElements(pSettings.DownloadLinkSelector)
-
-    Dim result_status As String
-    Select Case link_count
-     Case 0
-        result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE
-     Case 1
-        Call pClearDownloadDirectory
-        If pTryNavigateDownloadLink("css selector", pSettings.DownloadLinkSelector) Then
-            result_status = pWaitForDownloadedFile(DownloadedFilePath)
-        Else
-            Call pClickElement("css selector", pSettings.DownloadLinkSelector)
-            result_status = pWaitForDownloadedFile(DownloadedFilePath)
-        End If
-     Case Else
-        pLastDownloadErrorDescription = "ダウンロードリンクが複数あります。(" & CStr(link_count) & ")"
-        result_status = G_WEB_DOWNLOAD_STATUS_ERROR
-    End Select
-
-    On Error GoTo 0
-    DownloadLinkedFile = result_status
-    Exit Function
-
-ON_ERROR:
-    pLastDownloadErrorDescription = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    DownloadLinkedFile = G_WEB_DOWNLOAD_STATUS_ERROR
+    TryNavigateDownloadLink = pTryNavigateDownloadLink(LocatorType, LocatorValue)
 End Function
+
+'* 要素をクリックします。
+'*
+'* @param LocatorType locator 種別。
+'* @param LocatorValue locator 値。
+Public Sub ClickElement(ByVal LocatorType As String, ByVal LocatorValue As String)
+    Call pCheckInit
+    Call pRequireSession
+
+    Call pClickElement(LocatorType, LocatorValue)
+End Sub
+
 '* selector に一致する要素の表示テキストを読み取ります。
 '*
 '* @param Selector CSS selector。
@@ -481,6 +463,7 @@ Private Function pCountElementIds(ByVal ResponseBody As String) As Long
 
     pCountElementIds = element_re.Execute(array_text).Count
 End Function
+
 Private Function pExtractElementId(ByVal ResponseBody As String) As String
     Dim result_value As String
     result_value = pExtractJsonString(ResponseBody, "element-6066-11e4-a52e-4f735466cecf")
@@ -497,95 +480,7 @@ Private Function pIsNoSuchElement(ByVal ResponseBody As String) As Boolean
     pIsNoSuchElement = (LCase$(pExtractJsonString(ResponseBody, "error")) = "no such element")
 End Function
 
-Private Function pWaitForDownloadedFile(ByRef DownloadedFilePath As String) As String
-    Call pRequireDownloadFileSystem
 
-    Dim deadline_time As Date
-    deadline_time = DateAdd("s", pSettings.TimeoutSeconds, Now)
-
-    Do
-        Dim incomplete_files() As String
-        incomplete_files = FsSrv.GetFileList(pDownloadDirectoryPath, CatchRegExp:=C_INCOMPLETE_DOWNLOAD_FILE_REGEX)
-
-        Dim completed_files() As String
-        completed_files = FsSrv.GetFileList(pDownloadDirectoryPath, IgnoreRegExp:=C_INCOMPLETE_DOWNLOAD_FILE_REGEX)
-
-        If pStringArrayCount(incomplete_files) = 0 Then
-            Select Case pStringArrayCount(completed_files)
-             Case 1
-                Dim candidate_file_path As String
-                candidate_file_path = completed_files(LBound(completed_files))
-                If pIsDownloadFileReady(candidate_file_path) Then
-                    DownloadedFilePath = candidate_file_path
-                    pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_DOWNLOADED
-                    Exit Function
-                End If
-             Case Is > 1
-                pLastDownloadErrorDescription = "ダウンロード完了ファイルが複数あります。(" & CStr(pStringArrayCount(completed_files)) & ")"
-                pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
-                Exit Function
-            End Select
-        End If
-
-        DoEvents
-    Loop While Now < deadline_time
-
-    pLastDownloadErrorDescription = "ダウンロード完了を待機中にタイムアウトしました。"
-    pWaitForDownloadedFile = G_WEB_DOWNLOAD_STATUS_ERROR
-End Function
-
-Private Function pIsDownloadFileReady(ByVal FilePath As String) As Boolean
-    On Error GoTo NOT_READY
-
-    Dim result_value As Boolean
-    result_value = False
-
-    If FsSrv.IsFile(FilePath) Then
-        If 0# < FsSrv.GetFileSize(FilePath) Then
-            result_value = FsSrv.IsFile(FilePath)
-        End If
-    End If
-
-    On Error GoTo 0
-    pIsDownloadFileReady = result_value
-    Exit Function
-
-NOT_READY:
-    Err.Clear
-    On Error GoTo 0
-    pIsDownloadFileReady = False
-End Function
-
-Private Sub pClearDownloadDirectory()
-    Call pRequireDownloadFileSystem
-
-    Dim staging_files() As String
-    staging_files = FsSrv.GetFileList(pDownloadDirectoryPath)
-
-    If pStringArrayCount(staging_files) = 0 Then Exit Sub
-
-    Dim file_index As Long
-    For file_index = LBound(staging_files) To UBound(staging_files)
-        Call FsSrv.RemoveFile(staging_files(file_index))
-    Next file_index
-End Sub
-
-Private Sub pRequireDownloadFileSystem()
-    If FsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystemService が初期化されていません。"
-    End If
-    If pDownloadDirectoryPath = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="一時ダウンロード領域がありません。"
-    End If
-End Sub
-
-Private Function pStringArrayCount(ByRef Values() As String) As Long
-    If IsEmptyArray(Values) Then
-        pStringArrayCount = 0
-    Else
-        pStringArrayCount = UBound(Values) - LBound(Values) + 1
-    End If
-End Function
 Private Function pFindElementResponse(ByVal LocatorType As String, ByVal LocatorValue As String) As String
     Dim target_locator_type As String
     target_locator_type = LocatorType
@@ -679,6 +574,7 @@ Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal Locato
 
     pFindElementsResponse = pClient.Execute("POST", "/session/" & pSessionId & "/elements", pBuildFindElementBody(target_locator_type, target_locator_value))
 End Function
+
 Private Sub pSwitchToTopLevelContext()
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/frame", "{""id"":null}")

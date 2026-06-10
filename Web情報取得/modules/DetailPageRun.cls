@@ -21,12 +21,14 @@ Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pConditionEvaluator As OutputConditionEvaluator
 Private pValueResolver As DetailValueResolver
+Private pFileDownloader As DetailFileDownloader
 Private pIsInitialized As Boolean
 
 '* 詳細ページ run を初期化します。
 Public Sub Initialize( _
         ByVal SessionClient As WebDriverSessionClient, _
-        ByVal Settings As IToolSettings)
+        ByVal Settings As IToolSettings, _
+        Optional ByVal FileDownloader As DetailFileDownloader = Nothing)
 
     If SessionClient Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="SessionClient は必須です。"
@@ -34,9 +36,13 @@ Public Sub Initialize( _
     If Settings Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="Settings は必須です。"
     End If
+    If Settings.DownloadEnabled And (FileDownloader Is Nothing) Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="FileDownloader は必須です。"
+    End If
 
     Set pSessionClient = SessionClient
     Set pSettings = Settings
+    Set pFileDownloader = FileDownloader
     Set pConditionEvaluator = New OutputConditionEvaluator
     Call pConditionEvaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
 
@@ -101,22 +107,21 @@ Public Function Run( _
     Dim detail_values As ArrayObject
     Set detail_values = pReadDetailValues()
 
-    Dim download_error_description As String
-    Dim download_status As String
-    download_status = pDownloadCurrentDetailFile(output_target_id, download_error_description)
+    Dim download_result As DetailFileDownloadResult
+    Set download_result = pDownloadCurrentDetailFile(output_target_id)
 
     Dim row_status As String
     row_status = G_WEB_STATUS_OK
 
     Dim row_error_description As String
     row_error_description = ""
-    If pDownloadStatusRequiresRowError(download_status) Then
+    If download_result.RequiresDetailError Then
         row_status = G_WEB_STATUS_ERROR
-        row_error_description = download_error_description
+        row_error_description = download_result.ErrorDescription
     End If
 
     Dim result_value As DetailPageRunResult
-    Set result_value = New_DetailPageRunResult(output_target_id, row_status, row_error_description, detail_values, download_status)
+    Set result_value = New_DetailPageRunResult(output_target_id, row_status, row_error_description, detail_values, download_result.DownloadStatus)
 
     On Error GoTo 0
     Call pReturnToListIfNeeded(needs_return)
@@ -176,48 +181,17 @@ Private Function pReadDetailValues() As ArrayObject
     Set pReadDetailValues = pValueResolver.ResolveValues(extraction_values)
 End Function
 
-Private Function pDownloadCurrentDetailFile( _
-        ByVal TargetId As String, _
-        ByRef ErrorDescription As String) As String
-
-    ErrorDescription = ""
+Private Function pDownloadCurrentDetailFile(ByVal TargetId As String) As DetailFileDownloadResult
     If Not pSettings.DownloadEnabled Then
-        pDownloadCurrentDetailFile = ""
+        Set pDownloadCurrentDetailFile = New_DetailFileDownloadResult("", "", False)
         Exit Function
     End If
 
-    On Error GoTo DOWNLOAD_ERROR
-
-    Dim downloaded_file_path As String
-    Dim result_status As String
-    result_status = pSessionClient.DownloadLinkedFile(downloaded_file_path)
-
-    If result_status = G_WEB_DOWNLOAD_STATUS_DOWNLOADED Then
-        Dim file_saver As DownloadedFileSaver
-        Set file_saver = New_DownloadedFileSaver(pSettings, FsSrv)
-        result_status = file_saver.SaveDownloadedFile(downloaded_file_path, TargetId)
-        If result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then ErrorDescription = file_saver.LastErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_ERROR Then
-        ErrorDescription = pSessionClient.LastDownloadErrorDescription
-    ElseIf result_status = G_WEB_DOWNLOAD_STATUS_NO_FILE Then
-        ErrorDescription = "ダウンロードリンクがありません。"
+    If pFileDownloader Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRun", Description:="FileDownloader は必須です。"
     End If
 
-    On Error GoTo 0
-    pDownloadCurrentDetailFile = result_status
-    Exit Function
-
-DOWNLOAD_ERROR:
-    ErrorDescription = Err.Description
-    Err.Clear
-    On Error GoTo 0
-
-    pDownloadCurrentDetailFile = G_WEB_DOWNLOAD_STATUS_ERROR
-End Function
-
-Private Function pDownloadStatusRequiresRowError(ByVal DownloadStatus As String) As Boolean
-    pDownloadStatusRequiresRowError = (pSettings.DownloadRequired _
-            And (DownloadStatus = G_WEB_DOWNLOAD_STATUS_ERROR Or DownloadStatus = G_WEB_DOWNLOAD_STATUS_NO_FILE))
+    Set pDownloadCurrentDetailFile = pFileDownloader.DownloadForDetail(TargetId)
 End Function
 
 Private Function pShouldOutputByCondition() As Boolean
