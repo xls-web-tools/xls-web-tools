@@ -19,11 +19,22 @@ Private Const C_NODE_KIND_OR As String = "Or"
 Private Const C_NODE_KIND_NOT As String = "Not"
 Private Const C_NODE_KIND_IF As String = "If"
 
+Private Type TColumnExpressionNode
+    Kind As String
+    TextValue As String
+    OperatorText As String
+    LeftNodeIndex As Long
+    MiddleNodeIndex As Long
+    RightNodeIndex As Long
+End Type
+
 Private pExpression As String
 Private pExpressionKind As String
 Private pSourceName As String
 Private pPosition As Long
-Private pRootNode As ColumnExpressionNode
+Private pRootNodeIndex As Long
+Private pNodes() As TColumnExpressionNode
+Private pNodeCount As Long
 Private pReferencedColumnNames As ObjectList
 Private pReferencedColumnNameSet As ObjectSet
 Private pIsInitialized As Boolean
@@ -57,19 +68,22 @@ Public Sub Initialize( _
     pExpressionKind = ExpressionKind
     pSourceName = SourceName
     pPosition = 1
+    pRootNodeIndex = 0
+    Erase pNodes
+    pNodeCount = 0
     Set pReferencedColumnNames = New ObjectList
     Set pReferencedColumnNameSet = New ObjectSet
 
     Select Case pExpressionKind
         Case G_COLUMN_EXPRESSION_KIND_CONDITION
             If Trim$(pExpression) = "" Then
-                Set pRootNode = pNewBooleanNode(True)
+                pRootNodeIndex = pNewBooleanNode(True)
             Else
-                Set pRootNode = pParseConditionOrExpression()
+                pRootNodeIndex = pParseConditionOrExpression()
                 Call pRequireExpressionEnd
             End If
         Case G_COLUMN_EXPRESSION_KIND_VALUE
-            Set pRootNode = pParseValueExpression()
+            pRootNodeIndex = pParseValueExpression()
             Call pRequireExpressionEnd
         Case Else
             Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="未対応の列参照記法種別です。(" & ExpressionKind & ")"
@@ -78,50 +92,50 @@ Public Sub Initialize( _
     pIsInitialized = True
 End Sub
 
-Private Function pParseConditionOrExpression() As ColumnExpressionNode
-    Dim left_node As ColumnExpressionNode
-    Set left_node = pParseConditionAndExpression()
+Private Function pParseConditionOrExpression() As Long
+    Dim left_node As Long
+    left_node = pParseConditionAndExpression()
 
     Do While pConsumeKeyword("OR")
-        Dim right_node As ColumnExpressionNode
-        Set right_node = pParseConditionAndExpression()
-        Set left_node = pNewBinaryNode(C_NODE_KIND_OR, "OR", left_node, right_node)
+        Dim right_node As Long
+        right_node = pParseConditionAndExpression()
+        left_node = pNewBinaryNode(C_NODE_KIND_OR, "OR", left_node, right_node)
     Loop
 
-    Set pParseConditionOrExpression = left_node
+    pParseConditionOrExpression = left_node
 End Function
 
-Private Function pParseValueExpression() As ColumnExpressionNode
+Private Function pParseValueExpression() As Long
     If pConsumeKeyword("IF") Then
         Call pRequireChar("(")
 
-        Dim condition_node As ColumnExpressionNode
-        Set condition_node = pParseConditionOrExpression()
+        Dim condition_node As Long
+        condition_node = pParseConditionOrExpression()
 
         Call pRequireChar(",")
 
-        Dim true_node As ColumnExpressionNode
-        Set true_node = pParseValueExpression()
+        Dim true_node As Long
+        true_node = pParseValueExpression()
 
         Call pRequireChar(",")
 
-        Dim false_node As ColumnExpressionNode
-        Set false_node = pParseValueExpression()
+        Dim false_node As Long
+        false_node = pParseValueExpression()
 
         Call pRequireChar(")")
 
-        Set pParseValueExpression = pNewTernaryNode(C_NODE_KIND_IF, condition_node, true_node, false_node)
+        pParseValueExpression = pNewTernaryNode(C_NODE_KIND_IF, condition_node, true_node, false_node)
         Exit Function
     End If
 
-    Set pParseValueExpression = pParseValueOperandNode()
+    pParseValueExpression = pParseValueOperandNode()
 End Function
 
-Private Function pNewBooleanNode(ByVal Value As Boolean) As ColumnExpressionNode
+Private Function pNewBooleanNode(ByVal Value As Boolean) As Long
     If Value Then
-        Set pNewBooleanNode = pNewTextNode(C_NODE_KIND_BOOLEAN_LITERAL, "True")
+        pNewBooleanNode = pNewTextNode(C_NODE_KIND_BOOLEAN_LITERAL, "True")
     Else
-        Set pNewBooleanNode = pNewTextNode(C_NODE_KIND_BOOLEAN_LITERAL, "False")
+        pNewBooleanNode = pNewTextNode(C_NODE_KIND_BOOLEAN_LITERAL, "False")
     End If
 End Function
 
@@ -138,36 +152,36 @@ Public Function EvaluateCondition(ByVal ColumnValues As ObjectDictionary) As Boo
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " は条件として評価できません。"
     End If
 
-    EvaluateCondition = pEvaluateConditionNode(pRootNode, ColumnValues)
+    EvaluateCondition = pEvaluateConditionNode(pRootNodeIndex, ColumnValues)
 End Function
 
 Private Function pEvaluateConditionNode( _
-        ByVal ExpressionNode As ColumnExpressionNode, _
+        ByVal ExpressionNodeIndex As Long, _
         ByVal ColumnValues As ObjectDictionary) As Boolean
 
     Dim result_value As Boolean
-    Select Case ExpressionNode.Kind
+    Select Case pNodes(ExpressionNodeIndex).Kind
         Case C_NODE_KIND_BOOLEAN_LITERAL
-            result_value = (ExpressionNode.TextValue = "True")
+            result_value = (pNodes(ExpressionNodeIndex).TextValue = "True")
         Case C_NODE_KIND_COMPARISON
             result_value = pEvaluateComparison( _
-                    pEvaluateValueNode(ExpressionNode.LeftNode, ColumnValues), _
-                    ExpressionNode.OperatorText, _
-                    pEvaluateValueNode(ExpressionNode.RightNode, ColumnValues))
+                    pEvaluateValueNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues), _
+                    pNodes(ExpressionNodeIndex).OperatorText, _
+                    pEvaluateValueNode(pNodes(ExpressionNodeIndex).RightNodeIndex, ColumnValues))
         Case C_NODE_KIND_AND
-            result_value = pEvaluateConditionNode(ExpressionNode.LeftNode, ColumnValues)
+            result_value = pEvaluateConditionNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues)
             If result_value Then
-                result_value = pEvaluateConditionNode(ExpressionNode.RightNode, ColumnValues)
+                result_value = pEvaluateConditionNode(pNodes(ExpressionNodeIndex).RightNodeIndex, ColumnValues)
             End If
         Case C_NODE_KIND_OR
-            result_value = pEvaluateConditionNode(ExpressionNode.LeftNode, ColumnValues)
+            result_value = pEvaluateConditionNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues)
             If Not result_value Then
-                result_value = pEvaluateConditionNode(ExpressionNode.RightNode, ColumnValues)
+                result_value = pEvaluateConditionNode(pNodes(ExpressionNodeIndex).RightNodeIndex, ColumnValues)
             End If
         Case C_NODE_KIND_NOT
-            result_value = Not pEvaluateConditionNode(ExpressionNode.LeftNode, ColumnValues)
+            result_value = Not pEvaluateConditionNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues)
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="条件として評価できない列参照記法ノードです。(" & ExpressionNode.Kind & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="条件として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
     End Select
 
     pEvaluateConditionNode = result_value
@@ -179,91 +193,91 @@ Public Function EvaluateValue(ByVal ColumnValues As ObjectDictionary) As String
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " は値として評価できません。"
     End If
 
-    EvaluateValue = pEvaluateValueNode(pRootNode, ColumnValues)
+    EvaluateValue = pEvaluateValueNode(pRootNodeIndex, ColumnValues)
 End Function
 
 Private Function pEvaluateValueNode( _
-        ByVal ExpressionNode As ColumnExpressionNode, _
+        ByVal ExpressionNodeIndex As Long, _
         ByVal ColumnValues As ObjectDictionary) As String
 
     Dim result_value As String
-    Select Case ExpressionNode.Kind
+    Select Case pNodes(ExpressionNodeIndex).Kind
         Case C_NODE_KIND_STRING_LITERAL
-            result_value = ExpressionNode.TextValue
+            result_value = pNodes(ExpressionNodeIndex).TextValue
         Case C_NODE_KIND_COLUMN_REFERENCE
-            result_value = pReadColumnValue(ExpressionNode.TextValue, ColumnValues)
+            result_value = pReadColumnValue(pNodes(ExpressionNodeIndex).TextValue, ColumnValues)
         Case C_NODE_KIND_IF
-            If pEvaluateConditionNode(ExpressionNode.LeftNode, ColumnValues) Then
-                result_value = pEvaluateValueNode(ExpressionNode.MiddleNode, ColumnValues)
+            If pEvaluateConditionNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues) Then
+                result_value = pEvaluateValueNode(pNodes(ExpressionNodeIndex).MiddleNodeIndex, ColumnValues)
             Else
-                result_value = pEvaluateValueNode(ExpressionNode.RightNode, ColumnValues)
+                result_value = pEvaluateValueNode(pNodes(ExpressionNodeIndex).RightNodeIndex, ColumnValues)
             End If
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="値として評価できない列参照記法ノードです。(" & ExpressionNode.Kind & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="値として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
     End Select
 
     pEvaluateValueNode = result_value
 End Function
 
-Private Function pParseConditionAndExpression() As ColumnExpressionNode
-    Dim left_node As ColumnExpressionNode
-    Set left_node = pParseConditionNotExpression()
+Private Function pParseConditionAndExpression() As Long
+    Dim left_node As Long
+    left_node = pParseConditionNotExpression()
 
     Do While pConsumeKeyword("AND")
-        Dim right_node As ColumnExpressionNode
-        Set right_node = pParseConditionNotExpression()
-        Set left_node = pNewBinaryNode(C_NODE_KIND_AND, "AND", left_node, right_node)
+        Dim right_node As Long
+        right_node = pParseConditionNotExpression()
+        left_node = pNewBinaryNode(C_NODE_KIND_AND, "AND", left_node, right_node)
     Loop
 
-    Set pParseConditionAndExpression = left_node
+    pParseConditionAndExpression = left_node
 End Function
 
-Private Function pParseConditionNotExpression() As ColumnExpressionNode
+Private Function pParseConditionNotExpression() As Long
     If pConsumeKeyword("NOT") Then
-        Set pParseConditionNotExpression = pNewUnaryNode(C_NODE_KIND_NOT, "NOT", pParseConditionNotExpression())
+        pParseConditionNotExpression = pNewUnaryNode(C_NODE_KIND_NOT, "NOT", pParseConditionNotExpression())
         Exit Function
     End If
 
-    Set pParseConditionNotExpression = pParseConditionPrimary()
+    pParseConditionNotExpression = pParseConditionPrimary()
 End Function
 
-Private Function pParseConditionPrimary() As ColumnExpressionNode
+Private Function pParseConditionPrimary() As Long
     If pConsumeChar("(") Then
-        Set pParseConditionPrimary = pParseConditionOrExpression()
+        pParseConditionPrimary = pParseConditionOrExpression()
         Call pRequireChar(")")
         Exit Function
     End If
 
-    Set pParseConditionPrimary = pParseConditionComparison()
+    pParseConditionPrimary = pParseConditionComparison()
 End Function
 
-Private Function pParseConditionComparison() As ColumnExpressionNode
-    Dim left_node As ColumnExpressionNode
-    Set left_node = pParseValueOperandNode()
+Private Function pParseConditionComparison() As Long
+    Dim left_node As Long
+    left_node = pParseValueOperandNode()
 
     Dim operator_text As String
     operator_text = pParseComparisonOperator()
 
-    Dim right_node As ColumnExpressionNode
-    Set right_node = pParseValueOperandNode()
+    Dim right_node As Long
+    right_node = pParseValueOperandNode()
 
-    Set pParseConditionComparison = pNewBinaryNode(C_NODE_KIND_COMPARISON, operator_text, left_node, right_node)
+    pParseConditionComparison = pNewBinaryNode(C_NODE_KIND_COMPARISON, operator_text, left_node, right_node)
 End Function
 
-Private Function pParseValueOperandNode() As ColumnExpressionNode
+Private Function pParseValueOperandNode() As Long
     Call pSkipSpaces
 
     Select Case pPeekChar()
         Case "["
-            Set pParseValueOperandNode = pParseColumnReferenceNode()
+            pParseValueOperandNode = pParseColumnReferenceNode()
         Case Chr$(34)
-            Set pParseValueOperandNode = pParseStringLiteralNode()
+            pParseValueOperandNode = pParseStringLiteralNode()
         Case Else
             Call pRaiseSyntaxError("列参照または文字列リテラルが見つかりません。")
     End Select
 End Function
 
-Private Function pParseColumnReferenceNode() As ColumnExpressionNode
+Private Function pParseColumnReferenceNode() As Long
     Call pSkipSpaces
     If Not pConsumeChar("[") Then
         Call pRaiseSyntaxError("列参照の開始括弧が見つかりません。")
@@ -279,7 +293,7 @@ Private Function pParseColumnReferenceNode() As ColumnExpressionNode
         If current_char = "]" Then
             pPosition = pPosition + 1
             Call pAddReferencedColumnName(column_name)
-            Set pParseColumnReferenceNode = pNewTextNode(C_NODE_KIND_COLUMN_REFERENCE, column_name)
+            pParseColumnReferenceNode = pNewTextNode(C_NODE_KIND_COLUMN_REFERENCE, column_name)
             Exit Function
         End If
 
@@ -290,7 +304,7 @@ Private Function pParseColumnReferenceNode() As ColumnExpressionNode
     Call pRaiseSyntaxError("列参照の閉じ括弧が見つかりません。")
 End Function
 
-Private Function pParseStringLiteralNode() As ColumnExpressionNode
+Private Function pParseStringLiteralNode() As Long
     Call pSkipSpaces
     If Not pConsumeChar(Chr$(34)) Then
         Call pRaiseSyntaxError("文字列リテラルはダブルクオートで囲んでください。")
@@ -305,7 +319,7 @@ Private Function pParseStringLiteralNode() As ColumnExpressionNode
 
         If current_char = Chr$(34) Then
             pPosition = pPosition + 1
-            Set pParseStringLiteralNode = pNewTextNode(C_NODE_KIND_STRING_LITERAL, pJsonUnescape(raw_value))
+            pParseStringLiteralNode = pNewTextNode(C_NODE_KIND_STRING_LITERAL, pJsonUnescape(raw_value))
             Exit Function
         End If
 
@@ -387,60 +401,71 @@ End Sub
 
 Private Function pNewTextNode( _
         ByVal Kind As String, _
-        ByVal TextValue As String) As ColumnExpressionNode
+        ByVal TextValue As String) As Long
 
-    Dim result_value As ColumnExpressionNode
-    Set result_value = New ColumnExpressionNode
-    result_value.Kind = Kind
-    result_value.TextValue = TextValue
-
-    Set pNewTextNode = result_value
+    pNewTextNode = pAppendNode(Kind, TextValue:=TextValue)
 End Function
 
 Private Function pNewUnaryNode( _
         ByVal Kind As String, _
         ByVal OperatorText As String, _
-        ByVal ChildNode As ColumnExpressionNode) As ColumnExpressionNode
+        ByVal ChildNodeIndex As Long) As Long
 
-    Dim result_value As ColumnExpressionNode
-    Set result_value = New ColumnExpressionNode
-    result_value.Kind = Kind
-    result_value.OperatorText = OperatorText
-    Set result_value.LeftNode = ChildNode
-
-    Set pNewUnaryNode = result_value
+    pNewUnaryNode = pAppendNode( _
+            Kind, _
+            OperatorText:=OperatorText, _
+            LeftNodeIndex:=ChildNodeIndex)
 End Function
 
 Private Function pNewBinaryNode( _
         ByVal Kind As String, _
         ByVal OperatorText As String, _
-        ByVal LeftNode As ColumnExpressionNode, _
-        ByVal RightNode As ColumnExpressionNode) As ColumnExpressionNode
+        ByVal LeftNodeIndex As Long, _
+        ByVal RightNodeIndex As Long) As Long
 
-    Dim result_value As ColumnExpressionNode
-    Set result_value = New ColumnExpressionNode
-    result_value.Kind = Kind
-    result_value.OperatorText = OperatorText
-    Set result_value.LeftNode = LeftNode
-    Set result_value.RightNode = RightNode
-
-    Set pNewBinaryNode = result_value
+    pNewBinaryNode = pAppendNode( _
+            Kind, _
+            OperatorText:=OperatorText, _
+            LeftNodeIndex:=LeftNodeIndex, _
+            RightNodeIndex:=RightNodeIndex)
 End Function
 
 Private Function pNewTernaryNode( _
         ByVal Kind As String, _
-        ByVal ConditionNode As ColumnExpressionNode, _
-        ByVal TrueNode As ColumnExpressionNode, _
-        ByVal FalseNode As ColumnExpressionNode) As ColumnExpressionNode
+        ByVal ConditionNodeIndex As Long, _
+        ByVal TrueNodeIndex As Long, _
+        ByVal FalseNodeIndex As Long) As Long
 
-    Dim result_value As ColumnExpressionNode
-    Set result_value = New ColumnExpressionNode
-    result_value.Kind = Kind
-    Set result_value.LeftNode = ConditionNode
-    Set result_value.MiddleNode = TrueNode
-    Set result_value.RightNode = FalseNode
+    pNewTernaryNode = pAppendNode( _
+            Kind, _
+            LeftNodeIndex:=ConditionNodeIndex, _
+            MiddleNodeIndex:=TrueNodeIndex, _
+            RightNodeIndex:=FalseNodeIndex)
+End Function
 
-    Set pNewTernaryNode = result_value
+Private Function pAppendNode( _
+        ByVal Kind As String, _
+        Optional ByVal TextValue As String = "", _
+        Optional ByVal OperatorText As String = "", _
+        Optional ByVal LeftNodeIndex As Long = 0, _
+        Optional ByVal MiddleNodeIndex As Long = 0, _
+        Optional ByVal RightNodeIndex As Long = 0) As Long
+
+    pNodeCount = pNodeCount + 1
+    If pNodeCount = 1 Then
+        ReDim pNodes(1 To 1)
+    Else
+        ReDim Preserve pNodes(1 To pNodeCount)
+    End If
+
+    pNodes(pNodeCount).Kind = Kind
+    pNodes(pNodeCount).TextValue = TextValue
+    pNodes(pNodeCount).OperatorText = OperatorText
+    pNodes(pNodeCount).LeftNodeIndex = LeftNodeIndex
+    pNodes(pNodeCount).MiddleNodeIndex = MiddleNodeIndex
+    pNodes(pNodeCount).RightNodeIndex = RightNodeIndex
+
+    pAppendNode = pNodeCount
 End Function
 
 Private Function pConsumeKeyword(ByVal Keyword As String) As Boolean

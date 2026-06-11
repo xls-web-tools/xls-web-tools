@@ -359,21 +359,6 @@ Public Function New_WebDriverSessionLifecycle( _
     Set New_WebDriverSessionLifecycle = result_value
 End Function
 
-'* WebDriver smoke runner を生成します。
-'*
-'* @param Lifecycle WebDriver session lifecycle。
-'* @return 初期化済みの WebDriver smoke runner。
-'*
-'* @details
-'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebDriverSmokeRunner に委譲します。
-Public Function New_WebDriverSmokeRunner(ByVal Lifecycle As WebDriverSessionLifecycle) As WebDriverSmokeRunner
-    Dim result_value As WebDriverSmokeRunner
-    Set result_value = New WebDriverSmokeRunner
-    Call result_value.Initialize(Lifecycle)
-
-    Set New_WebDriverSmokeRunner = result_value
-End Function
-
 '* ブラウザ取得 run lifecycle を生成します。
 '*
 '* @param Lifecycle WebDriver session lifecycle。
