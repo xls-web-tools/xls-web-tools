@@ -10,6 +10,8 @@ Attribute VB_Exposed = False
 Option Explicit
 Option Base 0
 
+Implements IWebCollectionRunBody
+
 ' #############################################################################
 '!
 '! @brief
@@ -24,6 +26,8 @@ Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pTransitionResolver As TransitionOperationResolver
 Private pIndexTemplate As ListItemIndexTemplate
+Private pDetailRunner As DetailPageRunner
+Private pOutputWriter As OutputSheetWriter
 Private pSucceededCount As Long
 Private pSkippedCount As Long
 Private pOutputExcludedCount As Long
@@ -105,55 +109,31 @@ End Sub
 Public Function Run() As String
     Call pCheckInit
 
-    Dim result_value As String
     pSucceededCount = 0
     pSkippedCount = 0
     pOutputExcludedCount = 0
     pErrorCount = 0
     pPageCount = 0
     pProgressStarted = False
+    Set pDetailRunner = New_DetailPageRunner(pSessionClient, pSettings)
+    Set pOutputWriter = New_OutputSheetWriter(pSettings)
 
-    Dim detail_runner As DetailPageRunner
-    Set detail_runner = New_DetailPageRunner(pSessionClient, pSettings)
+    Dim run_lifecycle As WebCollectionRunLifecycle
+    Set run_lifecycle = New_WebCollectionRunLifecycle(pLifecycle, pSettings)
 
-    Dim preparation As WebCollectionPreparation
-    On Error GoTo ON_ERROR
-
-    Set preparation = New_WebCollectionPreparation(pLifecycle, pSettings)
-    result_value = preparation.Run()
-
-    Dim output_writer As OutputSheetWriter
-    Set output_writer = New_OutputSheetWriter(pSettings)
-    Call output_writer.EnsureHeaders
-    Call pCollectPages(output_writer, detail_runner)
-    Call pMarkProgressComplete
-
-    Call pLifecycle.FinishSession
-
-    On Error GoTo 0
-    Run = result_value
-    Exit Function
-
-ON_ERROR:
-    Dim err_num As Long
-    Dim err_source As String
-    Dim err_desc As String
-    Dim err_help_file As String
-    Dim err_help_context As Long
-    err_num = Err.Number
-    err_source = Err.Source
-    err_desc = Err.Description
-    err_help_file = Err.HelpFile
-    err_help_context = Err.HelpContext
-
-    On Error Resume Next
-    If Not preparation Is Nothing Then Call preparation.ClearProgress
-    Call pClearProgress
-    On Error GoTo 0
-    Call pLifecycle.CleanupAfterError(err_desc)
-
-    Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
+    Run = run_lifecycle.Run(Me)
 End Function
+
+'* 一覧画面到達後に本番収集を実行します。
+Public Sub RunAfterPreparation()
+    Call pCheckInit
+    Call pOutputWriter.EnsureHeaders
+    Call pCollectPages(pOutputWriter, pDetailRunner)
+    Call pMarkProgressComplete
+End Sub
+Private Sub IWebCollectionRunBody_RunAfterPreparation()
+    Call RunAfterPreparation
+End Sub
 
 Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailRunner As DetailPageRunner)
     Dim first_target_ids As ObjectSet
@@ -196,6 +176,15 @@ Private Sub pMarkProgressComplete()
     If Not pProgressStarted Then Exit Sub
 
     Call ProgStat.MarkAsComplete
+End Sub
+
+'* エラー時に本番収集側の進捗表示を解除します。
+Public Sub ClearProgressAfterError()
+    Call pCheckInit
+    Call pClearProgress
+End Sub
+Private Sub IWebCollectionRunBody_ClearProgressAfterError()
+    Call ClearProgressAfterError
 End Sub
 
 Private Sub pClearProgress()

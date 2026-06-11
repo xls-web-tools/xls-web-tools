@@ -372,6 +372,25 @@ Public Function New_WebDriverSmokeRunner(ByVal Lifecycle As WebDriverSessionLife
     Set New_WebDriverSmokeRunner = result_value
 End Function
 
+'* ブラウザ取得 run lifecycle を生成します。
+'*
+'* @param Lifecycle WebDriver session lifecycle。
+'* @param Settings Web情報取得の設定。
+'* @return 初期化済みのブラウザ取得 run lifecycle。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、実処理は WebCollectionRunLifecycle に委譲します。
+Public Function New_WebCollectionRunLifecycle( _
+        ByVal Lifecycle As WebDriverSessionLifecycle, _
+        ByVal Settings As IToolSettings) As WebCollectionRunLifecycle
+
+    Dim result_value As WebCollectionRunLifecycle
+    Set result_value = New WebCollectionRunLifecycle
+    Call result_value.Initialize(Lifecycle, Settings)
+
+    Set New_WebCollectionRunLifecycle = result_value
+End Function
+
 '* Web collection preparation を生成します。
 '*
 '* @param Lifecycle WebDriver session lifecycle。
