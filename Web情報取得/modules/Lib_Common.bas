@@ -248,6 +248,31 @@ Public Function New_ObjectSet( _
 
     Set New_ObjectSet = result_value
 End Function
+'* ObjectDictionary インスタンスを新規作成し、必要に応じて要素型契約を設定します。
+'*
+'* @param ElementTypeName [省略可] 要素型契約名。
+'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
+'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
+'* @return 新しい ObjectDictionary インスタンス。
+'*
+'* @details
+'* ElementTypeName を省略した場合、最初に追加された要素から ObjectList と同じ型推論を行います。
+Public Function New_ObjectDictionary( _
+        Optional ByVal ElementTypeName As String = "", _
+        Optional ByVal RequireComparable As Boolean = False, _
+        Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE) As ObjectDictionary
+
+    Dim result_value As ObjectDictionary
+    Set result_value = New ObjectDictionary
+    If ElementTypeName <> "" Then
+        Call result_value.Initialize( _
+                ElementTypeName:=ElementTypeName, _
+                RequireComparable:=RequireComparable, _
+                ObjectKeyMode:=ObjectKeyMode)
+    End If
+
+    Set New_ObjectDictionary = result_value
+End Function
 
 '* Excel アドレス文字列から WorksheetRangeBounds インスタンスを新規作成します。
 '*
