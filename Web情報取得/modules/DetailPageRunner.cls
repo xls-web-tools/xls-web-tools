@@ -20,7 +20,7 @@ Option Base 0
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
 Private pTransitionResolver As TransitionOperationResolver
-Private pConditionEvaluator As OutputConditionEvaluator
+Private pOutputConditionExpression As ColumnExpression
 Private pValueResolver As DetailValueResolver
 Private pFileDownloader As DetailFileDownloader
 Private pIsInitialized As Boolean
@@ -52,8 +52,14 @@ Public Sub Initialize( _
     Set pSettings = Settings
     Set pTransitionResolver = New_TransitionOperationResolver(Settings)
     Set pFileDownloader = FileDownloader
-    Set pConditionEvaluator = New OutputConditionEvaluator
-    Call pConditionEvaluator.Initialize(pSettings.OutputConditionExpression, pSettings.DetailColumnDefinitions)
+    If Trim$(pSettings.OutputConditionExpression) <> "" Then
+        Set pOutputConditionExpression = New_ColumnExpression( _
+                Expression:=pSettings.OutputConditionExpression, _
+                ExpressionKind:=G_COLUMN_EXPRESSION_KIND_CONDITION, _
+                SourceName:="OutputConditionExpression")
+    Else
+        Set pOutputConditionExpression = Nothing
+    End If
 
     Set pValueResolver = New DetailValueResolver
     Call pValueResolver.Initialize(pSettings.DetailColumnDefinitions)
@@ -194,7 +200,10 @@ Private Function pReadDetailValues() As ArrayObject
         Set extraction_values = pSessionClient.ReadDetailColumnValues(extraction_defs)
     End If
 
-    Set pReadDetailValues = pValueResolver.ResolveValues(extraction_values)
+    Dim values_by_name As ObjectDictionary
+    Set values_by_name = pValueResolver.ResolveValues(extraction_values)
+
+    Set pReadDetailValues = pValueResolver.BuildOutputValues(values_by_name)
 End Function
 
 Private Function pDownloadCurrentDetailFile(ByVal TargetId As String) As DetailFileDownloadResult
@@ -211,14 +220,14 @@ Private Function pDownloadCurrentDetailFile(ByVal TargetId As String) As DetailF
 End Function
 
 Private Function pShouldOutputByCondition() As Boolean
-    If Not pConditionEvaluator.IsEnabled Then
+    If pOutputConditionExpression Is Nothing Then
         pShouldOutputByCondition = True
         Exit Function
     End If
 
     Dim condition_defs As ObjectList
-    Set condition_defs = pValueResolver.BuildDependentDefinitions( _
-            pConditionEvaluator.ReferencedColumnDefinitions, _
+    Set condition_defs = pValueResolver.BuildDependentDefinitionsByNames( _
+            pOutputConditionExpression.ReferencedColumnNames, _
             OptionalExtraction:=True, _
             IgnoreDerivedBlankMode:=True)
 
@@ -236,10 +245,10 @@ Private Function pShouldOutputByCondition() As Boolean
         Set extraction_values = pSessionClient.ReadDetailColumnValues(extraction_defs)
     End If
 
-    Dim referenced_values As ArrayObject
-    Set referenced_values = condition_resolver.ResolveValues(extraction_values, ValidateDerivedBlankMode:=False)
+    Dim values_by_name As ObjectDictionary
+    Set values_by_name = condition_resolver.ResolveValues(extraction_values, ValidateDerivedBlankMode:=False)
 
-    pShouldOutputByCondition = pConditionEvaluator.ShouldOutputByColumnValues(referenced_values, condition_defs)
+    pShouldOutputByCondition = pOutputConditionExpression.EvaluateCondition(values_by_name)
 End Function
 
 Private Sub pReturnToListIfNeeded(ByVal NeedsReturn As Boolean)

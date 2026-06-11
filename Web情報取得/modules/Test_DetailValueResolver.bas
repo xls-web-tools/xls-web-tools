@@ -49,14 +49,14 @@ Public Sub Test_DetailValueResolver_’Pƒ—ñQÆ‚Ì”h¶’l‚ğ‰ğŒˆ‚·‚é(ByVal Assert As
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(extraction_values)
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "ˆÄŒA", CStr(actual_values.Item(1))
+    Assert.Equals "ˆÄŒA", CStr(actual_values.Item("Œ–¼•Ê–¼"))
 End Sub
 
 Public Sub Test_DetailValueResolver_ValueExpressionŒ‹‰Ê‚É’Ç‰ÁTrim‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
@@ -77,14 +77,14 @@ Public Sub Test_DetailValueResolver_ValueExpressionŒ‹‰Ê‚É’Ç‰ÁTrim‚µ‚È‚¢(ByVal As
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(extraction_values)
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "  ˆÄŒA  ", CStr(actual_values.Item(1))
+    Assert.Equals "  ˆÄŒA  ", CStr(actual_values.Item("Œ–¼•Ê–¼"))
 End Sub
 
 Public Sub Test_DetailValueResolver_IF’l®‚Å‹ó—“‚Ì‘ã‘Ö’l‚ğ•Ô‚·(ByVal Assert As UnitTestAssert)
@@ -101,14 +101,14 @@ Public Sub Test_DetailValueResolver_IF’l®‚Å‹ó—“‚Ì‘ã‘Ö’l‚ğ•Ô‚·(ByVal Assert As
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("A", ""))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "A", CStr(actual_values.Item(2))
+    Assert.Equals "A", CStr(actual_values.Item("Ì—p—ñ"))
 End Sub
 
 Public Sub Test_DetailValueResolver_IFğŒ‚Å˜_—‰‰Zq‚ÆƒGƒXƒP[ƒv‚ğg‚¦‚é(ByVal Assert As UnitTestAssert)
@@ -126,14 +126,14 @@ Public Sub Test_DetailValueResolver_IFğŒ‚Å˜_—‰‰Zq‚ÆƒGƒXƒP[ƒv‚ğg‚¦‚é(ByVal
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("", "R“c", "‚»‚Ì‘¼"))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "‘ÎÛ" & vbLf & "s", CStr(actual_values.Item(3))
+    Assert.Equals "‘ÎÛ" & vbLf & "s", CStr(actual_values.Item("”»’è"))
 End Sub
 
 Public Sub Test_DetailValueResolver_”h¶—ñ‚ª‘¼‚Ì”h¶—ñ‚ğQÆ‚Å‚«‚é(ByVal Assert As UnitTestAssert)
@@ -150,14 +150,14 @@ Public Sub Test_DetailValueResolver_”h¶—ñ‚ª‘¼‚Ì”h¶—ñ‚ğQÆ‚Å‚«‚é(ByVal Assert 
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("ˆÄŒA"))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "ˆÄŒA", CStr(actual_values.Item(2))
+    Assert.Equals "ˆÄŒA", CStr(actual_values.Item("Ä•Ê–¼"))
 End Sub
 
 Public Sub Test_DetailValueResolver_”h¶—ñ•]‰¿‡‚Íİ’ès‡‚ÉˆË‘¶‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
@@ -174,14 +174,14 @@ Public Sub Test_DetailValueResolver_”h¶—ñ•]‰¿‡‚Íİ’ès‡‚ÉˆË‘¶‚µ‚È‚¢(ByVal Ass
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("ˆÄŒA"))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "ˆÄŒA", CStr(actual_values.Item(0))
+    Assert.Equals "ˆÄŒA", CStr(actual_values.Item("Ä•Ê–¼"))
 End Sub
 
 Public Sub Test_DetailValueResolver_–¢‘Î‰ŠÖ”‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
@@ -240,14 +240,14 @@ Public Sub Test_DetailValueResolver_ValueExpression‚ÅLF‚ğŠÜ‚ŞOutputColumnName‚ğ
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("ˆÄŒA"))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "ˆÄŒA", CStr(actual_values.Item(1))
+    Assert.Equals "ˆÄŒA", CStr(actual_values.Item("•Ê–¼"))
 End Sub
 
 Public Sub Test_DetailValueResolver_—ñQÆ“àbackslashn‚ÍLF‚Æ‚µ‚Äˆµ‚í‚È‚¢(ByVal Assert As UnitTestAssert)
@@ -283,14 +283,14 @@ Public Sub Test_DetailValueResolver_•¶š—ñƒŠƒeƒ‰ƒ‹“àbackslashn‚ÍLF‚Æ‚µ‚Äˆµ‚¤(ByV
     Set resolver = New DetailValueResolver
     Call resolver.Initialize(detail_defs)
 
-    Dim actual_values As ArrayObject
+    Dim actual_values As ObjectDictionary
 
     ' --- Act ---
     Set actual_values = resolver.ResolveValues(pValues("dummy"))
 
     ' --- Assert ---
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
-    Assert.Equals "A" & vbLf & "B", CStr(actual_values.Item(1))
+    Assert.Equals "A" & vbLf & "B", CStr(actual_values.Item("”h¶"))
 End Sub
 
 Public Sub Test_DetailValueResolver_–¢’è‹`—ñQÆ‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
@@ -352,6 +352,82 @@ Public Sub Test_DetailValueResolver_”h¶—ñ“¯m‚ÌzŠÂQÆ‚ÍƒGƒ‰[(ByVal Assert As
     Assert.IsTrue 0 < InStr(1, Err.Description, "zŠÂ", vbTextCompare)
 End Sub
 
+Public Sub Test_DetailValueResolver_OutputColumnNamed•¡‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("d•¡", "#a"))
+    Call detail_defs.Add(New_DetailColumnDefinition("d•¡", "#b"))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+
+    ' --- Act ---
+    Call resolver.Initialize(detail_defs)
+
+    ' --- Assert ---
+    If Not Assert.ErrorRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.IsTrue 0 < InStr(1, Err.Description, "d•¡", vbTextCompare)
+End Sub
+
+Public Sub Test_DetailValueResolver_BuildDependentDefinitionsByNames‚Í’¼Ú’Šo—ñ‚ğ”CˆÓ—ñ‚É‚·‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("”»’è", "#judge", IsRequired:=True, BlankMode:="ErrorIfBlank"))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+    Call resolver.Initialize(detail_defs)
+
+    Dim actual_defs As ObjectList
+
+    ' --- Act ---
+    Set actual_defs = resolver.BuildDependentDefinitionsByNames(pNames("”»’è"), OptionalExtraction:=True)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, actual_defs.Count
+    Call Assert.IsFalse(actual_defs.Item(0).IsRequired, "ğŒQÆ—ñ‚Í”CˆÓ’Šo‚Å‚«‚é")
+    Assert.Equals "AllowBlank", actual_defs.Item(0).BlankMode
+End Sub
+
+Public Sub Test_DetailValueResolver_BuildDependentDefinitionsByNames‚Í”h¶—ñ‚ÌˆË‘¶—ñ‚ğŠÜ‚ß‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ³—ñ", "#source", IsRequired:=True, BlankMode:="ErrorIfBlank"))
+    Call detail_defs.Add(New_DetailColumnDefinition("”h¶", "", ValueExpression:="[Œ³—ñ]", BlankMode:="ErrorIfBlank"))
+
+    Dim resolver As DetailValueResolver
+    Set resolver = New DetailValueResolver
+    Call resolver.Initialize(detail_defs)
+
+    Dim actual_defs As ObjectList
+
+    ' --- Act ---
+    Set actual_defs = resolver.BuildDependentDefinitionsByNames( _
+            pNames("”h¶"), _
+            OptionalExtraction:=True, _
+            IgnoreDerivedBlankMode:=True)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 2, actual_defs.Count
+    Assert.Equals "Œ³—ñ", actual_defs.Item(0).OutputColumnName
+    Call Assert.IsFalse(actual_defs.Item(0).IsRequired, "”h¶—ñ‚ÌˆË‘¶Œ³‚à”CˆÓ’Šo‚Å‚«‚é")
+    Assert.Equals "AllowBlank", actual_defs.Item(0).BlankMode
+    Assert.Equals "”h¶", actual_defs.Item(1).OutputColumnName
+    Assert.IsTrue actual_defs.Item(1).IsDerived
+    Assert.Equals "[Œ³—ñ]", actual_defs.Item(1).ValueExpression
+    Assert.Equals "AllowBlank", actual_defs.Item(1).BlankMode
+End Sub
 Private Function pValues(ParamArray Values() As Variant) As ArrayObject
     Dim result_values As ArrayObject
     Set result_values = New ArrayObject
@@ -366,4 +442,17 @@ Private Function pValues(ParamArray Values() As Variant) As ArrayObject
     Next value_idx
 
     Set pValues = result_values
+End Function
+Private Function pNames(ParamArray Names() As Variant) As ObjectList
+    Dim result_names As ObjectList
+    Set result_names = New ObjectList
+
+    Dim name_idx As Long
+    If LBound(Names) <= UBound(Names) Then
+        For name_idx = LBound(Names) To UBound(Names)
+            Call result_names.Add(CStr(Names(name_idx)))
+        Next name_idx
+    End If
+
+    Set pNames = result_names
 End Function

@@ -132,6 +132,30 @@ Public Function New_DetailPageRunResult( _
     Set New_DetailPageRunResult = result_value
 End Function
 
+'* 列参照記法を生成します。
+'*
+'* @param Expression 列参照記法の文字列。
+'* @param ExpressionKind 評価種別。
+'* @param SourceName エラー表示に使う設定項目名。
+'* @return 初期化済みの列参照記法。
+'*
+'* @details
+'* New_ 系の処理は生成と Initialize 呼び出しに留め、構文解析と評価は ColumnExpression に委譲します。
+Public Function New_ColumnExpression( _
+        ByVal Expression As String, _
+        ByVal ExpressionKind As String, _
+        Optional ByVal SourceName As String = "") As ColumnExpression
+
+    Dim result_value As ColumnExpression
+    Set result_value = New ColumnExpression
+    Call result_value.Initialize( _
+            Expression:=Expression, _
+            ExpressionKind:=ExpressionKind, _
+            SourceName:=SourceName)
+
+    Set New_ColumnExpression = result_value
+End Function
+
 '* 詳細ページのダウンロード処理結果を生成します。
 '*
 '* @param DownloadStatus ダウンロード状態。

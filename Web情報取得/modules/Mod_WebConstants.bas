@@ -54,3 +54,9 @@ Public Const G_WEB_RUN_MODE_DIAGNOSTIC As String = "Diagnostic"
 
 '* 通常取得用の実行モード。
 Public Const G_WEB_RUN_MODE_COLLECT As String = "Collect"
+
+'* 条件として評価する列参照記法種別。
+Public Const G_COLUMN_EXPRESSION_KIND_CONDITION As String = "Condition"
+
+'* 値として評価する列参照記法種別。
+Public Const G_COLUMN_EXPRESSION_KIND_VALUE As String = "Value"

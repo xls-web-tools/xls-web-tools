@@ -18,20 +18,14 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_SOURCE As String = "Class DetailValueResolver"
-Private Const C_PARSE_MODE_VALIDATE As Long = 0
-Private Const C_PARSE_MODE_EVALUATE As Long = 1
 Private Const C_STATE_VISITING As Long = 1
 Private Const C_STATE_RESOLVED As Long = 2
 
 Private pDefinitions As ObjectList
 Private pExtractionDefinitions As ObjectList
-Private pResolvedValues As ArrayObject
+Private pValueExpressions() As ColumnExpression
+Private pResolvedValues As ObjectDictionary
 Private pResolveState() As Long
-Private pExpression As String
-Private pPosition As Long
-Private pParseMode As Long
-Private pCurrentDefinitionIndex As Long
-Private pCurrentReferences As Collection
 Private pIsInitialized As Boolean
 
 '* WebDriver から直接抽出する列定義。
@@ -54,10 +48,9 @@ Public Sub Initialize(ByVal DetailColumnDefinitions As ObjectList)
     Set pDefinitions = DetailColumnDefinitions
     Set pExtractionDefinitions = New_ObjectList("DetailColumnDefinition")
     Set pResolvedValues = Nothing
-    Set pCurrentReferences = Nothing
-    pExpression = ""
-    pPosition = 1
-    pCurrentDefinitionIndex = -1
+
+    Call pValidateUniqueOutputColumnNames
+    Call pInitializeValueExpressions
 
     Dim def_idx As Long
     For def_idx = 0 To pDefinitions.Count - 1
@@ -69,6 +62,40 @@ Public Sub Initialize(ByVal DetailColumnDefinitions As ObjectList)
     Call pValidateDerivedExpressions
 
     pIsInitialized = True
+End Sub
+
+Private Sub pValidateUniqueOutputColumnNames()
+    Dim known_names As ObjectSet
+    Set known_names = New ObjectSet
+
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+
+        If known_names.Exists(detail_def.OutputColumnName) Then
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName が重複しています。(" & detail_def.OutputColumnName & ")"
+        End If
+        Call known_names.Add(detail_def.OutputColumnName)
+    Next def_idx
+End Sub
+
+Private Sub pInitializeValueExpressions()
+    If pDefinitions.Count = 0 Then Exit Sub
+
+    ReDim pValueExpressions(0 To pDefinitions.Count - 1)
+
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If detail_def.IsDerived Then
+            Set pValueExpressions(def_idx) = New_ColumnExpression( _
+                    Expression:=detail_def.ValueExpression, _
+                    ExpressionKind:=G_COLUMN_EXPRESSION_KIND_VALUE, _
+                    SourceName:="ValueExpression(" & detail_def.OutputColumnName & ")")
+        End If
+    Next def_idx
 End Sub
 
 Private Sub pValidateDerivedExpressions()
@@ -109,18 +136,54 @@ Public Function BuildDependentDefinitions( _
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="TargetDefinitions は必須です。"
     End If
 
+    Set BuildDependentDefinitions = BuildDependentDefinitionsByNames( _
+            pDefinitionNames(TargetDefinitions), _
+            OptionalExtraction:=OptionalExtraction, _
+            IgnoreDerivedBlankMode:=IgnoreDerivedBlankMode)
+End Function
+
+Private Function pDefinitionNames(ByVal DetailDefinitions As ObjectList) As ObjectList
+    Dim result_value As ObjectList
+    Set result_value = New ObjectList
+
+    Dim def_idx As Long
+    For def_idx = 0 To DetailDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = DetailDefinitions.Item(def_idx)
+        Call result_value.Add(detail_def.OutputColumnName)
+    Next def_idx
+
+    Set pDefinitionNames = result_value
+End Function
+
+'* 指定列名の解決に必要な列定義を、元の settings 行順で返します。
+'*
+'* @param TargetColumnNames 解決対象の OutputColumnName 一覧。
+'* @param OptionalExtraction True の場合、直接抽出列を必須扱いにしません。
+'* @param IgnoreDerivedBlankMode True の場合、派生列の空欄検証設定を無視します。
+'* @return 解決に必要な詳細ページ列定義。
+Public Function BuildDependentDefinitionsByNames( _
+        ByVal TargetColumnNames As ObjectList, _
+        Optional ByVal OptionalExtraction As Boolean = False, _
+        Optional ByVal IgnoreDerivedBlankMode As Boolean = False) As ObjectList
+
+    Call pCheckInit
+    If TargetColumnNames Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="TargetColumnNames は必須です。"
+    End If
+
     Dim needed() As Boolean
     If 0 < pDefinitions.Count Then ReDim needed(0 To pDefinitions.Count - 1)
 
     Dim target_idx As Long
-    For target_idx = 0 To TargetDefinitions.Count - 1
-        Dim target_def As DetailColumnDefinition
-        Set target_def = TargetDefinitions.Item(target_idx)
+    For target_idx = 0 To TargetColumnNames.Count - 1
+        Dim target_name As String
+        target_name = CStr(TargetColumnNames.Item(target_idx))
 
         Dim def_idx As Long
-        def_idx = pFindDefinitionIndex(target_def.OutputColumnName)
+        def_idx = pFindDefinitionIndex(target_name)
         If def_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & target_def.OutputColumnName & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & target_name & ")"
         End If
         Call pMarkDependentDefinition(def_idx, needed)
     Next target_idx
@@ -137,7 +200,7 @@ Public Function BuildDependentDefinitions( _
         End If
     Next result_idx
 
-    Set BuildDependentDefinitions = result_value
+    Set BuildDependentDefinitionsByNames = result_value
 End Function
 
 Private Sub pMarkDependentDefinition( _
@@ -151,18 +214,21 @@ Private Sub pMarkDependentDefinition( _
     Set detail_def = pDefinitions.Item(DefinitionIndex)
     If Not detail_def.IsDerived Then Exit Sub
 
-    Dim references As Collection
+    Dim references As ObjectList
     Set references = pCollectReferences(DefinitionIndex)
 
-    Dim ref_name As Variant
-    For Each ref_name In references
+    Dim ref_idx_in_list As Long
+    For ref_idx_in_list = 0 To references.Count - 1
+        Dim ref_name As String
+        ref_name = CStr(references.Item(ref_idx_in_list))
+
         Dim ref_idx As Long
-        ref_idx = pFindDefinitionIndex(CStr(ref_name))
+        ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & CStr(ref_name) & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         Call pMarkDependentDefinition(ref_idx, Needed)
-    Next ref_name
+    Next ref_idx_in_list
 End Sub
 
 Private Function pCopyDefinition( _
@@ -213,27 +279,22 @@ Private Function pFindDefinitionIndex(ByVal OutputColumnName As String) As Long
     pFindDefinitionIndex = -1
 End Function
 
-'* 通常抽出値から、列定義順の詳細値を解決します。
+'* 通常抽出値から、列名で参照できる詳細値を解決します。
 '*
 '* @param ExtractionValues ExtractionColumnDefinitions と同じ順序の抽出値。
 '* @param ValidateDerivedBlankMode True の場合、派生列の空欄検証設定を適用します。
-'* @return 元の詳細ページ列定義と同じ順序の値。
-'*
-'* @details
-'* WebDriver から直接読んだ値と派生式の評価結果を統合し、output シートへ渡せる列定義順の値配列に戻します。
+'* @return OutputColumnName から値を引ける辞書。
 Public Function ResolveValues( _
         ByVal ExtractionValues As ArrayObject, _
-        Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ArrayObject
+        Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ObjectDictionary
+
     Call pCheckInit
     If ExtractionValues Is Nothing Then
         Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ExtractionValues は必須です。"
     End If
 
-    Set pResolvedValues = New ArrayObject
-    If 0 < pDefinitions.Count Then
-        Call pResolvedValues.ReDimArray(0, pDefinitions.Count - 1)
-        ReDim pResolveState(0 To pDefinitions.Count - 1)
-    End If
+    Set pResolvedValues = New_ObjectDictionary()
+    If 0 < pDefinitions.Count Then ReDim pResolveState(0 To pDefinitions.Count - 1)
 
     Dim extraction_idx As Long
     extraction_idx = 0
@@ -242,10 +303,8 @@ Public Function ResolveValues( _
     For def_idx = 0 To pDefinitions.Count - 1
         Dim detail_def As DetailColumnDefinition
         Set detail_def = pDefinitions.Item(def_idx)
-        If detail_def.IsDerived Then
-            Call pResolvedValues.Update(def_idx, "")
-        Else
-            Call pResolvedValues.Update(def_idx, CStr(ExtractionValues.Item(extraction_idx)))
+        If Not detail_def.IsDerived Then
+            Call pResolvedValues.Add(detail_def.OutputColumnName, CStr(ExtractionValues.Item(extraction_idx)))
             pResolveState(def_idx) = C_STATE_RESOLVED
             extraction_idx = extraction_idx + 1
         End If
@@ -275,52 +334,97 @@ Private Sub pValidateDerivedBlankMode( _
 End Sub
 
 Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As String
-    If pResolveState(DefinitionIndex) = C_STATE_RESOLVED Then
-        pResolveDefinitionValue = CStr(pResolvedValues.Item(DefinitionIndex))
-        Exit Function
-    End If
-    If pResolveState(DefinitionIndex) = C_STATE_VISITING Then
-        Dim loop_def As DetailColumnDefinition
-        Set loop_def = pDefinitions.Item(DefinitionIndex)
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & loop_def.OutputColumnName & ")"
-    End If
-
     Dim detail_def As DetailColumnDefinition
     Set detail_def = pDefinitions.Item(DefinitionIndex)
 
+    If pResolveState(DefinitionIndex) = C_STATE_RESOLVED Then
+        pResolveDefinitionValue = CStr(pResolvedValues.Item(detail_def.OutputColumnName))
+        Exit Function
+    End If
+    If pResolveState(DefinitionIndex) = C_STATE_VISITING Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & detail_def.OutputColumnName & ")"
+    End If
+
     pResolveState(DefinitionIndex) = C_STATE_VISITING
-    pCurrentDefinitionIndex = DefinitionIndex
-    pParseMode = C_PARSE_MODE_EVALUATE
-    pExpression = Trim$(detail_def.ValueExpression)
-    pPosition = 1
+    Call pResolveReferencedValues(DefinitionIndex)
 
     Dim result_value As String
-    result_value = pParseValueExpression()
-    Call pRequireExpressionEnd
+    result_value = pValueExpressions(DefinitionIndex).EvaluateValue(pResolvedValues)
 
-    Call pResolvedValues.Update(DefinitionIndex, result_value)
+    Call pResolvedValues.Add(detail_def.OutputColumnName, result_value)
     pResolveState(DefinitionIndex) = C_STATE_RESOLVED
 
     pResolveDefinitionValue = result_value
 End Function
 
-Private Sub pValidateExpressionReferences(ByVal DefinitionIndex As Long)
-    Dim references As Collection
+'* 列名辞書を元の詳細ページ列定義順の値配列に戻します。
+'*
+'* @param ValuesByName OutputColumnName から値を引ける辞書。
+'* @return 元の詳細ページ列定義と同じ順序の値。
+Public Function BuildOutputValues(ByVal ValuesByName As ObjectDictionary) As ArrayObject
+    Call pCheckInit
+    If ValuesByName Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValuesByName は必須です。"
+    End If
+
+    Dim result_values As ArrayObject
+    Set result_values = New ArrayObject
+    If 0 < pDefinitions.Count Then Call result_values.ReDimArray(0, pDefinitions.Count - 1)
+
+    Dim def_idx As Long
+    For def_idx = 0 To pDefinitions.Count - 1
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = pDefinitions.Item(def_idx)
+        If Not ValuesByName.Exists(detail_def.OutputColumnName) Then
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValuesByName に OutputColumnName がありません。(" & detail_def.OutputColumnName & ")"
+        End If
+        Call result_values.Update(def_idx, CStr(ValuesByName.Item(detail_def.OutputColumnName)))
+    Next def_idx
+
+    Set BuildOutputValues = result_values
+End Function
+
+Private Sub pResolveReferencedValues(ByVal DefinitionIndex As Long)
+    Dim references As ObjectList
     Set references = pCollectReferences(DefinitionIndex)
 
-    Dim ref_name As Variant
-    For Each ref_name In references
+    Dim ref_idx_in_list As Long
+    For ref_idx_in_list = 0 To references.Count - 1
+        Dim ref_name As String
+        ref_name = CStr(references.Item(ref_idx_in_list))
+
         Dim ref_idx As Long
-        ref_idx = pFindDefinitionIndex(CStr(ref_name))
+        ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & CStr(ref_name) & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
+        End If
+
+        Dim ref_def As DetailColumnDefinition
+        Set ref_def = pDefinitions.Item(ref_idx)
+        If ref_def.IsDerived Then Call pResolveDefinitionValue(ref_idx)
+    Next ref_idx_in_list
+End Sub
+
+Private Sub pValidateExpressionReferences(ByVal DefinitionIndex As Long)
+    Dim references As ObjectList
+    Set references = pCollectReferences(DefinitionIndex)
+
+    Dim ref_idx_in_list As Long
+    For ref_idx_in_list = 0 To references.Count - 1
+        Dim ref_name As String
+        ref_name = CStr(references.Item(ref_idx_in_list))
+
+        Dim ref_idx As Long
+        ref_idx = pFindDefinitionIndex(ref_name)
+        If ref_idx < 0 Then
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         If ref_idx = DefinitionIndex Then
             Dim detail_def As DetailColumnDefinition
             Set detail_def = pDefinitions.Item(DefinitionIndex)
             Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が自己参照しています。(" & detail_def.OutputColumnName & ")"
         End If
-    Next ref_name
+    Next ref_idx_in_list
 End Sub
 
 Private Sub pVisitDerivedDefinition( _
@@ -336,15 +440,18 @@ Private Sub pVisitDerivedDefinition( _
 
     VisitState(DefinitionIndex) = C_STATE_VISITING
 
-    Dim references As Collection
+    Dim references As ObjectList
     Set references = pCollectReferences(DefinitionIndex)
 
-    Dim ref_name As Variant
-    For Each ref_name In references
+    Dim ref_idx_in_list As Long
+    For ref_idx_in_list = 0 To references.Count - 1
+        Dim ref_name As String
+        ref_name = CStr(references.Item(ref_idx_in_list))
+
         Dim ref_idx As Long
-        ref_idx = pFindDefinitionIndex(CStr(ref_name))
+        ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & CStr(ref_name) & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         If ref_idx = DefinitionIndex Then
             Dim self_def As DetailColumnDefinition
@@ -355,396 +462,14 @@ Private Sub pVisitDerivedDefinition( _
         Dim ref_def As DetailColumnDefinition
         Set ref_def = pDefinitions.Item(ref_idx)
         If ref_def.IsDerived Then Call pVisitDerivedDefinition(ref_idx, VisitState)
-    Next ref_name
+    Next ref_idx_in_list
 
     VisitState(DefinitionIndex) = C_STATE_RESOLVED
 End Sub
 
-Private Function pCollectReferences(ByVal DefinitionIndex As Long) As Collection
-    Dim detail_def As DetailColumnDefinition
-    Set detail_def = pDefinitions.Item(DefinitionIndex)
-
-    Set pCurrentReferences = New Collection
-    pCurrentDefinitionIndex = DefinitionIndex
-    pParseMode = C_PARSE_MODE_VALIDATE
-    pExpression = Trim$(detail_def.ValueExpression)
-    pPosition = 1
-
-    Call pParseValueExpression
-    Call pRequireExpressionEnd
-
-    Set pCollectReferences = pCurrentReferences
-    Set pCurrentReferences = Nothing
+Private Function pCollectReferences(ByVal DefinitionIndex As Long) As ObjectList
+    Set pCollectReferences = pValueExpressions(DefinitionIndex).ReferencedColumnNames
 End Function
-
-Private Function pParseValueExpression() As String
-    Call pSkipSpaces
-
-    Dim result_value As String
-    If pConsumeKeyword("IF") Then
-        Call pRequireChar("(")
-
-        Dim condition_value As Boolean
-        condition_value = pParseConditionOrExpression()
-
-        Call pRequireChar(",")
-
-        Dim true_value As String
-        true_value = pParseValueExpression()
-
-        Call pRequireChar(",")
-
-        Dim false_value As String
-        false_value = pParseValueExpression()
-
-        Call pRequireChar(")")
-
-        If pParseMode = C_PARSE_MODE_EVALUATE Then
-            If condition_value Then
-                result_value = true_value
-            Else
-                result_value = false_value
-            End If
-        Else
-            result_value = ""
-        End If
-    ElseIf pPeekChar() = "[" Then
-        result_value = pParseColumnReferenceValue()
-    ElseIf pPeekChar() = Chr$(34) Then
-        result_value = pParseStringLiteral()
-    Else
-        Call pRaiseSyntaxError("値式は列参照、ダブルクォート文字列リテラル、IF(条件, 値式, 値式) のいずれかで指定してください。")
-    End If
-
-    pParseValueExpression = result_value
-End Function
-
-Private Function pParseConditionOrExpression() As Boolean
-    Dim result_value As Boolean
-    result_value = pParseConditionAndExpression()
-
-    Do While pConsumeKeyword("OR")
-        Dim right_value As Boolean
-        right_value = pParseConditionAndExpression()
-        result_value = result_value Or right_value
-    Loop
-
-    pParseConditionOrExpression = result_value
-End Function
-
-Private Function pParseConditionAndExpression() As Boolean
-    Dim result_value As Boolean
-    result_value = pParseConditionNotExpression()
-
-    Do While pConsumeKeyword("AND")
-        Dim right_value As Boolean
-        right_value = pParseConditionNotExpression()
-        result_value = result_value And right_value
-    Loop
-
-    pParseConditionAndExpression = result_value
-End Function
-
-Private Function pParseConditionNotExpression() As Boolean
-    Dim result_value As Boolean
-
-    If pConsumeKeyword("NOT") Then
-        result_value = Not pParseConditionNotExpression()
-    Else
-        result_value = pParseConditionPrimary()
-    End If
-
-    pParseConditionNotExpression = result_value
-End Function
-
-Private Function pParseConditionPrimary() As Boolean
-    Dim result_value As Boolean
-
-    Call pSkipSpaces
-    If pConsumeChar("(") Then
-        result_value = pParseConditionOrExpression()
-        Call pRequireChar(")")
-    Else
-        result_value = pParseConditionComparison()
-    End If
-
-    pParseConditionPrimary = result_value
-End Function
-
-Private Function pParseConditionComparison() As Boolean
-    Dim left_value As String
-    left_value = pParseColumnReferenceValue()
-
-    Dim operator_text As String
-    operator_text = pParseComparisonOperator()
-
-    Dim right_value As String
-    right_value = pParseStringLiteral()
-
-    pParseConditionComparison = pEvaluateComparison(left_value, operator_text, right_value)
-End Function
-
-Private Function pParseColumnReferenceValue() As String
-    If Not pConsumeChar("[") Then
-        Call pRaiseSyntaxError("列参照は [OutputColumnName] の形式で指定してください。")
-    End If
-
-    Dim start_pos As Long
-    start_pos = pPosition
-
-    Do While pPosition <= Len(pExpression)
-        If Mid$(pExpression, pPosition, 1) = "]" Then Exit Do
-        pPosition = pPosition + 1
-    Loop
-
-    If Len(pExpression) < pPosition Then
-        Call pRaiseSyntaxError("列参照の ] が見つかりません。")
-    End If
-
-    Dim column_name As String
-    column_name = Mid$(pExpression, start_pos, pPosition - start_pos)
-    If column_name = "" Then
-        Call pRaiseSyntaxError("列参照の OutputColumnName が空です。")
-    End If
-
-    pPosition = pPosition + 1
-    pParseColumnReferenceValue = pReadColumnValue(column_name)
-End Function
-
-Private Function pReadColumnValue(ByVal ColumnName As String) As String
-    Dim def_idx As Long
-    def_idx = pFindDefinitionIndex(ColumnName)
-    If def_idx < 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ColumnName & ")"
-    End If
-
-    If pParseMode = C_PARSE_MODE_VALIDATE Then
-        Call pAddCurrentReference(ColumnName)
-        pReadColumnValue = ""
-        Exit Function
-    End If
-
-    Dim detail_def As DetailColumnDefinition
-    Set detail_def = pDefinitions.Item(def_idx)
-    If detail_def.IsDerived Then
-        pReadColumnValue = pResolveDefinitionValue(def_idx)
-    Else
-        pReadColumnValue = CStr(pResolvedValues.Item(def_idx))
-    End If
-End Function
-
-Private Sub pAddCurrentReference(ByVal ColumnName As String)
-    If pCurrentReferences Is Nothing Then Exit Sub
-    pCurrentReferences.Add ColumnName
-End Sub
-
-Private Function pParseComparisonOperator() As String
-    Call pSkipSpaces
-
-    Dim result_value As String
-    If pConsumeText("==") Then
-        result_value = "=="
-    ElseIf pConsumeText("!=") Then
-        result_value = "!="
-    Else
-        Call pRaiseSyntaxError("比較演算子は == または != を指定してください。")
-    End If
-
-    pParseComparisonOperator = result_value
-End Function
-
-Private Function pParseStringLiteral() As String
-    If Not pConsumeChar(Chr$(34)) Then
-        Call pRaiseSyntaxError("文字列リテラルはダブルクォートで囲んでください。")
-    End If
-
-    Dim raw_value As String
-    raw_value = ""
-
-    Do While pPosition <= Len(pExpression)
-        Dim current_char As String
-        current_char = Mid$(pExpression, pPosition, 1)
-
-        If current_char = Chr$(34) Then
-            pPosition = pPosition + 1
-            pParseStringLiteral = pJsonUnescape(raw_value)
-            Exit Function
-        End If
-
-        If current_char = "\" Then
-            If Len(pExpression) < pPosition + 1 Then
-                Call pRaiseSyntaxError("文字列リテラル内のエスケープが完了していません。")
-            End If
-
-            Dim escaped_char As String
-            escaped_char = Mid$(pExpression, pPosition + 1, 1)
-            Select Case escaped_char
-                Case "n", "r", "t", "\", Chr$(34)
-                Case Else
-                    Call pRaiseSyntaxError("未知のエスケープです。(\" & escaped_char & ")")
-            End Select
-
-            raw_value = raw_value & Mid$(pExpression, pPosition, 2)
-            pPosition = pPosition + 2
-        Else
-            raw_value = raw_value & current_char
-            pPosition = pPosition + 1
-        End If
-    Loop
-
-    Call pRaiseSyntaxError("文字列リテラルの閉じダブルクォートが見つかりません。")
-End Function
-
-Private Function pEvaluateComparison( _
-        ByVal LeftValue As String, _
-        ByVal OperatorText As String, _
-        ByVal RightValue As String) As Boolean
-
-    Dim left_text As String
-    left_text = Trim$(LeftValue)
-
-    Dim right_text As String
-    right_text = Trim$(RightValue)
-
-    Dim result_value As Boolean
-    Select Case OperatorText
-        Case "=="
-            result_value = (StrComp(left_text, right_text, vbBinaryCompare) = 0)
-        Case "!="
-            result_value = (StrComp(left_text, right_text, vbBinaryCompare) <> 0)
-        Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="未対応の比較演算子です。(" & OperatorText & ")"
-    End Select
-
-    pEvaluateComparison = result_value
-End Function
-
-Private Function pConsumeKeyword(ByVal Keyword As String) As Boolean
-    Call pSkipSpaces
-
-    Dim keyword_len As Long
-    keyword_len = Len(Keyword)
-    If Len(pExpression) - pPosition + 1 < keyword_len Then
-        pConsumeKeyword = False
-        Exit Function
-    End If
-    If StrComp(Mid$(pExpression, pPosition, keyword_len), Keyword, vbTextCompare) <> 0 Then
-        pConsumeKeyword = False
-        Exit Function
-    End If
-
-    Dim before_char As String
-    If pPosition <= 1 Then
-        before_char = ""
-    Else
-        before_char = Mid$(pExpression, pPosition - 1, 1)
-    End If
-
-    Dim after_char As String
-    If Len(pExpression) < pPosition + keyword_len Then
-        after_char = ""
-    Else
-        after_char = Mid$(pExpression, pPosition + keyword_len, 1)
-    End If
-
-    If pIsWordChar(before_char) Or pIsWordChar(after_char) Then
-        pConsumeKeyword = False
-        Exit Function
-    End If
-
-    pPosition = pPosition + keyword_len
-    pConsumeKeyword = True
-End Function
-
-Private Function pConsumeText(ByVal TargetText As String) As Boolean
-    Call pSkipSpaces
-
-    If StrComp(Mid$(pExpression, pPosition, Len(TargetText)), TargetText, vbBinaryCompare) = 0 Then
-        pPosition = pPosition + Len(TargetText)
-        pConsumeText = True
-    Else
-        pConsumeText = False
-    End If
-End Function
-
-Private Function pConsumeChar(ByVal TargetChar As String) As Boolean
-    Call pSkipSpaces
-
-    If pPosition <= Len(pExpression) And Mid$(pExpression, pPosition, 1) = TargetChar Then
-        pPosition = pPosition + 1
-        pConsumeChar = True
-    Else
-        pConsumeChar = False
-    End If
-End Function
-
-Private Function pPeekChar() As String
-    Call pSkipSpaces
-
-    If pPosition <= Len(pExpression) Then
-        pPeekChar = Mid$(pExpression, pPosition, 1)
-    Else
-        pPeekChar = ""
-    End If
-End Function
-
-Private Sub pRequireChar(ByVal TargetChar As String)
-    If Not pConsumeChar(TargetChar) Then
-        Call pRaiseSyntaxError(TargetChar & " が見つかりません。")
-    End If
-End Sub
-
-Private Sub pRequireExpressionEnd()
-    Call pSkipSpaces
-    If pPosition <= Len(pExpression) Then
-        Call pRaiseSyntaxError("式の末尾に不正な文字があります。")
-    End If
-End Sub
-
-Private Sub pSkipSpaces()
-    Do While pPosition <= Len(pExpression)
-        Dim current_char As String
-        current_char = Mid$(pExpression, pPosition, 1)
-        If current_char <> " " And current_char <> vbTab And current_char <> vbCr And current_char <> vbLf Then Exit Do
-        pPosition = pPosition + 1
-    Loop
-End Sub
-
-Private Function pIsWordChar(ByVal TargetChar As String) As Boolean
-    If TargetChar = "" Then
-        pIsWordChar = False
-    Else
-        pIsWordChar = _
-                (("A" <= TargetChar And TargetChar <= "Z") _
-                Or ("a" <= TargetChar And TargetChar <= "z") _
-                Or ("0" <= TargetChar And TargetChar <= "9") _
-                Or TargetChar = "_")
-    End If
-End Function
-
-Private Function pJsonUnescape(ByVal TargetText As String) As String
-    Dim result_value As String
-    result_value = TargetText
-    result_value = Replace(result_value, "\n", vbLf)
-    result_value = Replace(result_value, "\r", vbCr)
-    result_value = Replace(result_value, "\t", vbTab)
-    result_value = Replace(result_value, "\" & Chr$(34), Chr$(34))
-    result_value = Replace(result_value, "\\", "\")
-
-    pJsonUnescape = result_value
-End Function
-
-Private Sub pRaiseSyntaxError(ByVal Message As String)
-    Dim output_column_name As String
-    output_column_name = ""
-    If 0 <= pCurrentDefinitionIndex And pCurrentDefinitionIndex < pDefinitions.Count Then
-        Dim detail_def As DetailColumnDefinition
-        Set detail_def = pDefinitions.Item(pCurrentDefinitionIndex)
-        output_column_name = detail_def.OutputColumnName
-    End If
-
-    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression の構文が不正です。" & Message & " (" & output_column_name & ", 位置: " & CStr(pPosition) & ")"
-End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
