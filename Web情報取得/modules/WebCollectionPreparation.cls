@@ -64,6 +64,10 @@ Public Function Run() As String
     Call pStartProgress
 
     result_value = pLifecycle.StartSession()
+    If result_value = "" Then
+        Run = result_value
+        Exit Function
+    End If
     Call pAdvanceProgress
 
     Call pSessionClient.NavigateToStartUrl
@@ -82,18 +86,6 @@ Public Function Run() As String
 
     Run = result_value
 End Function
-
-'* 準備中に中断した進捗表示を解除します。
-'*
-'* @details
-'* 準備中に中断した進捗表示を解除します。
-Public Sub ClearProgress()
-    If ProgStat Is Nothing Then Exit Sub
-    If StrComp(ProgStat.TaskName, C_PREPARATION_PROGRESS_TASK_NAME, vbBinaryCompare) <> 0 Then Exit Sub
-    If ProgStat.IsComplete Then Exit Sub
-
-    Call ProgStat.Reset(ResetTaskName:=False, ResetStartAndTotalValue:=False)
-End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
@@ -114,4 +106,16 @@ Private Sub pAdvanceProgress()
     If ProgStat Is Nothing Then Exit Sub
 
     ProgStat.ProcessedValue = ProgStat.ProcessedValue + 1
+End Sub
+
+'* 準備中に中断した進捗表示を解除します。
+'*
+'* @details
+'* 準備中に中断した進捗表示を解除します。
+Public Sub ClearProgress()
+    If ProgStat Is Nothing Then Exit Sub
+    If StrComp(ProgStat.TaskName, C_PREPARATION_PROGRESS_TASK_NAME, vbBinaryCompare) <> 0 Then Exit Sub
+    If ProgStat.IsComplete Then Exit Sub
+
+    Call ProgStat.Reset(ResetTaskName:=False, ResetStartAndTotalValue:=False)
 End Sub

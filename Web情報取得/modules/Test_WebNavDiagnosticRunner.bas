@@ -18,6 +18,7 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.ListPageSelector = "#list-ready"
@@ -95,6 +96,7 @@ Public Sub Test_WebNavDiagnosticRunner_æ“ªˆê——€–Ú‚©‚çÚ×ƒy[ƒW‚Ö“ü‚è‘ÎÛID‚ğ’
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.ListPageSelector = "#list-ready"
@@ -190,6 +192,7 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚ÉŠî‚Ã‚­f’fo—Ís‚ğ‘‚­(ByVal 
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+    Call fs_stub.Store.SetReturn("IsDirectory", True, "C:\Profile")
     Set FsSrv = fs_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
@@ -327,6 +330,7 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñƒwƒbƒ_[‚É’Pƒ—ñQÆ‚Ì’l‚ğ‘‚­(ByVa
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -412,6 +416,7 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñ‚ğo—Í‘ÎÛğŒ‚ÅQÆ‚µ‚Äf’fs‚ğ‘‚
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -501,6 +506,7 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒˆê’vŒã‚Ì”h¶—ñBlankMode‹ó—“‚ÍERRORs‚
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -587,6 +593,7 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚ç”h¶—ñBlankMode‹ó—“‚Å‚àERRO
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -672,6 +679,7 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àŒÅ’èŠÇ——ñ‚¾‚¯‚Ìf’fs‚
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -751,6 +759,7 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚ÅDownloadRequired‚È‚çNO_FI
     Dim fs_stub As FileSystemServiceTestDouble
     Set fs_stub = New FileSystemServiceTestDouble
     Call fs_stub.Store.SetReturn("CreateTemporaryDirectory", "C:\Temp\xls-web-tools_tmp123.tmp", "xls-web-tools_")
+    Call fs_stub.Store.SetReturn("IsDirectory", True, "C:\Profile")
     Set FsSrv = fs_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
@@ -861,6 +870,7 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
     Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-001", False, True)
+    Call fs_stub.Store.SetReturn("IsDirectory", True, "C:\Profile")
     Set FsSrv = fs_stub
 
     Dim output_target_search_bounds As WorksheetRangeBounds
@@ -967,6 +977,7 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚çf’fo—Ís‚ğ‘‚©‚È‚¢(ByVal 
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -1060,6 +1071,7 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
@@ -1161,6 +1173,7 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——ã‚ÆÚ×ƒy[ƒW‚Ì‘ÎÛID•sˆê’v‚ÍƒGƒ‰[(
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.ListPageSelector = "#list-ready"
@@ -1242,6 +1255,7 @@ Public Sub Test_WebNavDiagnosticRunner_‰Â‹ƒuƒ‰ƒEƒUf’f’†‚ÌƒGƒ‰[‚Å‚Íƒuƒ‰ƒEƒU‚ğ
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = False
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.TimeoutSeconds = 1
@@ -1290,6 +1304,7 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×ƒy[ƒWŒã‚Éˆê——•œ‹AƒŠƒ“ƒN‚Å–ß‚é(ByVal 
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.ListPageSelector = "#list-ready"
@@ -1378,6 +1393,7 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——•œ‹A¸”s‚Í•œ‹A•s”\ƒGƒ‰[‚É‚·‚é(ByVal 
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
     tool_settings.ListPageSelector = "#list-ready"
@@ -1552,4 +1568,12 @@ Private Sub pAssertWrittenCell( _
     Set call_record = WsStub.Store.GetLatestCall("WriteCell", target_bounds)
 
     Assert.Equals ExpectedValue, CStr(call_record.GetArgument(1)), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex)
+End Sub
+
+Private Sub pUseProfileDirectory(ByVal DirectoryPath As String, ByVal Exists As Boolean)
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Call fs_stub.Store.SetReturn("IsDirectory", True, "C:\Profile")
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("IsDirectory", Exists, DirectoryPath)
 End Sub

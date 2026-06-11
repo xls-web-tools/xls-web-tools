@@ -99,11 +99,73 @@ Public Sub Test_WebCollectionRunLifecycle_Bodyé∏îséûÇÕBodyêiíªÇ∆SessionÇCleanup
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 
+Public Sub Test_WebCollectionRunLifecycle_BrowserProfilePathçÏê¨íÜé~Ç»ÇÁBodyÇé¿çsÇπÇ∏íÜífÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Missing\Profile"
+    tool_settings.StartUrl = "https://example.test/start"
+    tool_settings.AuthenticatedStartSelector = "#top-ready"
+    tool_settings.ListPageSelector = "#list-ready"
+    tool_settings.ListTransitionOperationName = "OpenList"
+
+    Dim operations As ObjectList
+    Set operations = New_ObjectList("TransitionOperation")
+    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Set tool_settings.TransitionOperations = operations
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("IsDirectory", False, "C:\Missing\Profile")
+
+    Dim prompt As BrowserProfilePromptTestDouble
+    Set prompt = New BrowserProfilePromptTestDouble
+    Call prompt.Store.SetReturn("ConfirmCreateDirectory", False, "C:\Missing\Profile")
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+    Set lifecycle.BrowserProfilePrompt = prompt
+
+    Dim body As WebCollectionRunBodyTestDouble
+    Set body = New WebCollectionRunBodyTestDouble
+
+    Dim run_lifecycle As WebCollectionRunLifecycle
+    Set run_lifecycle = New_WebCollectionRunLifecycle(lifecycle, tool_settings)
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = run_lifecycle.Run(body)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "", actual_session_id
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("IsDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 1, prompt.Store.GetCallCount("ConfirmCreateDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 0, fs_stub.Store.GetCallCount("CreateDirectory", "C:\Missing\Profile", False, True)
+    Assert.EqualsNumeric 0, process.Store.GetCallCount("Start")
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCountAll("Execute")
+    Assert.EqualsNumeric 0, body.Store.GetCallCount("RunAfterPreparation")
+    Assert.EqualsNumeric 0, body.Store.GetCallCount("ClearProgressAfterError")
+End Sub
 Private Function pCreateToolSettings() As ToolSettingsTestDouble
     Dim result_value As ToolSettingsTestDouble
     Set result_value = New ToolSettingsTestDouble
     result_value.Headless = True
     result_value.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
     result_value.StartUrl = "https://example.test/start"
     result_value.AuthenticatedStartSelector = "#top-ready"
     result_value.ListPageSelector = "#list-ready"
@@ -116,6 +178,13 @@ Private Function pCreateToolSettings() As ToolSettingsTestDouble
 
     Set pCreateToolSettings = result_value
 End Function
+
+Private Sub pUseProfileDirectory(ByVal DirectoryPath As String, ByVal Exists As Boolean)
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("IsDirectory", Exists, DirectoryPath)
+End Sub
 
 Private Sub pPrepareSuccessfulPreparationClient(ByVal ClientDouble As WebDriverClientTestDouble)
     Call ClientDouble.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", pCreateSessionBody())

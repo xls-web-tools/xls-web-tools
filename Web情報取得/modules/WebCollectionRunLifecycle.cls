@@ -61,6 +61,12 @@ Public Function Run(ByVal Body As IWebCollectionRunBody) As String
 
     Set preparation = New_WebCollectionPreparation(pLifecycle, pSettings)
     result_value = preparation.Run()
+    If result_value = "" Then
+        Call preparation.ClearProgress
+        On Error GoTo 0
+        Run = result_value
+        Exit Function
+    End If
     Call Body.RunAfterPreparation
     Call pLifecycle.FinishSession
 

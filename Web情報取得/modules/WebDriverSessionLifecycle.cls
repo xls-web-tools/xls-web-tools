@@ -20,6 +20,7 @@ Option Base 0
 Private pProcess As IWebDriverProcess
 Private pSessionClient As WebDriverSessionClient
 Private pSettings As IToolSettings
+Private pBrowserProfilePrompt As IBrowserProfilePrompt
 Private pKeepVisibleBrowserOnError As Boolean
 Private pSessionId As String
 Private pIsInitialized As Boolean
@@ -34,6 +35,16 @@ End Property
 Public Property Get SessionId() As String
     Call pCheckInit
     SessionId = pSessionId
+End Property
+
+'* 専用ブラウザプロファイル フォルダー作成確認。
+Public Property Set BrowserProfilePrompt(ByVal NewValue As IBrowserProfilePrompt)
+    Call pCheckInit
+    If NewValue Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="BrowserProfilePrompt は必須です。"
+    End If
+
+    Set pBrowserProfilePrompt = NewValue
 End Property
 
 '* WebDriver session lifecycle を初期化します。
@@ -64,6 +75,7 @@ Public Sub Initialize( _
     Set pProcess = Process
     Set pSessionClient = SessionClient
     Set pSettings = Settings
+    Set pBrowserProfilePrompt = New BrowserProfilePrompt
     pKeepVisibleBrowserOnError = KeepVisibleBrowserOnError
     pSessionId = ""
     pIsInitialized = True
@@ -77,11 +89,34 @@ End Sub
 '* 失敗時の cleanup は CleanupAfterError に委譲します。
 Public Function StartSession() As String
     Call pCheckInit
+    If Not pPrepareBrowserProfileDirectory Then
+        StartSession = ""
+        Exit Function
+    End If
 
     Call pProcess.Start(pSettings)
     pSessionId = pSessionClient.CreateSession()
 
     StartSession = pSessionId
+End Function
+
+Private Function pPrepareBrowserProfileDirectory() As Boolean
+    If FsSrv Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="InitializeCommonService が呼ばれていません。"
+    End If
+
+    If FsSrv.IsDirectory(pSettings.BrowserProfilePath) Then
+        pPrepareBrowserProfileDirectory = True
+        Exit Function
+    End If
+
+    If Not pBrowserProfilePrompt.ConfirmCreateDirectory(pSettings.BrowserProfilePath) Then
+        pPrepareBrowserProfileDirectory = False
+        Exit Function
+    End If
+
+    Call FsSrv.CreateDirectory(pSettings.BrowserProfilePath, Recursive:=True)
+    pPrepareBrowserProfileDirectory = True
 End Function
 
 '* WebDriver session と process を正常終了します。
@@ -116,12 +151,12 @@ Public Sub CleanupAfterError(ByRef ErrorDescription As String)
     On Error GoTo 0
 End Sub
 
+Private Function pShouldKeepVisibleBrowserOnError() As Boolean
+    pShouldKeepVisibleBrowserOnError = (pKeepVisibleBrowserOnError And (Not pSettings.Headless) And pSessionId <> "")
+End Function
+
 Private Sub pCheckInit()
     If Not pIsInitialized Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="初期化されていません。"
     End If
 End Sub
-
-Private Function pShouldKeepVisibleBrowserOnError() As Boolean
-    pShouldKeepVisibleBrowserOnError = (pKeepVisibleBrowserOnError And (Not pSettings.Headless) And pSessionId <> "")
-End Function

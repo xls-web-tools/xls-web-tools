@@ -31,7 +31,7 @@ Private Const C_DEFAULT_TIMEOUT_SECONDS As Long = 30
 
 '* Edge WebDriver 実行ファイルのパス。
 Public Property Get WebDriverPath() As String
-    WebDriverPath = pGetOptionalParam("WebDriverPath", pWorkbookRelativePath("bin" & G_FS_PATH_SEP & "msedgedriver.exe"))
+    WebDriverPath = pResolvePath(pGetOptionalParam("WebDriverPath", "bin" & G_FS_PATH_SEP & "msedgedriver.exe"))
 End Property
 Private Property Get IToolSettings_WebDriverPath() As String
     IToolSettings_WebDriverPath = WebDriverPath
@@ -47,7 +47,7 @@ End Property
 
 '* 専用ブラウザプロファイルのパス。
 Public Property Get BrowserProfilePath() As String
-    BrowserProfilePath = pGetOptionalParam("BrowserProfilePath", pWorkbookRelativePath("browser-profile"))
+    BrowserProfilePath = pResolvePath(pGetOptionalParam("BrowserProfilePath", "browser-profile"))
 End Property
 Private Property Get IToolSettings_BrowserProfilePath() As String
     IToolSettings_BrowserProfilePath = BrowserProfilePath
@@ -322,15 +322,12 @@ Private Function pNormalizeExistingRowMode(ByVal ModeText As String) As String
     End Select
 End Function
 
-Private Function pWorkbookRelativePath(ByVal RelativePath As String) As String
-    Dim base_path As String
-    base_path = WbSrv.GetThisWorkbookDirectoryPath()
-
-    If base_path = "" Then
-        pWorkbookRelativePath = RelativePath
-    Else
-        pWorkbookRelativePath = base_path & G_FS_PATH_SEP & RelativePath
+Private Function pResolvePath(ByVal PathLikeString As String) As String
+    If FsSrv Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="InitializeCommonService が呼ばれていません。"
     End If
+
+    pResolvePath = FsSrv.GetAbsolutePath(PathLikeString)
 End Function
 
 Private Function pReadTransitionOperations() As ObjectList

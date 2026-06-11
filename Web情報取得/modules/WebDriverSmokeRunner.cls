@@ -48,6 +48,11 @@ Public Function Run() As String
 
     Dim result_value As String
     result_value = pLifecycle.StartSession()
+    If result_value = "" Then
+        On Error GoTo 0
+        Run = result_value
+        Exit Function
+    End If
     Call pLifecycle.FinishSession
 
     On Error GoTo 0

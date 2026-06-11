@@ -140,6 +140,38 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "#download", actual_download_link_selector
 End Sub
 
+Public Sub Test_ToolSettings_Settingsシート_パス設定は絶対パスへ解決して返す(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetSetting(ws_stub, "WebDriverPath", "%LOCALAPPDATA%\Driver\msedgedriver.exe", 2)
+    Call pSetSetting(ws_stub, "BrowserProfilePath", "%LOCALAPPDATA%\Profile", 4)
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("GetAbsolutePath", "C:\Users\tester\AppData\Local\Driver\msedgedriver.exe", "%LOCALAPPDATA%\Driver\msedgedriver.exe")
+    Call fs_stub.Store.SetReturn("GetAbsolutePath", "C:\Users\tester\AppData\Local\Profile", "%LOCALAPPDATA%\Profile")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim actual_driver_path As String
+    actual_driver_path = tool_settings.WebDriverPath
+
+    Dim actual_profile_path As String
+    actual_profile_path = tool_settings.BrowserProfilePath
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "C:\Users\tester\AppData\Local\Driver\msedgedriver.exe", actual_driver_path
+    Assert.Equals "C:\Users\tester\AppData\Local\Profile", actual_profile_path
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetAbsolutePath", "%LOCALAPPDATA%\Driver\msedgedriver.exe")
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetAbsolutePath", "%LOCALAPPDATA%\Profile")
+End Sub
 Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -457,6 +489,8 @@ Private Function pUseSettingsStubs(ByVal WorkbookDirectoryPath As String) As Wor
     Set wb_stub = New WorkbookServiceTestDouble
     Call wb_stub.Store.SetReturn("GetThisWorkbookDirectoryPath", WorkbookDirectoryPath)
     Set WbSrv = wb_stub
+
+    Set FsSrv = New FileSystemService
 
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble

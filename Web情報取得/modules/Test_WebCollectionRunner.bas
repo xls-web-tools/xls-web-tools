@@ -41,6 +41,7 @@ Public Sub Test_WebCollectionRunner_現在ページを対象ID主キーで巡回し既存OKはスキ
     Call fs_stub.Store.SetReturn("IsFile", True, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Call fs_stub.Store.SetReturn("GetFileSize", 1024#, "C:\Temp\xls-web-tools_tmp123.tmp\report.pdf")
     Call fs_stub.Store.SetReturn("CreateDirectory", True, "D:\Root\T-002", False, True)
+    Call fs_stub.Store.SetReturn("IsDirectory", True, "C:\Profile")
     Set FsSrv = fs_stub
 
     Dim tool_settings As ToolSettingsTestDouble

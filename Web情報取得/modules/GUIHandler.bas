@@ -45,7 +45,9 @@ Public Sub RunDiagnostic_Click()
     Dim runner As WebNavDiagnosticRunner
     Set runner = New_WebNavDiagnosticRunner(lifecycle, settings)
 
-    Call runner.Run
+    Dim session_id As String
+    session_id = runner.Run
+    If session_id = "" Then GoTo ON_EXIT
 
     If runner.IsOutputExcluded Then
         Call MsgBoxPage("詳細ページ対象ID取得診断が完了しました。" & vbCrLf & "対象ID: " & runner.TargetId & vbCrLf & "出力対象外のため output シートへ行を書き込みませんでした。")
@@ -76,6 +78,7 @@ ON_ERROR:
 
     Call MsgBoxPage(err_desc & " (0x" & Hex(err_num) & ") @" & err_source & debug_lines)
 End Sub
+
 '* 一覧項目を対象ID主キーで全ページ収集します。
 '*
 '* @details
@@ -113,7 +116,9 @@ Public Sub Collect_Click()
     Dim runner As WebCollectionRunner
     Set runner = New_WebCollectionRunner(lifecycle, settings)
 
-    Call runner.Run
+    Dim session_id As String
+    session_id = runner.Run
+    If session_id = "" Then GoTo ON_EXIT
 
     ' ==== 実処理ここまで ========
 

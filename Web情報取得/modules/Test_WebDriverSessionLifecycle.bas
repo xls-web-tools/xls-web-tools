@@ -18,6 +18,7 @@ Public Sub Test_WebDriverSessionLifecycle_StartSessionÇ©ÇÁFinishSessionÇ‹Ç≈í Ç∑(
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
 
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
@@ -49,6 +50,129 @@ Public Sub Test_WebDriverSessionLifecycle_StartSessionÇ©ÇÁFinishSessionÇ‹Ç≈í Ç∑(
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 
+Public Sub Test_WebDriverSessionLifecycle_StartSessionëOÇ…BrowserProfilePathÇÃë∂ç›ÇämîFÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = pUseProfileDirectory("C:\Profile", True)
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", pCreateSessionBody(True))
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = lifecycle.StartSession()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "abc", actual_session_id
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("IsDirectory", "C:\Profile")
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("Start")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session", pCreateSessionBody(True))
+End Sub
+Public Sub Test_WebDriverSessionLifecycle_BrowserProfilePathïsë∂ç›Ç≈çÏê¨ë±çsÇ»ÇÁçƒãAçÏê¨ÇµÇƒSessionÇäJénÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Missing\Profile"
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = pUseProfileDirectory("C:\Missing\Profile", False)
+    Call fs_stub.Store.SetReturn("CreateDirectory", True, "C:\Missing\Profile", False, True)
+
+    Dim prompt As BrowserProfilePromptTestDouble
+    Set prompt = New BrowserProfilePromptTestDouble
+    Call prompt.Store.SetReturn("ConfirmCreateDirectory", True, "C:\Missing\Profile")
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", pCreateSessionBodyWithProfile("C:\Missing\Profile", True))
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+    Set lifecycle.BrowserProfilePrompt = prompt
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = lifecycle.StartSession()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "abc", actual_session_id
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("IsDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 1, prompt.Store.GetCallCount("ConfirmCreateDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("CreateDirectory", "C:\Missing\Profile", False, True)
+    Assert.EqualsNumeric 1, process.Store.GetCallCount("Start")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session", pCreateSessionBodyWithProfile("C:\Missing\Profile", True))
+End Sub
+Public Sub Test_WebDriverSessionLifecycle_BrowserProfilePathïsë∂ç›Ç≈çÏê¨íÜé~Ç»ÇÁSessionÇäJénÇµÇ»Ç¢(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Missing\Profile"
+
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = pUseProfileDirectory("C:\Missing\Profile", False)
+
+    Dim prompt As BrowserProfilePromptTestDouble
+    Set prompt = New BrowserProfilePromptTestDouble
+    Call prompt.Store.SetReturn("ConfirmCreateDirectory", False, "C:\Missing\Profile")
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim process As WebDriverProcessTestDouble
+    Set process = New WebDriverProcessTestDouble
+
+    Dim lifecycle As WebDriverSessionLifecycle
+    Set lifecycle = New_WebDriverSessionLifecycle(process, session_client, tool_settings)
+    Set lifecycle.BrowserProfilePrompt = prompt
+
+    ' --- Act ---
+    Dim actual_session_id As String
+    actual_session_id = lifecycle.StartSession()
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "", actual_session_id
+    Assert.Equals "", lifecycle.SessionId
+    Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("IsDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 1, prompt.Store.GetCallCount("ConfirmCreateDirectory", "C:\Missing\Profile")
+    Assert.EqualsNumeric 0, fs_stub.Store.GetCallCount("CreateDirectory", "C:\Missing\Profile", False, True)
+    Assert.EqualsNumeric 0, process.Store.GetCallCount("Start")
+    Assert.EqualsNumeric 0, client_double.Store.GetCallCountAll("Execute")
+End Sub
 Public Sub Test_WebDriverSessionLifecycle_CleanupAfterErrorÇÕHeadlessÇ»ÇÁSessionÇ∆ProcessÇï¬Ç∂ÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -57,6 +181,7 @@ Public Sub Test_WebDriverSessionLifecycle_CleanupAfterErrorÇÕHeadlessÇ»ÇÁSession
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
 
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
@@ -96,6 +221,7 @@ Public Sub Test_WebDriverSessionLifecycle_â¬éãÉuÉâÉEÉUêfífíÜÇÃÉGÉâÅ[Ç≈ÇÕSessionÇ
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = False
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
 
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
@@ -135,6 +261,7 @@ Public Sub Test_WebDriverSessionLifecycle_StartSessioné∏îså„ÇÃCleanupÇÕProcessÇ
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
 
     Dim client_double As WebDriverClientTestDouble
     Set client_double = New WebDriverClientTestDouble
@@ -168,6 +295,25 @@ Public Sub Test_WebDriverSessionLifecycle_StartSessioné∏îså„ÇÃCleanupÇÕProcessÇ
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
 End Sub
 
+Private Function pUseProfileDirectory(ByVal DirectoryPath As String, ByVal Exists As Boolean) As FileSystemServiceTestDouble
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("IsDirectory", Exists, DirectoryPath)
+
+    Set pUseProfileDirectory = fs_stub
+End Function
+Private Function pCreateSessionBodyWithProfile(ByVal BrowserProfilePath As String, ByVal Headless As Boolean) As String
+    Dim profile_path As String
+    profile_path = Replace(BrowserProfilePath, "\", "\\")
+
+    Dim result_value As String
+    result_value = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=" & profile_path & """"
+    If Headless Then result_value = result_value & ",""--headless=new"""
+    result_value = result_value & "]}}}}"
+
+    pCreateSessionBodyWithProfile = result_value
+End Function
 Private Function pCreateSessionBody(ByVal Headless As Boolean) As String
     Dim result_value As String
     If Headless Then

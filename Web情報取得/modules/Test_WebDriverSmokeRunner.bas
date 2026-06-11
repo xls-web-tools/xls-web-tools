@@ -18,6 +18,7 @@ Public Sub Test_WebDriverSmokeRunner_Process‹N“®‚©‚çSessionQuit‚Ü‚Å’Ê‚·(ByVal As
     Set tool_settings = New ToolSettingsTestDouble
     tool_settings.Headless = True
     tool_settings.BrowserProfilePath = "C:\Profile"
+    Call pUseProfileDirectory("C:\Profile", True)
 
     Dim create_body As String
     create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
@@ -51,4 +52,11 @@ Public Sub Test_WebDriverSmokeRunner_Process‹N“®‚©‚çSessionQuit‚Ü‚Å’Ê‚·(ByVal As
     Assert.IsFalse process.IsRunning
     Assert.EqualsNumeric 1, web_driver_client.Store.GetCallCount("Execute", "POST", "/session", create_body)
     Assert.EqualsNumeric 1, web_driver_client.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
+End Sub
+
+Private Sub pUseProfileDirectory(ByVal DirectoryPath As String, ByVal Exists As Boolean)
+    Dim fs_stub As FileSystemServiceTestDouble
+    Set fs_stub = New FileSystemServiceTestDouble
+    Set FsSrv = fs_stub
+    Call fs_stub.Store.SetReturn("IsDirectory", Exists, DirectoryPath)
 End Sub
