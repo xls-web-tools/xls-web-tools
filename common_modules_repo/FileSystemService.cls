@@ -36,18 +36,36 @@ End Sub
 '*
 '* @details
 '* 指定されたパスを絶対パスにします。もともと絶対パスの場合も正規化した絶対パスを返します。
+'* URL ではないローカルパスの場合、OS 挙動で環境変数を展開してから絶対パス化します。
 '* 相対パスの場合は、WorkbookService.GetThisWorkbookDirectoryPath の結果を基準にします。
 Public Function GetAbsolutePath(ByVal PathLikeString As String) As String
-    If IsAbsolutePath(PathLikeString) Then
-        GetAbsolutePath = GetAbsolutePathFromParent(PathLikeString, PathLikeString)
+    Dim target_path As String
+    target_path = PathLikeString
+    If Not IsUrlPath(target_path) Then target_path = pExpandEnvironmentStrings(target_path)
+
+    If IsAbsolutePath(target_path) Then
+        GetAbsolutePath = GetAbsolutePathFromParent(target_path, target_path)
     Else
         Call pRequireWorkbookService("GetAbsolutePath")
-        GetAbsolutePath = GetAbsolutePathFromParent(WbSrv.GetThisWorkbookDirectoryPath(), PathLikeString)
+        GetAbsolutePath = GetAbsolutePathFromParent(WbSrv.GetThisWorkbookDirectoryPath(), target_path)
     End If
 End Function
 Private Function IFileSystemService_GetAbsolutePath(ByVal PathLikeString As String) As String
     IFileSystemService_GetAbsolutePath = GetAbsolutePath(PathLikeString)
 End Function
+
+Private Function pExpandEnvironmentStrings(ByVal PathLikeString As String) As String
+    Dim shell_obj As Object
+    Set shell_obj = CreateObject("WScript.Shell")
+
+    pExpandEnvironmentStrings = shell_obj.ExpandEnvironmentStrings(PathLikeString)
+End Function
+
+Private Sub pRequireWorkbookService(ByVal MethodName As String)
+    If WbSrv Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
+    End If
+End Sub
 
 '* OS ユーザー一時フォルダーのパスを取得します。
 '*
@@ -121,12 +139,6 @@ End Function
 Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
     IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
 End Function
-
-Private Sub pRequireWorkbookService(ByVal MethodName As String)
-    If WbSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
-    End If
-End Sub
 
 ' 指定されたディレクトリにあるファイルの絶対パス一覧を得ます。
 '
