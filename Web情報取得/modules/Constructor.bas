@@ -15,6 +15,7 @@ Option Private Module
 '* @param OperationName 操作名。
 '* @param LocatorType locator 種別。
 '* @param LocatorValue locator 値。
+'* @param LocatorInnerText locator 表示テキスト絞り込み値。
 '* @param Script click で再現できない場合だけ使う JavaScript。
 '* @param WaitConditionName 操作後の待機条件名。
 '* @return 初期化済みの画面遷移操作定義。
@@ -25,12 +26,13 @@ Public Function New_TransitionOperation( _
         ByVal OperationName As String, _
         ByVal LocatorType As String, _
         ByVal LocatorValue As String, _
+        Optional ByVal LocatorInnerText As String = "", _
         Optional ByVal Script As String = "", _
         Optional ByVal WaitConditionName As String = "") As TransitionOperation
 
     Dim result_value As TransitionOperation
     Set result_value = New TransitionOperation
-    Call result_value.Initialize(OperationName, LocatorType, LocatorValue, Script:=Script, WaitConditionName:=WaitConditionName)
+    Call result_value.Initialize(OperationName, LocatorType, LocatorValue, LocatorInnerText:=LocatorInnerText, Script:=Script, WaitConditionName:=WaitConditionName)
 
     Set New_TransitionOperation = result_value
 End Function

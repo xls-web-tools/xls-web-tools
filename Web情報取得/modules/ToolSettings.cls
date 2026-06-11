@@ -22,10 +22,10 @@ Implements IToolSettings
 Private Const C_PARAM_COL_NAME As Long = 1
 Private Const C_PARAM_COL_VALUE As Long = 2
 Private Const C_PARAM_START_ROW As Long = 2
-Private Const C_TRANSITION_COL_START As Long = 4
-Private Const C_TRANSITION_COL_FINISH As Long = 8
-Private Const C_DETAIL_COL_START As Long = 10
-Private Const C_DETAIL_COL_FINISH As Long = 16
+Private Const C_TRANSITION_COL_START As Long = 5
+Private Const C_TRANSITION_COL_FINISH As Long = 10
+Private Const C_DETAIL_COL_START As Long = 12
+Private Const C_DETAIL_COL_FINISH As Long = 18
 Private Const C_DEFAULT_WEB_DRIVER_PORT As Long = 9515
 Private Const C_DEFAULT_TIMEOUT_SECONDS As Long = 30
 
@@ -340,13 +340,14 @@ Private Function pReadTransitionOperations() As ObjectList
     If Not IsEmptyArray(table_values) Then
         Dim row_idx As Long
         For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
-            If Not pIsEmptyTableRow(table_values, row_idx, 1, 5) Then
+            If Not pIsEmptyTableRow(table_values, row_idx, 1, 6) Then
                 Call result_value.Add(New_TransitionOperation( _
                         OperationName:=CStr(table_values(row_idx, 1)), _
                         LocatorType:=CStr(table_values(row_idx, 2)), _
                         LocatorValue:=CStr(table_values(row_idx, 3)), _
-                        Script:=CStr(table_values(row_idx, 4)), _
-                        WaitConditionName:=CStr(table_values(row_idx, 5))))
+                        LocatorInnerText:=CStr(table_values(row_idx, 4)), _
+                        Script:=CStr(table_values(row_idx, 5)), _
+                        WaitConditionName:=CStr(table_values(row_idx, 6))))
             End If
         Next row_idx
     End If

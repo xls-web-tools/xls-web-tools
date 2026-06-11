@@ -57,17 +57,18 @@
 
 ## 画面遷移操作
 
-`settings` シート中央の `OperationName` から `WaitConditionName` までの表に、画面移動やクリック操作を定義します。
+`settings` シートでは C 列をメモ、D 列を空列、E:J の `OperationName` から `WaitConditionName` までを画面遷移操作表、K 列を空列、L:R を詳細ページ列定義表として使います。
 
 | 列 | 説明 |
 | --- | --- |
 | `OperationName` | 操作名。基本設定の各 `...OperationName` から参照します。 |
-| `LocatorType` | 通常は `css selector` を指定します。 |
+| `LocatorType` | 通常は `css selector` を指定します。`LocatorInnerText` を使う場合は `css selector` が必須です。 |
 | `LocatorValue` | クリックする要素の selector。詳細ページへ入る操作では `{{index}}` や `{{rowNumber}}` を使えます。 |
+| `LocatorInnerText` | selector の候補が複数ある場合に、画面上の `innerText` でクリック対象を 1 件に絞り込む任意列です。空白正規化後の完全一致で比較します。 |
 | `Script` | クリックだけで動かない画面で使う JavaScript。通常は空欄です。 |
 | `WaitConditionName` | 操作後の待機条件名。メモ用の列です。 |
 
-frame 内の要素を指定する場合は、`frame selector >> target selector` の形で selector を書きます。
+frame 内の要素を指定する場合は、`frame selector >> target selector` の形で selector を書きます。`LocatorInnerText` は最後の target selector に一致する候補へ適用されます。
 
 ## 詳細ページ列定義
 

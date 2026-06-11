@@ -66,18 +66,6 @@ Public Function ResolveDetailTransitionOperation(ByVal ItemIndex As Long) As Tra
     Set ResolveDetailTransitionOperation = pResolveIndexedTransitionOperation(pSettings.DetailTransitionOperationName, ItemIndex)
 End Function
 
-'* 一覧画面へ戻る画面遷移操作を解決します。
-Public Function ResolveReturnToListOperation() As TransitionOperation
-    Call pCheckInit
-    Set ResolveReturnToListOperation = pFindTransitionOperation(pSettings.ReturnToListOperationName)
-End Function
-
-'* 次ページへ進む画面遷移操作を解決します。
-Public Function ResolveNextPageOperation() As TransitionOperation
-    Call pCheckInit
-    Set ResolveNextPageOperation = pFindTransitionOperation(pSettings.NextPageOperationName)
-End Function
-
 Private Function pResolveIndexedTransitionOperation( _
         ByVal OperationName As String, _
         ByVal ItemIndex As Long) As TransitionOperation
@@ -89,8 +77,21 @@ Private Function pResolveIndexedTransitionOperation( _
             base_operation.OperationName, _
             base_operation.LocatorType, _
             pIndexTemplate.Apply(base_operation.LocatorValue, ItemIndex), _
+            LocatorInnerText:=base_operation.LocatorInnerText, _
             Script:=pIndexTemplate.Apply(base_operation.Script, ItemIndex), _
             WaitConditionName:=base_operation.WaitConditionName)
+End Function
+
+'* 一覧画面へ戻る画面遷移操作を解決します。
+Public Function ResolveReturnToListOperation() As TransitionOperation
+    Call pCheckInit
+    Set ResolveReturnToListOperation = pFindTransitionOperation(pSettings.ReturnToListOperationName)
+End Function
+
+'* 次ページへ進む画面遷移操作を解決します。
+Public Function ResolveNextPageOperation() As TransitionOperation
+    Call pCheckInit
+    Set ResolveNextPageOperation = pFindTransitionOperation(pSettings.NextPageOperationName)
 End Function
 
 Private Function pFindTransitionOperation(ByVal OperationName As String) As TransitionOperation

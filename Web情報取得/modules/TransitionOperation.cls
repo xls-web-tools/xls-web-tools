@@ -21,6 +21,7 @@ Private pIsInitialized As Boolean
 Private pOperationName As String
 Private pLocatorType As String
 Private pLocatorValue As String
+Private pLocatorInnerText As String
 Private pScript As String
 Private pWaitConditionName As String
 
@@ -42,6 +43,12 @@ Public Property Get LocatorValue() As String
     LocatorValue = pLocatorValue
 End Property
 
+'* locator 表示テキスト絞り込み値。
+Public Property Get LocatorInnerText() As String
+    Call pCheckInit
+    LocatorInnerText = pLocatorInnerText
+End Property
+
 '* click で再現できない場合だけ使う JavaScript。
 Public Property Get Script() As String
     Call pCheckInit
@@ -59,6 +66,7 @@ End Property
 '* @param OperationName 操作名。
 '* @param LocatorType locator 種別。
 '* @param LocatorValue locator 値。
+'* @param LocatorInnerText locator 表示テキスト絞り込み値。
 '* @param Script click で再現できない場合だけ使う JavaScript。
 '* @param WaitConditionName 操作後の待機条件名。
 '*
@@ -69,6 +77,7 @@ Public Sub Initialize( _
         ByVal OperationName As String, _
         ByVal LocatorType As String, _
         ByVal LocatorValue As String, _
+        Optional ByVal LocatorInnerText As String = "", _
         Optional ByVal Script As String = "", _
         Optional ByVal WaitConditionName As String = "")
 
@@ -85,6 +94,7 @@ Public Sub Initialize( _
     pOperationName = OperationName
     pLocatorType = LocatorType
     pLocatorValue = LocatorValue
+    pLocatorInnerText = LocatorInnerText
     pScript = Script
     pWaitConditionName = WaitConditionName
     pIsInitialized = True

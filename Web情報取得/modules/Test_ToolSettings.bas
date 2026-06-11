@@ -321,6 +321,9 @@ Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Ass
     Dim first_operation As TransitionOperation
     Set first_operation = operations.Item(0)
 
+    Dim second_operation As TransitionOperation
+    Set second_operation = operations.Item(1)
+
     Dim first_column As DetailColumnDefinition
     Set first_column = detail_columns.Item(0)
 
@@ -333,7 +336,9 @@ Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Ass
     Assert.Equals "OpenList", first_operation.OperationName
     Assert.Equals "css selector", first_operation.LocatorType
     Assert.Equals "#open-list", first_operation.LocatorValue
+    Assert.Equals "一覧を開く", first_operation.LocatorInnerText
     Assert.Equals "ListReady", first_operation.WaitConditionName
+    Assert.Equals "", second_operation.LocatorInnerText
     Assert.EqualsNumeric 2, detail_columns.Count
     Assert.Equals "対象ID", first_column.OutputColumnName
     Assert.Equals "#target-id", first_column.Selector
@@ -543,23 +548,25 @@ End Sub
 
 Private Sub pSetTransitionTable(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=4, FinishRow:=G_ROW_MAX, FinishColumn:=8, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=G_ROW_MAX, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=4, FinishRow:=3, FinishColumn:=8, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=3, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
-    ReDim table_values(1 To 2, 1 To 5)
+    ReDim table_values(1 To 2, 1 To 6)
     table_values(1, 1) = "OpenList"
     table_values(1, 2) = "css selector"
     table_values(1, 3) = "#open-list"
-    table_values(1, 4) = ""
-    table_values(1, 5) = "ListReady"
+    table_values(1, 4) = "一覧を開く"
+    table_values(1, 5) = ""
+    table_values(1, 6) = "ListReady"
     table_values(2, 1) = "OpenDetail"
     table_values(2, 2) = "css selector"
     table_values(2, 3) = ".detail-link"
     table_values(2, 4) = ""
-    table_values(2, 5) = "DetailReady"
+    table_values(2, 5) = ""
+    table_values(2, 6) = "DetailReady"
 
     Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
     Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
@@ -576,10 +583,10 @@ Private Sub pSetInvalidDetailColumnTable( _
         ByVal ValueExpression As String)
 
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=2, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
     ReDim table_values(1 To 1, 1 To 7)
@@ -597,10 +604,10 @@ End Sub
 
 Private Sub pSetDetailColumnTableWithValueExpression(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=3, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
     ReDim table_values(1 To 2, 1 To 7)
@@ -625,10 +632,10 @@ End Sub
 
 Private Sub pSetDetailColumnTableWithLfOutputColumnName(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=2, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=2, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
     ReDim table_values(1 To 1, 1 To 7)
@@ -646,10 +653,10 @@ End Sub
 
 Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
     Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=G_ROW_MAX, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=10, FinishRow:=3, FinishColumn:=16, Sheet:=G_WEB_SETTINGS_SHEET)
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=3, FinishColumn:=18, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
     ReDim table_values(1 To 2, 1 To 7)
