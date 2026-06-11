@@ -341,13 +341,25 @@ Private Function pReadTransitionOperations() As ObjectList
         Dim row_idx As Long
         For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
             If Not pIsEmptyTableRow(table_values, row_idx, 1, 6) Then
+                Dim operation_name As String
+                operation_name = pTableText(table_values, row_idx, 1)
+
+                Dim locator_type As String
+                locator_type = pTableText(table_values, row_idx, 2)
+
+                Dim locator_inner_text As String
+                locator_inner_text = pTableText(table_values, row_idx, 4)
+                If Trim$(locator_inner_text) <> "" And LCase$(Trim$(locator_type)) <> "css selector" Then
+                    Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。(OperationName=" & operation_name & ")"
+                End If
+
                 Call result_value.Add(New_TransitionOperation( _
-                        OperationName:=CStr(table_values(row_idx, 1)), _
-                        LocatorType:=CStr(table_values(row_idx, 2)), _
-                        LocatorValue:=CStr(table_values(row_idx, 3)), _
-                        LocatorInnerText:=CStr(table_values(row_idx, 4)), _
-                        Script:=CStr(table_values(row_idx, 5)), _
-                        WaitConditionName:=CStr(table_values(row_idx, 6))))
+                        OperationName:=operation_name, _
+                        LocatorType:=locator_type, _
+                        LocatorValue:=pTableText(table_values, row_idx, 3), _
+                        LocatorInnerText:=locator_inner_text, _
+                        Script:=pTableText(table_values, row_idx, 5), _
+                        WaitConditionName:=pTableText(table_values, row_idx, 6)))
             End If
         Next row_idx
     End If

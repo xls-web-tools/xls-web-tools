@@ -432,6 +432,27 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—
     Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
 End Sub
 
+Public Sub Test_ToolSettings_SettingsƒV[ƒg_LocatorInnerText‚ÅCssSelectorˆÈŠO‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetInvalidTransitionInnerTextTable(ws_stub)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = New ToolSettings
+
+    ' --- Act ---
+    Dim operations As ObjectList
+    Set operations = tool_settings.TransitionOperations
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.IsTrue 0 < InStr(1, Err.Description, "LocatorInnerText", vbBinaryCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "css selector", vbTextCompare)
+End Sub
+
 Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—¼•ûw’è‚È‚çƒGƒ‰[(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -575,6 +596,26 @@ End Sub
 
 
 
+
+Private Sub pSetInvalidTransitionInnerTextTable(ByVal WsStub As WorksheetServiceTestDouble)
+    Dim search_bounds As WorksheetRangeBounds
+    Set search_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=G_ROW_MAX, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim used_bounds As WorksheetRangeBounds
+    Set used_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=2, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
+
+    Dim table_values() As Variant
+    ReDim table_values(1 To 1, 1 To 6)
+    table_values(1, 1) = "OpenList"
+    table_values(1, 2) = "xpath"
+    table_values(1, 3) = "//button"
+    table_values(1, 4) = "ˆê——‚ğŠJ‚­"
+    table_values(1, 5) = ""
+    table_values(1, 6) = "ListReady"
+
+    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+End Sub
 
 Private Sub pSetInvalidDetailColumnTable( _
         ByVal WsStub As WorksheetServiceTestDouble, _

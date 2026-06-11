@@ -18,6 +18,7 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_DOWNLOAD_DIRECTORY_PREFIX As String = "xls-web-tools_"
+Private Const C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED As Long = vbObjectError + 3301
 
 Private pClient As IWebDriverClient
 Private pSettings As IToolSettings
@@ -552,8 +553,18 @@ Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
     End If
 
     If Trim$(Operation.LocatorType) <> "" Then
+        If Trim$(Operation.LocatorInnerText) <> "" Then
+            If LCase$(Trim$(Operation.LocatorType)) <> "css selector" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。"
+            End If
+        End If
+
         On Error GoTo CLICK_ERROR
-        Call pClickElement(Operation.LocatorType, Operation.LocatorValue)
+        If Trim$(Operation.LocatorInnerText) = "" Then
+            Call pClickElement(Operation.LocatorType, Operation.LocatorValue)
+        Else
+            Call pClickElementByInnerText(Operation)
+        End If
         On Error GoTo 0
         Exit Sub
     End If
@@ -573,6 +584,10 @@ CLICK_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
+    If err_num = C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED Then
+        Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
+    End If
+
     If Trim$(Operation.Script) = "" Then
         Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
     End If
@@ -590,6 +605,19 @@ Private Sub pExecuteScript(ByVal Script As String)
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", "{""script"":""" & pJsonEscape(Script) & """,""args"":[]}")
     Call pRaiseIfWebDriverError(response_body)
+End Sub
+
+Private Sub pClickElementByInnerText(ByVal Operation As TransitionOperation)
+    Dim element_id As String
+    element_id = pFindElementByInnerText(Operation.OperationName, Operation.LocatorValue, Operation.LocatorInnerText)
+
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element/" & element_id & "/click", "{}")
+    If pIsElementNotInteractable(response_body) Then
+        Call pClickElementByScript(element_id)
+    Else
+        Call pRaiseIfWebDriverError(response_body)
+    End If
 End Sub
 
 '* Edge WebDriver session を終了します。
@@ -615,6 +643,48 @@ Public Sub QuitSession(Optional ByVal SessionId As String = "")
 
     If pSessionId = target_session_id Then pSessionId = ""
 End Sub
+
+Private Function pExtractElementIds(ByVal ResponseBody As String) As ArrayObject
+    Dim key_idx As Long
+    key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
+    If key_idx = 0 Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim open_idx As Long
+    open_idx = InStr(key_idx, ResponseBody, "[", vbBinaryCompare)
+
+    Dim close_idx As Long
+    close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
+    If open_idx = 0 Or close_idx < open_idx Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
+    End If
+
+    Dim array_text As String
+    array_text = Mid$(ResponseBody, open_idx + 1, close_idx - open_idx - 1)
+
+    Dim element_re As RegExp
+    Set element_re = New RegExp
+    element_re.Global = True
+    element_re.IgnoreCase = False
+    element_re.Pattern = """(element-6066-11e4-a52e-4f735466cecf|ELEMENT)""\s*:\s*""((\\.|[^""])*)"""
+
+    Dim matches As MatchCollection
+    Set matches = element_re.Execute(array_text)
+
+    Dim result_values As ArrayObject
+    Set result_values = New ArrayObject
+    If 0 < matches.Count Then
+        Call result_values.ReDimArray(0, matches.Count - 1)
+    End If
+
+    Dim match_idx As Long
+    For match_idx = 0 To matches.Count - 1
+        Call result_values.Update(match_idx, pJsonUnescape(CStr(matches.Item(match_idx).SubMatches(1))))
+    Next match_idx
+
+    Set pExtractElementIds = result_values
+End Function
 
 Private Function pCreateTemporaryDownloadDirectory() As String
     If pFileSystem Is Nothing Then
@@ -673,6 +743,16 @@ Private Function pBuildDetailDefinitionJson(ByVal DetailColumnDefinitions As Obj
 
     result_text = result_text & "]"
     pBuildDetailDefinitionJson = result_text
+End Function
+
+Private Function pNormalizeLocatorInnerText(ByVal TargetText As String) As String
+    Dim whitespace_re As RegExp
+    Set whitespace_re = New RegExp
+    whitespace_re.Global = True
+    whitespace_re.IgnoreCase = False
+    whitespace_re.Pattern = "[\s" & ChrW$(&H3000) & "]+"
+
+    pNormalizeLocatorInnerText = Trim$(whitespace_re.Replace(TargetText, " "))
 End Function
 
 Private Function pJsonBoolean(ByVal TargetValue As Boolean) As String
@@ -749,6 +829,58 @@ Private Function pBuildFindElementBody(ByVal LocatorType As String, ByVal Locato
     pBuildFindElementBody = "{""using"":""" & pJsonEscape(LocatorType) & """,""value"":""" & pJsonEscape(LocatorValue) & """}"
 End Function
 
+Private Function pFindElementByInnerText( _
+        ByVal OperationName As String, _
+        ByVal LocatorValue As String, _
+        ByVal LocatorInnerText As String) As String
+
+    Dim response_body As String
+    response_body = pFindElementsResponse("css selector", LocatorValue)
+    Call pRaiseIfWebDriverError(response_body)
+
+    Dim element_ids As ArrayObject
+    Set element_ids = pExtractElementIds(response_body)
+
+    Dim expected_text As String
+    expected_text = pNormalizeLocatorInnerText(LocatorInnerText)
+
+    Dim match_count As Long
+    match_count = 0
+
+    Dim matched_element_id As String
+    matched_element_id = ""
+
+    Dim element_idx As Long
+    For element_idx = element_ids.LowerBound To element_ids.UpperBound
+        Dim element_id As String
+        element_id = CStr(element_ids.Item(element_idx))
+
+        If StrComp(pNormalizeLocatorInnerText(pReadElementInnerText(element_id)), expected_text, vbBinaryCompare) = 0 Then
+            match_count = match_count + 1
+            matched_element_id = element_id
+        End If
+    Next element_idx
+
+    If match_count <> 1 Then
+        Err.Raise Number:=C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED, _
+                Source:="Class WebDriverSessionClient", _
+                Description:="LocatorInnerText の対象を確定できません。OperationName=" & OperationName _
+                        & ", LocatorValue=" & LocatorValue _
+                        & ", LocatorInnerText=" & LocatorInnerText _
+                        & ", MatchCount=" & CStr(match_count)
+    End If
+
+    pFindElementByInnerText = matched_element_id
+End Function
+
+Private Function pReadElementInnerText(ByVal ElementId As String) As String
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", pBuildElementInnerTextScriptBody(ElementId))
+    Call pRaiseIfWebDriverError(response_body)
+
+    pReadElementInnerText = pJsonUnescape(pExtractJsonString(response_body, "value"))
+End Function
+
 Private Function pTryClickElement( _
         ByVal LocatorType As String, _
         ByVal LocatorValue As String, _
@@ -800,7 +932,18 @@ Private Sub pClickElementByScript(ByVal ElementId As String)
 End Sub
 
 Private Function pBuildElementClickScriptBody(ByVal ElementId As String) As String
-    pBuildElementClickScriptBody = "{""script"":""arguments[0].click();"",""args"":[{""element-6066-11e4-a52e-4f735466cecf"":""" & pJsonEscape(ElementId) & """}]}"
+    pBuildElementClickScriptBody = "{""script"":""arguments[0].click();"",""args"":[" & pBuildElementReferenceJson(ElementId) & "]}"
+End Function
+
+Private Function pBuildElementInnerTextScriptBody(ByVal ElementId As String) As String
+    Dim script_text As String
+    script_text = "var value = arguments[0].innerText; return value === null || value === undefined ? '' : String(value);"
+
+    pBuildElementInnerTextScriptBody = "{""script"":""" & pJsonEscape(script_text) & """,""args"":[" & pBuildElementReferenceJson(ElementId) & "]}"
+End Function
+
+Private Function pBuildElementReferenceJson(ByVal ElementId As String) As String
+    pBuildElementReferenceJson = "{""element-6066-11e4-a52e-4f735466cecf"":""" & pJsonEscape(ElementId) & """}"
 End Function
 
 Private Sub pRequireSession()
