@@ -608,16 +608,27 @@ Private Sub pExecuteScript(ByVal Script As String)
 End Sub
 
 Private Sub pClickElementByInnerText(ByVal Operation As TransitionOperation)
-    Dim element_id As String
-    element_id = pFindElementByInnerText(Operation.OperationName, Operation.LocatorValue, Operation.LocatorInnerText)
+    Dim deadline_time As Date
+    deadline_time = DateAdd("s", pSettings.TimeoutSeconds, Now)
 
-    Dim response_body As String
-    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element/" & element_id & "/click", "{}")
-    If pIsElementNotInteractable(response_body) Then
-        Call pClickElementByScript(element_id)
-    Else
-        Call pRaiseIfWebDriverError(response_body)
-    End If
+    Dim err_num As Long
+    Dim err_source As String
+    Dim err_desc As String
+    Dim err_help_file As String
+    Dim err_help_context As Long
+
+    Do
+        If pTryClickElementByInnerText(Operation, err_num, err_source, err_desc, err_help_file, err_help_context) Then Exit Sub
+        If err_num = C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED Then
+            Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
+        End If
+        If Not pIsRetryableElementLookupError(err_desc) Then
+            Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
+        End If
+        DoEvents
+    Loop While Now < deadline_time
+
+    Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Sub
 
 '* Edge WebDriver session ‚ðI—¹‚µ‚Ü‚·B
@@ -643,6 +654,40 @@ Public Sub QuitSession(Optional ByVal SessionId As String = "")
 
     If pSessionId = target_session_id Then pSessionId = ""
 End Sub
+
+Private Function pTryClickElementByInnerText( _
+        ByVal Operation As TransitionOperation, _
+        ByRef ErrorNumber As Long, _
+        ByRef ErrorSource As String, _
+        ByRef ErrorDescription As String, _
+        ByRef ErrorHelpFile As String, _
+        ByRef ErrorHelpContext As Long) As Boolean
+
+    On Error GoTo CLICK_ERROR
+
+    Dim element_id As String
+    element_id = pFindElementByInnerText(Operation.OperationName, Operation.LocatorValue, Operation.LocatorInnerText)
+
+    Dim response_body As String
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element/" & element_id & "/click", "{}")
+    If pIsElementNotInteractable(response_body) Then
+        Call pClickElementByScript(element_id)
+    Else
+        Call pRaiseIfWebDriverError(response_body)
+    End If
+
+    pTryClickElementByInnerText = True
+    Exit Function
+
+CLICK_ERROR:
+    ErrorNumber = Err.Number
+    ErrorSource = Err.Source
+    ErrorDescription = Err.Description
+    ErrorHelpFile = Err.HelpFile
+    ErrorHelpContext = Err.HelpContext
+    Err.Clear
+    pTryClickElementByInnerText = False
+End Function
 
 Private Function pExtractElementIds(ByVal ResponseBody As String) As ArrayObject
     Dim key_idx As Long

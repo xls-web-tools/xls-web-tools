@@ -323,10 +323,14 @@ Public Sub WriteCell( _
         Dim current_format As String
         current_format = target_cell.NumberFormatLocal
 
+        Dim current_wrap_text As Boolean
+        current_wrap_text = target_cell.WrapText
+
         On Error GoTo RESTORE_STRING_WRITE_CELL_ON_ERROR
         target_cell.NumberFormatLocal = "@"
         target_cell.Value = Expression
         target_cell.NumberFormatLocal = current_format
+        target_cell.WrapText = current_wrap_text
         On Error GoTo 0
     End If
     Exit Sub
@@ -347,7 +351,8 @@ RESTORE_STRING_WRITE_CELL_ON_ERROR:
             target_had_formula, _
             target_formula_r1c1, _
             target_value, _
-            current_format)
+            current_format, _
+            current_wrap_text)
 
     Err.Raise Number:=err_num, Source:=err_source, Description:=err_desc
 End Sub
@@ -371,7 +376,8 @@ Private Sub pRestoreCellContentsAndNumberFormat( _
         ByVal HadFormula As Boolean, _
         ByVal FormulaR1C1 As String, _
         ByVal CellValue As Variant, _
-        ByVal NumberFormatLocal As String)
+        ByVal NumberFormatLocal As String, _
+        ByVal WrapText As Boolean)
 
     Dim original_enable_events As Boolean
     original_enable_events = Application.EnableEvents
@@ -392,6 +398,7 @@ Private Sub pRestoreCellContentsAndNumberFormat( _
         TargetCell.Value2 = CellValue
     End If
     TargetCell.NumberFormatLocal = NumberFormatLocal
+    TargetCell.WrapText = WrapText
 
     Application.EnableEvents = original_enable_events
     On Error GoTo 0
@@ -1846,6 +1853,9 @@ Private Sub pCopyCellCore( _
             Dim dst_number_format As String
             dst_number_format = dst_cell.NumberFormatLocal
 
+            Dim dst_wrap_text As Boolean
+            dst_wrap_text = dst_cell.WrapText
+
             On Error GoTo RESTORE_FORMULA_COPY_DESTINATION_ON_ERROR
             dst_cell.NumberFormat = "General"
             dst_cell.FormulaR1C1 = src_cell.FormulaR1C1
@@ -1883,7 +1893,8 @@ RESTORE_FORMULA_COPY_DESTINATION_ON_ERROR:
             dst_had_formula, _
             dst_formula_r1c1, _
             dst_value, _
-            dst_number_format)
+            dst_number_format, _
+            dst_wrap_text)
 
     Err.Raise Number:=err_num, Source:=err_source, Description:=err_desc
 End Sub

@@ -469,6 +469,170 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈LocatorInnerTextÇ
     Assert.IsTrue 0 < InStr(1, Err.Description, "MatchCount=0", vbBinaryCompare)
 End Sub
 
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈LocatorInnerTextëŒè€Ç™StaleÇ»ÇÁçƒíTçıÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim elements_body As String
+    elements_body = "{""using"":""css selector"",""value"":"".menu-button""}"
+
+    Dim old_text_body As String
+    old_text_body = pInnerTextScriptBody("element-old")
+
+    Dim new_text_body As String
+    new_text_body = pInnerTextScriptBody("element-new")
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute.Sequence", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""element-old""}]}", "POST", "/session/abc/elements", elements_body, CLng(0))
+    Call client_double.Store.SetReturn("Execute.Sequence", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""element-new""}]}", "POST", "/session/abc/elements", elements_body, CLng(1))
+    Call client_double.Store.SetReturn("Execute", "{""value"":""àÍóóÇäJÇ≠""}", "POST", "/session/abc/execute/sync", old_text_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""àÍóóÇäJÇ≠""}", "POST", "/session/abc/execute/sync", new_text_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""error"":""stale element reference"",""message"":""stale element reference""}}", "POST", "/session/abc/element/element-old/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/element-new/click", "{}")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="àÍóóÇäJÇ≠", WaitConditionName:="ListReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 2, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/elements", elements_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", old_text_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", new_text_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-old/click", "{}")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-new/click", "{}")
+End Sub
+
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈Frameì‡LocatorInnerTextàÍívóvëfÇClickÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim switch_top_body As String
+    switch_top_body = "{""id"":null}"
+
+    Dim frame_find_body As String
+    frame_find_body = "{""using"":""css selector"",""value"":""iframe[name='right']""}"
+
+    Dim switch_frame_body As String
+    switch_frame_body = "{""id"":{""element-6066-11e4-a52e-4f735466cecf"":""frame-1""}}"
+
+    Dim elements_body As String
+    elements_body = "{""using"":""css selector"",""value"":"".menu-button""}"
+
+    Dim element_1_text_body As String
+    element_1_text_body = pInnerTextScriptBody("target-1")
+
+    Dim element_2_text_body As String
+    element_2_text_body = pInnerTextScriptBody("target-2")
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", switch_top_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""frame-1""}}", "POST", "/session/abc/element", frame_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/frame", switch_frame_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""target-1""},{""element-6066-11e4-a52e-4f735466cecf"":""target-2""}]}", "POST", "/session/abc/elements", elements_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""ëŒè€äO""}", "POST", "/session/abc/execute/sync", element_1_text_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""è⁄ç◊ÇäJÇ≠""}", "POST", "/session/abc/execute/sync", element_2_text_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/target-2/click", "{}")
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenDetail", "css selector", "iframe[name='right'] >> .menu-button", LocatorInnerText:="è⁄ç◊ÇäJÇ≠", WaitConditionName:="DetailReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/frame", switch_top_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", frame_find_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/frame", switch_frame_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/elements", elements_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", element_1_text_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", element_2_text_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/target-2/click", "{}")
+End Sub
+
+Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈LocatorInnerTextämíËå„Clické∏îsÇ»ÇÁScriptFallbackÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.Headless = True
+    tool_settings.BrowserProfilePath = "C:\Profile"
+
+    Dim create_body As String
+    create_body = "{""capabilities"":{""alwaysMatch"":{""browserName"":""MicrosoftEdge"",""ms:edgeOptions"":{""args"":[""--user-data-dir=C:\\Profile"",""--headless=new""]}}}}"
+
+    Dim elements_body As String
+    elements_body = "{""using"":""css selector"",""value"":"".menu-button""}"
+
+    Dim element_text_body As String
+    element_text_body = pInnerTextScriptBody("element-1")
+
+    Dim fallback_script_body As String
+    fallback_script_body = "{""script"":""fallback()"",""args"":[]}"
+
+    Dim client_double As WebDriverClientTestDouble
+    Set client_double = New WebDriverClientTestDouble
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""sessionId"":""abc""}}", "POST", "/session", create_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":[{""element-6066-11e4-a52e-4f735466cecf"":""element-1""}]}", "POST", "/session/abc/elements", elements_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""àÍóóÇäJÇ≠""}", "POST", "/session/abc/execute/sync", element_text_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":{""error"":""element click intercepted"",""message"":""blocked""}}", "POST", "/session/abc/element/element-1/click", "{}")
+    Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/execute/sync", fallback_script_body)
+
+    Dim session_client As WebDriverSessionClient
+    Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
+
+    Dim operation As TransitionOperation
+    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="àÍóóÇäJÇ≠", Script:="fallback()", WaitConditionName:="ListReady")
+
+    Call session_client.CreateSession
+    Err.Clear
+
+    ' --- Act ---
+    Call session_client.RunTransitionOperation(operation)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/elements", elements_body)
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-1/click", "{}")
+    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", fallback_script_body)
+End Sub
+
 Public Sub Test_WebDriverSessionClient_RunTransitionOperationÇ≈Frameì‡óvëfÇClickÇ∑ÇÈ(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
