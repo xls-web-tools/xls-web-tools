@@ -162,6 +162,9 @@ End Function
 '* @param OptionalExtraction True の場合、直接抽出列を必須扱いにしません。
 '* @param IgnoreDerivedBlankMode True の場合、派生列の空欄検証設定を無視します。
 '* @return 解決に必要な詳細ページ列定義。
+'*
+'* @details
+'* 指定列名の解決に必要な列定義を、元の settings 行順で返します。
 Public Function BuildDependentDefinitionsByNames( _
         ByVal TargetColumnNames As ObjectList, _
         Optional ByVal OptionalExtraction As Boolean = False, _
@@ -284,6 +287,9 @@ End Function
 '* @param ExtractionValues ExtractionColumnDefinitions と同じ順序の抽出値。
 '* @param ValidateDerivedBlankMode True の場合、派生列の空欄検証設定を適用します。
 '* @return OutputColumnName から値を引ける辞書。
+'*
+'* @details
+'* 通常抽出値から、列名で参照できる詳細値を解決します。
 Public Function ResolveValues( _
         ByVal ExtractionValues As ArrayObject, _
         Optional ByVal ValidateDerivedBlankMode As Boolean = True) As ObjectDictionary
@@ -361,6 +367,9 @@ End Function
 '*
 '* @param ValuesByName OutputColumnName から値を引ける辞書。
 '* @return 元の詳細ページ列定義と同じ順序の値。
+'*
+'* @details
+'* 列名辞書を元の詳細ページ列定義順の値配列に戻します。
 Public Function BuildOutputValues(ByVal ValuesByName As ObjectDictionary) As ArrayObject
     Call pCheckInit
     If ValuesByName Is Nothing Then

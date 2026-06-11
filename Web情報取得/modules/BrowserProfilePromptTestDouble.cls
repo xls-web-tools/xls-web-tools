@@ -27,6 +27,9 @@ Private Sub Class_Initialize()
 End Sub
 
 '* 専用ブラウザプロファイル フォルダーを作成して続行するか確認します。
+'*
+'* @details
+'* 専用ブラウザプロファイル フォルダーを作成して続行するか確認します。
 Public Function ConfirmCreateDirectory(ByVal DirectoryPath As String) As Boolean
     Call Store.RaiseIfError("ConfirmCreateDirectory", DirectoryPath)
 

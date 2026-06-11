@@ -25,6 +25,9 @@ Private pIsInitialized As Boolean
 '*
 '* @param Lifecycle WebDriver session lifecycle。
 '* @param Settings Web情報取得の設定。
+'*
+'* @details
+'* ブラウザ取得 run lifecycle を初期化します。
 Public Sub Initialize( _
         ByVal Lifecycle As WebDriverSessionLifecycle, _
         ByVal Settings As IToolSettings)

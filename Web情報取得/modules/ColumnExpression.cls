@@ -39,26 +39,38 @@ Private pReferencedColumnNames As ObjectList
 Private pReferencedColumnNameSet As ObjectSet
 Private pIsInitialized As Boolean
 
+'* 列参照記法の元文字列。
 Public Property Get Expression() As String
     Call pCheckInit
     Expression = pExpression
 End Property
 
+'* 列参照記法の評価種別。
 Public Property Get ExpressionKind() As String
     Call pCheckInit
     ExpressionKind = pExpressionKind
 End Property
 
+'* エラー表示に使う設定項目名。
 Public Property Get SourceName() As String
     Call pCheckInit
     SourceName = pSourceName
 End Property
 
+'* 参照された OutputColumnName の一覧。
 Public Property Get ReferencedColumnNames() As ObjectList
     Call pCheckInit
     Set ReferencedColumnNames = pReferencedColumnNames.CopyList()
 End Property
 
+'* 列参照記法を解析して初期化します。
+'*
+'* @param Expression 列参照記法の文字列。
+'* @param ExpressionKind 条件式または値式を表す評価種別。
+'* @param SourceName エラー表示に使う設定項目名。
+'*
+'* @details
+'* Expression を構文解析して内部ノード列へ変換し、参照された OutputColumnName を出現順で記録します。空の条件式は True として扱います。
 Public Sub Initialize( _
         ByVal Expression As String, _
         ByVal ExpressionKind As String, _
@@ -146,6 +158,13 @@ Private Sub pRequireExpressionEnd()
     End If
 End Sub
 
+'* 条件式として評価します。
+'*
+'* @param ColumnValues OutputColumnName をキーにした詳細値辞書。
+'* @return 条件式の評価結果。
+'*
+'* @details
+'* 条件式として初期化された列参照記法だけを評価します。未定義の列参照や値式として初期化された式はエラーにします。
 Public Function EvaluateCondition(ByVal ColumnValues As ObjectDictionary) As Boolean
     Call pCheckInit
     If pExpressionKind <> G_COLUMN_EXPRESSION_KIND_CONDITION Then
@@ -187,6 +206,13 @@ Private Function pEvaluateConditionNode( _
     pEvaluateConditionNode = result_value
 End Function
 
+'* 値式として評価します。
+'*
+'* @param ColumnValues OutputColumnName をキーにした詳細値辞書。
+'* @return 値式の評価結果。
+'*
+'* @details
+'* 値式として初期化された列参照記法だけを評価します。未定義の列参照や条件式として初期化された式はエラーにします。
 Public Function EvaluateValue(ByVal ColumnValues As ObjectDictionary) As String
     Call pCheckInit
     If pExpressionKind <> G_COLUMN_EXPRESSION_KIND_VALUE Then

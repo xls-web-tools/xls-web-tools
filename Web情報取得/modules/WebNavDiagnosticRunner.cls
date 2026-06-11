@@ -98,6 +98,9 @@ Public Function Run() As String
 End Function
 
 '* 一覧画面到達後に診断対象の詳細ページを処理します。
+'*
+'* @details
+'* 診断対象の先頭一覧項目を詳細ページまで処理し、必要に応じて output シートへ診断行を書き込みます。
 Public Sub RunAfterPreparation()
     Call pCheckInit
     Call pRunFirstDetail(pDetailRunner)
@@ -135,6 +138,9 @@ Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
 End Sub
 
 '* エラー時に診断 runner 側の進捗表示を解除します。
+'*
+'* @details
+'* 診断 runner は収集進捗を開始しないため、lifecycle から呼ばれても追加の解除処理は行いません。
 Public Sub ClearProgressAfterError()
     Call pCheckInit
 End Sub

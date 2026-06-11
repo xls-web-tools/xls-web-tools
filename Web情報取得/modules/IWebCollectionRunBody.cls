@@ -24,9 +24,15 @@ Private Sub Class_Initialize()
 End Sub
 
 '* 一覧画面到達後の処理を実行します。
+'*
+'* @details
+'* 一覧画面到達後の処理を実行します。
 Public Sub RunAfterPreparation()
 End Sub
 
+'* エラー時に一覧画面到達後処理側の進捗表示を解除します。
+'*
+'* @details
 '* エラー時に一覧画面到達後処理側の進捗表示を解除します。
 Public Sub ClearProgressAfterError()
 End Sub

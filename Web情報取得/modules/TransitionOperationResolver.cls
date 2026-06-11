@@ -50,6 +50,9 @@ Public Sub Initialize(ByVal Settings As IToolSettings)
 End Sub
 
 '* 一覧画面へ進む画面遷移操作を解決します。
+'*
+'* @details
+'* 一覧画面へ進む画面遷移操作を解決します。
 Public Function ResolveListTransitionOperation() As TransitionOperation
     Call pCheckInit
     Set ResolveListTransitionOperation = pFindTransitionOperation(pSettings.ListTransitionOperationName)
@@ -83,11 +86,17 @@ Private Function pResolveIndexedTransitionOperation( _
 End Function
 
 '* 一覧画面へ戻る画面遷移操作を解決します。
+'*
+'* @details
+'* 一覧画面へ戻る画面遷移操作を解決します。
 Public Function ResolveReturnToListOperation() As TransitionOperation
     Call pCheckInit
     Set ResolveReturnToListOperation = pFindTransitionOperation(pSettings.ReturnToListOperationName)
 End Function
 
+'* 次ページへ進む画面遷移操作を解決します。
+'*
+'* @details
 '* 次ページへ進む画面遷移操作を解決します。
 Public Function ResolveNextPageOperation() As TransitionOperation
     Call pCheckInit

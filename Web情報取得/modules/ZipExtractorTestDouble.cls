@@ -31,6 +31,9 @@ Private Sub Class_Initialize()
 End Sub
 
 '* ExtractZip の spy only です。失敗は Store.SetError で注入します。
+'*
+'* @details
+'* ExtractZip の spy only です。失敗は Store.SetError で注入します。
 Public Sub ExtractZip( _
         ByVal ZipFilePath As String, _
         ByVal DestinationDirectoryPath As String)

@@ -120,6 +120,9 @@ Private Function pPrepareBrowserProfileDirectory() As Boolean
 End Function
 
 '* WebDriver session と process を正常終了します。
+'*
+'* @details
+'* WebDriver session と process を正常終了します。
 Public Sub FinishSession()
     Call pCheckInit
 

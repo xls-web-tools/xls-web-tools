@@ -27,5 +27,8 @@ End Sub
 '*
 '* @param DirectoryPath 作成確認対象の解決済み絶対パス。
 '* @return 作成して続行する場合 True。
+'*
+'* @details
+'* 専用ブラウザプロファイル フォルダーを作成して続行するか確認します。
 Public Function ConfirmCreateDirectory(ByVal DirectoryPath As String) As Boolean
 End Function

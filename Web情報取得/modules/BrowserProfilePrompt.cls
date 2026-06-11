@@ -20,6 +20,9 @@ Implements IBrowserProfilePrompt
 ' #############################################################################
 
 '* 専用ブラウザプロファイル フォルダーを作成して続行するか確認します。
+'*
+'* @details
+'* 専用ブラウザプロファイル フォルダーを作成して続行するか確認します。
 Public Function ConfirmCreateDirectory(ByVal DirectoryPath As String) As Boolean
     Dim result_value As VbMsgBoxResult
     result_value = MsgBox( _

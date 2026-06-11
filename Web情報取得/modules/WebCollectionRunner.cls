@@ -125,6 +125,9 @@ Public Function Run() As String
 End Function
 
 '* 一覧画面到達後に本番収集を実行します。
+'*
+'* @details
+'* 一覧画面到達後に本番収集を実行します。
 Public Sub RunAfterPreparation()
     Call pCheckInit
     Call pOutputWriter.EnsureHeaders
@@ -178,6 +181,9 @@ Private Sub pMarkProgressComplete()
     Call ProgStat.MarkAsComplete
 End Sub
 
+'* エラー時に本番収集側の進捗表示を解除します。
+'*
+'* @details
 '* エラー時に本番収集側の進捗表示を解除します。
 Public Sub ClearProgressAfterError()
     Call pCheckInit
