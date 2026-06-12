@@ -59,11 +59,16 @@ Public Sub EnsureHeaders()
     Call pWriteOutputCell(C_HEADER_ROW, C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
 End Sub
 
-Private Sub pWriteOutputCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal CellValue As String)
+Private Sub pWriteOutputCell( _
+        ByVal RowIndex As Long, _
+        ByVal ColumnIndex As Long, _
+        ByVal CellValue As String, _
+        Optional ByVal TypeConvert As Boolean = False)
+
     Call WsSrv.WriteCell( _
             New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName), _
             CellValue, _
-            TypeConvert:=False)
+            TypeConvert:=TypeConvert)
 End Sub
 
 '* 診断用の出力行を書き込みます。
@@ -276,11 +281,24 @@ Private Sub pWriteDetailOutputCells(ByVal RowIndex As Long, ByVal DetailValues A
                     output_value = CStr(DetailValues.Item(detail_idx))
                 End If
 
-                Call pWriteOutputCell(RowIndex, output_col_idx, output_value)
+                Dim detail_def As DetailColumnDefinition
+                Set detail_def = detail_defs.Item(detail_idx)
+
+                Call pWriteOutputCell( _
+                        RowIndex, _
+                        output_col_idx, _
+                        output_value, _
+                        pShouldTypeConvertOutputValue(detail_def, output_value))
             End If
         End If
     Next header_col_idx
 End Sub
+
+Private Function pShouldTypeConvertOutputValue(ByVal DetailDefinition As DetailColumnDefinition, ByVal OutputValue As String) As Boolean
+    pShouldTypeConvertOutputValue = ( _
+            StrComp(DetailDefinition.OutputValueType, "Auto", vbTextCompare) = 0 _
+            And OutputValue <> "")
+End Function
 
 Private Function pOutputHeaderUsedBounds() As WorksheetRangeBounds
     Dim search_bounds As WorksheetRangeBounds

@@ -85,6 +85,49 @@ Public Sub Test_OutputSheetWriter_f’fo—Í‚Íoutputƒwƒbƒ_[‚Éˆê’v‚·‚éÚ×—ñ‚Ö‘‚«
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=6, Sheet:="result"))
 End Sub
 
+Public Sub Test_OutputSheetWriter_OutputValueType‚É]‚Á‚ÄÚ×—ñ‚ÌŒ^•ÏŠ·‚ğØ‚è‘Ö‚¦‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "•¶š—ñ—ñ", "©“®—ñ", "‹ó—“©“®—ñ", "©“®—ñ")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("•¶š—ñ—ñ", "#text", OutputValueType:="String"))
+    Call detail_defs.Add(New_DetailColumnDefinition("©“®—ñ", "#auto", OutputValueType:="Auto"))
+    Call detail_defs.Add(New_DetailColumnDefinition("‹ó—“©“®—ñ", "#blank", OutputValueType:="Auto"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 2)
+    Call detail_values.Update(0, "00123")
+    Call detail_values.Update(1, "123")
+    Call detail_values.Update(2, "")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteDiagnosticRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_NO_FILE)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 1, "T-001", False)
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 5, "00123", False)
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 6, "123", True)
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 7, "", False)
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 8, "123", True)
+End Sub
+
 Public Sub Test_OutputSheetWriter_LF‚ğŠÜ‚Ş’Êí’Šo—ñƒwƒbƒ_[Š®‘Sˆê’v‚Åo—Í‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -485,7 +528,7 @@ Public Sub Test_OutputSheetWriter_–{”Ôo—Í‚Í‘ÎÛIDˆê’vs‚ğXV‚µ–¢“o˜^‚È‚ç––”ö‚Ö
 
     Dim detail_defs As ObjectList
     Set detail_defs = New_ObjectList("DetailColumnDefinition")
-    Call detail_defs.Add(New_DetailColumnDefinition("Œ–¼", "#title"))
+    Call detail_defs.Add(New_DetailColumnDefinition("Œ–¼", "#title", OutputValueType:="Auto"))
     Set tool_settings.DetailColumnDefinitions = detail_defs
 
     Call pSetFindRows(ws_stub, "T-001", 5)
@@ -508,12 +551,12 @@ Public Sub Test_OutputSheetWriter_–{”Ôo—Í‚Í‘ÎÛIDˆê’vs‚ğXV‚µ–¢“o˜^‚È‚ç––”ö‚Ö
     Call pAssertWrittenCell(Assert, ws_stub, 5, 1, "T-001")
     Call pAssertWrittenCell(Assert, ws_stub, 5, 2, G_WEB_STATUS_OK)
     Call pAssertWrittenCell(Assert, ws_stub, 5, 4, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
-    Call pAssertWrittenCell(Assert, ws_stub, 5, 5, "ˆÄŒA")
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 5, "ˆÄŒA", True)
     Call pAssertWrittenCell(Assert, ws_stub, 7, 1, "T-002")
     Call pAssertWrittenCell(Assert, ws_stub, 7, 2, G_WEB_STATUS_ERROR)
     Call pAssertWrittenCell(Assert, ws_stub, 7, 3, "missing")
     Call pAssertWrittenCell(Assert, ws_stub, 7, 4, G_WEB_DOWNLOAD_STATUS_ERROR)
-    Call pAssertWrittenCell(Assert, ws_stub, 7, 5, "")
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 7, 5, "", False)
 End Sub
 
 Public Sub Test_OutputSheetWriter_outputƒwƒbƒ_[‚È‚µ‚È‚çŒÅ’èŠÇ——ñ‚¾‚¯‚ğ‘‚«‚Ş(ByVal Assert As UnitTestAssert)
@@ -648,4 +691,24 @@ Private Sub pAssertWrittenCell( _
     Set call_record = WsStub.Store.GetLatestCall("WriteCell", target_bounds)
 
     Assert.Equals ExpectedValue, CStr(call_record.GetArgument(1)), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex)
+End Sub
+
+Private Sub pAssertWrittenCellTypeConvert( _
+        ByVal Assert As UnitTestAssert, _
+        ByVal WsStub As WorksheetServiceTestDouble, _
+        ByVal RowIndex As Long, _
+        ByVal ColumnIndex As Long, _
+        ByVal ExpectedValue As String, _
+        ByVal ExpectedTypeConvert As Boolean)
+
+    Dim target_bounds As WorksheetRangeBounds
+    Set target_bounds = New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:="result")
+
+    Assert.EqualsNumeric 1, WsStub.Store.GetCallCount("WriteCell", target_bounds), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex) & " call count"
+
+    Dim call_record As TestDoubleCallRecord
+    Set call_record = WsStub.Store.GetLatestCall("WriteCell", target_bounds)
+
+    Assert.Equals ExpectedValue, CStr(call_record.GetArgument(1)), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex)
+    Assert.Equals ExpectedTypeConvert, CBool(call_record.GetArgument(6)), CaseName:="Row " & CStr(RowIndex) & ", Column " & CStr(ColumnIndex) & " TypeConvert"
 End Sub

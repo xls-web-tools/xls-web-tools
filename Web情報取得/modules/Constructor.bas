@@ -73,6 +73,7 @@ End Function
 '* @param AttributeName attribute 取得時の属性名。
 '* @param IsRequired True の場合は必須列として扱います。
 '* @param ValueExpression 値式。
+'* @param OutputValueType 出力値型変換方針。
 '* @param BlankMode 空欄時の扱い。
 '* @return 初期化済みの詳細ページ列定義。
 '*
@@ -85,6 +86,7 @@ Public Function New_DetailColumnDefinition( _
         Optional ByVal AttributeName As String = "", _
         Optional ByVal IsRequired As Boolean = False, _
         Optional ByVal ValueExpression As String = "", _
+        Optional ByVal OutputValueType As String = "String", _
         Optional ByVal BlankMode As String = "AllowBlank") As DetailColumnDefinition
 
     Dim result_value As DetailColumnDefinition
@@ -96,6 +98,7 @@ Public Function New_DetailColumnDefinition( _
             AttributeName:=AttributeName, _
             IsRequired:=IsRequired, _
             ValueExpression:=ValueExpression, _
+            OutputValueType:=OutputValueType, _
             BlankMode:=BlankMode)
 
     Set New_DetailColumnDefinition = result_value

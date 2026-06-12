@@ -24,6 +24,7 @@ Private pExtractType As String
 Private pAttributeName As String
 Private pIsRequired As Boolean
 Private pValueExpression As String
+Private pOutputValueType As String
 Private pBlankMode As String
 
 '* 出力列名。
@@ -62,6 +63,12 @@ Public Property Get ValueExpression() As String
     ValueExpression = pValueExpression
 End Property
 
+'* 出力値型変換方針。
+Public Property Get OutputValueType() As String
+    Call pCheckInit
+    OutputValueType = pOutputValueType
+End Property
+
 '* 派生列か否か。
 Public Property Get IsDerived() As Boolean
     Call pCheckInit
@@ -82,11 +89,13 @@ End Property
 '* @param AttributeName attribute 取得時の属性名。
 '* @param IsRequired True の場合は必須列として扱います。
 '* @param ValueExpression 値式。
+'* @param OutputValueType 出力値型変換方針。
 '* @param BlankMode 空欄時の扱い。
 '*
 '* @details
 '* OutputColumnName は必須です。通常の抽出列は Selector を、派生列は ValueExpression を指定します。
 '* ExtractType、AttributeName、IsRequired、BlankMode は DOM 抽出時の列ごとの振る舞いを指定するために保持します。
+'* OutputValueType は output シートへ書き出すときの型変換方針を指定します。
 Public Sub Initialize( _
         ByVal OutputColumnName As String, _
         ByVal Selector As String, _
@@ -94,6 +103,7 @@ Public Sub Initialize( _
         Optional ByVal AttributeName As String = "", _
         Optional ByVal IsRequired As Boolean = False, _
         Optional ByVal ValueExpression As String = "", _
+        Optional ByVal OutputValueType As String = "String", _
         Optional ByVal BlankMode As String = "AllowBlank")
 
     If Trim$(OutputColumnName) = "" Then
@@ -113,15 +123,34 @@ Public Sub Initialize( _
         Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="派生列では IsRequired=True を指定できません。(" & OutputColumnName & ")"
     End If
 
+    Dim normalized_output_value_type As String
+    normalized_output_value_type = pNormalizeOutputValueType(OutputValueType, OutputColumnName)
+
     pOutputColumnName = OutputColumnName
     pSelector = Selector
     pExtractType = ExtractType
     pAttributeName = AttributeName
     pIsRequired = IsRequired
     pValueExpression = ValueExpression
+    pOutputValueType = normalized_output_value_type
     pBlankMode = BlankMode
     pIsInitialized = True
 End Sub
+
+Private Function pNormalizeOutputValueType(ByVal OutputValueType As String, ByVal OutputColumnName As String) As String
+    Dim trimmed_value As String
+    trimmed_value = Trim$(OutputValueType)
+
+    If trimmed_value = "" Then
+        pNormalizeOutputValueType = "String"
+    ElseIf StrComp(trimmed_value, "String", vbTextCompare) = 0 Then
+        pNormalizeOutputValueType = "String"
+    ElseIf StrComp(trimmed_value, "Auto", vbTextCompare) = 0 Then
+        pNormalizeOutputValueType = "Auto"
+    Else
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="OutputValueType は String または Auto を指定してください。(" & OutputColumnName & ")"
+    End If
+End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then

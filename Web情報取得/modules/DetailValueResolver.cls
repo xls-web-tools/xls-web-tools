@@ -248,6 +248,7 @@ Private Function pCopyDefinition( _
                 DetailDefinition.OutputColumnName, _
                 "", _
                 ValueExpression:=DetailDefinition.ValueExpression, _
+                OutputValueType:=DetailDefinition.OutputValueType, _
                 BlankMode:=blank_mode)
         Exit Function
     End If
@@ -265,6 +266,7 @@ Private Function pCopyDefinition( _
             ExtractType:=DetailDefinition.ExtractType, _
             AttributeName:=DetailDefinition.AttributeName, _
             IsRequired:=is_required, _
+            OutputValueType:=DetailDefinition.OutputValueType, _
             BlankMode:=blank_mode)
 End Function
 
