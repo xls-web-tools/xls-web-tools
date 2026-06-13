@@ -82,13 +82,13 @@ Public Sub Initialize( _
         Optional ByVal WaitConditionName As String = "")
 
     If Trim$(OperationName) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation", Description:="OperationName は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="OperationName は必須です。"
     End If
     If Trim$(LocatorType) = "" And Trim$(Script) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation", Description:="LocatorType または Script は必須です。(" & OperationName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="LocatorType または Script は必須です。(" & OperationName & ")"
     End If
     If Trim$(LocatorType) <> "" And Trim$(LocatorValue) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation", Description:="LocatorValue は必須です。(" & OperationName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="LocatorValue は必須です。(" & OperationName & ")"
     End If
 
     pOperationName = OperationName
@@ -102,6 +102,6 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

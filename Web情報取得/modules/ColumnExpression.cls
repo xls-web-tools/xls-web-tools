@@ -98,7 +98,7 @@ Public Sub Initialize( _
             pRootNodeIndex = pParseValueExpression()
             Call pRequireExpressionEnd
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="未対応の列参照記法種別です。(" & ExpressionKind & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".Initialize", Description:="未対応の列参照記法種別です。(" & ExpressionKind & ")"
     End Select
 
     pIsInitialized = True
@@ -168,7 +168,7 @@ End Sub
 Public Function EvaluateCondition(ByVal ColumnValues As ObjectDictionary) As Boolean
     Call pCheckInit
     If pExpressionKind <> G_COLUMN_EXPRESSION_KIND_CONDITION Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " は条件として評価できません。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".EvaluateCondition", Description:=pExpressionLabel() & " は条件として評価できません。"
     End If
 
     EvaluateCondition = pEvaluateConditionNode(pRootNodeIndex, ColumnValues)
@@ -200,7 +200,7 @@ Private Function pEvaluateConditionNode( _
         Case C_NODE_KIND_NOT
             result_value = Not pEvaluateConditionNode(pNodes(ExpressionNodeIndex).LeftNodeIndex, ColumnValues)
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="条件として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pEvaluateConditionNode", Description:="条件として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
     End Select
 
     pEvaluateConditionNode = result_value
@@ -216,7 +216,7 @@ End Function
 Public Function EvaluateValue(ByVal ColumnValues As ObjectDictionary) As String
     Call pCheckInit
     If pExpressionKind <> G_COLUMN_EXPRESSION_KIND_VALUE Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " は値として評価できません。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".EvaluateValue", Description:=pExpressionLabel() & " は値として評価できません。"
     End If
 
     EvaluateValue = pEvaluateValueNode(pRootNodeIndex, ColumnValues)
@@ -239,7 +239,7 @@ Private Function pEvaluateValueNode( _
                 result_value = pEvaluateValueNode(pNodes(ExpressionNodeIndex).RightNodeIndex, ColumnValues)
             End If
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="値として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pEvaluateValueNode", Description:="値として評価できない列参照記法ノードです。(" & pNodes(ExpressionNodeIndex).Kind & ")"
     End Select
 
     pEvaluateValueNode = result_value
@@ -388,7 +388,7 @@ Private Function pReadColumnValue( _
         ByVal ColumnValues As ObjectDictionary) As String
 
     If Not ColumnValues.Exists(ColumnName) Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " が未定義の列を参照しています。(" & ColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pReadColumnValue", Description:=pExpressionLabel() & " が未定義の列を参照しています。(" & ColumnName & ")"
     End If
 
     pReadColumnValue = CStr(ColumnValues.Item(ColumnName))
@@ -412,7 +412,7 @@ Private Function pEvaluateComparison( _
         Case "!="
             result_value = (StrComp(left_text, right_text, vbBinaryCompare) <> 0)
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="未対応の比較演算子です。(" & OperatorText & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pEvaluateComparison", Description:="未対応の比較演算子です。(" & OperatorText & ")"
     End Select
 
     pEvaluateComparison = result_value
@@ -613,11 +613,11 @@ Private Function pExpressionLabel() As String
 End Function
 
 Private Sub pRaiseSyntaxError(ByVal Message As String)
-    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:=pExpressionLabel() & " の構文が不正です。" & Message & " (位置: " & CStr(pPosition) & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pRaiseSyntaxError", Description:=pExpressionLabel() & " の構文が不正です。" & Message & " (位置: " & CStr(pPosition) & ")"
 End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

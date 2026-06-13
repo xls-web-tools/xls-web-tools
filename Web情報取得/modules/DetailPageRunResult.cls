@@ -81,7 +81,7 @@ Public Sub Initialize( _
         Optional ByVal IsOutputExcluded As Boolean = False)
 
     If DetailValues Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunResult", Description:="DetailValues は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunResult.Initialize", Description:="DetailValues は必須です。"
     End If
 
     pTargetId = TargetId
@@ -95,6 +95,6 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunResult", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunResult.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

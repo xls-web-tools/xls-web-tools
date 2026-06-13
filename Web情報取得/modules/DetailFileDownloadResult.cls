@@ -61,6 +61,6 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloadResult", Description:="‰Šú‰»‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloadResult.pCheckInit", Description:="‰Šú‰»‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
     End If
 End Sub

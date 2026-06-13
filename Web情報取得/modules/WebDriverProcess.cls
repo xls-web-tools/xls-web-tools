@@ -44,7 +44,7 @@ End Property
 '* PortProbe は Nothing にできません。
 Public Sub Initialize(ByVal PortProbe As IWebDriverPortProbe)
     If PortProbe Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="PortProbe は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.Initialize", Description:="PortProbe は必須です。"
     End If
 
     Set pFileSystem = FsSrv
@@ -67,15 +67,15 @@ End Sub
 Public Sub Start(ByVal Settings As IToolSettings)
     Call pCheckInit
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.Start", Description:="Settings は必須です。"
     End If
 
     If Not pFileSystem.IsFile(Settings.WebDriverPath) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver 実行ファイルが配置されていません。(" & Settings.WebDriverPath & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.Start", Description:="Edge WebDriver 実行ファイルが配置されていません。(" & Settings.WebDriverPath & ")"
     End If
 
     If pPortProbe.IsPortInUse(Settings.WebDriverPort) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="WebDriver port が使用中です。他プロセスは終了しません。(" & CStr(Settings.WebDriverPort) & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.Start", Description:="WebDriver port が使用中です。他プロセスは終了しません。(" & CStr(Settings.WebDriverPort) & ")"
     End If
 
     On Error GoTo START_ERROR
@@ -102,7 +102,7 @@ START_ERROR:
     err_help_context = Err.HelpContext
 
     Call StopProcess
-    Err.Raise err_num, "Class WebDriverProcess", err_desc, err_help_file, err_help_context
+    Err.Raise err_num, "Class WebDriverProcess.Start", err_desc, err_help_file, err_help_context
 End Sub
 Private Sub IWebDriverProcess_Start(ByVal Settings As IToolSettings)
     Call Start(Settings)
@@ -110,7 +110,7 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 
@@ -131,7 +131,7 @@ Private Sub pWaitUntilReady(ByVal Settings As IToolSettings)
         DoEvents
     Loop While Now < deadline_time
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess", Description:="Edge WebDriver が起動待ち時間内に応答しません。port=" & CStr(Settings.WebDriverPort) & ", timeout=" & CStr(timeout_seconds) & " 秒"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverProcess.pWaitUntilReady", Description:="Edge WebDriver が起動待ち時間内に応答しません。port=" & CStr(Settings.WebDriverPort) & ", timeout=" & CStr(timeout_seconds) & " 秒"
 End Sub
 
 '* 起動した Edge WebDriver process を終了します。

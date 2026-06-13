@@ -32,10 +32,10 @@ Private pIsInitialized As Boolean
 '* `http://127.0.0.1:{port}` を基準 URL として WebDriver HTTP API を呼び出します。
 Public Sub Initialize(ByVal PortNumber As Long, ByVal TimeoutSeconds As Long)
     If PortNumber <= 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="PortNumber は 1 以上である必要があります。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient.Initialize", Description:="PortNumber は 1 以上である必要があります。"
     End If
     If TimeoutSeconds <= 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="TimeoutSeconds は 1 以上である必要があります。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient.Initialize", Description:="TimeoutSeconds は 1 以上である必要があります。"
     End If
 
     pPortNumber = PortNumber
@@ -84,7 +84,7 @@ Public Function Execute( _
     On Error GoTo 0
     If status_code < 200 Or 300 <= status_code Then
         If Not pIsWebDriverErrorResponse(response_body) Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="WebDriver HTTP error " & CStr(status_code) & "。" & response_body
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient.Execute", Description:="WebDriver HTTP error " & CStr(status_code) & "。" & response_body
         End If
     End If
 
@@ -101,7 +101,7 @@ REQUEST_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    Err.Raise err_num, "Class WebDriverClient", "WebDriver HTTP API に接続できません。(" & HttpMethod & " " & target_url & ") " & err_desc, err_help_file, err_help_context
+    Err.Raise err_num, "Class WebDriverClient.Execute", "WebDriver HTTP API に接続できません。(" & HttpMethod & " " & target_url & ") " & err_desc, err_help_file, err_help_context
 End Function
 Private Function IWebDriverClient_Execute( _
         ByVal HttpMethod As String, _
@@ -113,7 +113,7 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverClient.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 

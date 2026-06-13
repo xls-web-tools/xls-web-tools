@@ -39,13 +39,13 @@ Public Sub Initialize( _
         Optional ByVal FileDownloader As DetailFileDownloader = Nothing)
 
     If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="SessionClient は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.Initialize", Description:="SessionClient は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.Initialize", Description:="Settings は必須です。"
     End If
     If Settings.DownloadEnabled And (FileDownloader Is Nothing) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="FileDownloader は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.Initialize", Description:="FileDownloader は必須です。"
     End If
 
     Set pSessionClient = SessionClient
@@ -104,12 +104,12 @@ Public Function Run( _
     Dim detail_target_id As String
     detail_target_id = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
     If detail_target_id = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="詳細ページ上の対象IDを取得できません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.Run", Description:="詳細ページ上の対象IDを取得できません。"
     End If
 
     output_target_id = detail_target_id
     If StrComp(ListTargetId, detail_target_id, vbBinaryCompare) <> 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & ListTargetId & " / " & detail_target_id & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.Run", Description:="一覧上の対象IDと詳細ページ上の対象IDが一致しません。(" & ListTargetId & " / " & detail_target_id & ")"
     End If
     has_valid_detail_target = True
 
@@ -213,7 +213,7 @@ Private Function pDownloadCurrentDetailFile(ByVal TargetId As String) As DetailF
     End If
 
     If pFileDownloader Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="FileDownloader は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.pDownloadCurrentDetailFile", Description:="FileDownloader は必須です。"
     End If
 
     Set pDownloadCurrentDetailFile = pFileDownloader.DownloadForDetail(TargetId)
@@ -298,6 +298,6 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailPageRunner.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

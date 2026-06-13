@@ -41,7 +41,7 @@ End Property
 '* OperationName の照合と一覧項目 index 置換の規則をこの Module に閉じます。
 Public Sub Initialize(ByVal Settings As IToolSettings)
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pSettings = Settings
@@ -117,11 +117,11 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
         End If
     Next operation_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver.pFindTransitionOperation", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
 End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

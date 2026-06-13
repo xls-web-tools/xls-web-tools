@@ -38,10 +38,10 @@ Public Sub Initialize( _
         ByVal Settings As IToolSettings)
 
     If Lifecycle Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation", Description:="Lifecycle は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation.Initialize", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pLifecycle = Lifecycle
@@ -89,7 +89,7 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionPreparation.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 

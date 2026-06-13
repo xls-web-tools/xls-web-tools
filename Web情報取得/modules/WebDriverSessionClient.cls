@@ -51,10 +51,10 @@ Public Sub Initialize( _
         ByVal Settings As IToolSettings)
 
     If Client Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Client は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.Initialize", Description:="Client は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pClient = Client
@@ -81,7 +81,7 @@ Public Function CreateSession() As String
 
     pSessionId = pExtractJsonString(response_body, "sessionId")
     If pSessionId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver sessionId を取得できません。(" & response_body & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.CreateSession", Description:="WebDriver sessionId を取得できません。(" & response_body & ")"
     End If
 
     CreateSession = pSessionId
@@ -115,7 +115,7 @@ Public Sub NavigateToStartUrl()
     Call pCheckInit
 
     If pSessionId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver session が作成されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.NavigateToStartUrl", Description:="WebDriver session が作成されていません。"
     End If
 
     Dim response_body As String
@@ -147,7 +147,7 @@ Public Function WaitForSelector(ByVal Selector As String) As String
     Call pRequireSession
 
     If Trim$(Selector) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Selector は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.WaitForSelector", Description:="Selector は必須です。"
     End If
 
     Dim deadline_time As Date
@@ -160,7 +160,7 @@ Public Function WaitForSelector(ByVal Selector As String) As String
         If Not pIsWebDriverError(response_body) Then
             WaitForSelector = pExtractElementId(response_body)
             If WaitForSelector = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver element id を取得できません。(" & response_body & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.WaitForSelector", Description:="WebDriver element id を取得できません。(" & response_body & ")"
             End If
             Call pSwitchToTopLevelContext
             Exit Function
@@ -176,7 +176,7 @@ Public Function WaitForSelector(ByVal Selector As String) As String
     Call pSwitchToTopLevelContext
     On Error GoTo 0
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="selector が見つかりません。(" & Selector & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.WaitForSelector", Description:="selector が見つかりません。(" & Selector & ")"
 End Function
 
 Private Function pExtractElementId(ByVal ResponseBody As String) As String
@@ -213,7 +213,7 @@ Private Function pFindElementResponse(ByVal LocatorType As String, ByVal Locator
             Dim frame_selector As String
             frame_selector = Trim$(CStr(locator_parts(part_idx)))
             If frame_selector = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementResponse", Description:="frame selector は空にできません。(" & LocatorValue & ")"
             End If
 
             Dim frame_response As String
@@ -226,7 +226,7 @@ Private Function pFindElementResponse(ByVal LocatorType As String, ByVal Locator
             Dim frame_element_id As String
             frame_element_id = pExtractElementId(frame_response)
             If frame_element_id = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementResponse", Description:="frame element id を取得できません。(" & frame_response & ")"
             End If
 
             Call pSwitchToFrame(frame_element_id)
@@ -235,7 +235,7 @@ Private Function pFindElementResponse(ByVal LocatorType As String, ByVal Locator
         target_locator_type = "css selector"
         target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
         If target_locator_value = "" Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementResponse", Description:="target selector は空にできません。(" & LocatorValue & ")"
         End If
     End If
 
@@ -255,7 +255,7 @@ Public Function CountElements(ByVal Selector As String) As Long
     Call pRequireSession
 
     If Trim$(Selector) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Selector は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.CountElements", Description:="Selector は必須です。"
     End If
 
     Dim response_body As String
@@ -270,7 +270,7 @@ Private Function pCountElementIds(ByVal ResponseBody As String) As Long
     Dim key_idx As Long
     key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
     If key_idx = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pCountElementIds", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
     End If
 
     Dim open_idx As Long
@@ -279,7 +279,7 @@ Private Function pCountElementIds(ByVal ResponseBody As String) As Long
     Dim close_idx As Long
     close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
     If open_idx = 0 Or close_idx < open_idx Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pCountElementIds", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
     End If
 
     Dim array_text As String
@@ -312,7 +312,7 @@ Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal Locato
             Dim frame_selector As String
             frame_selector = Trim$(CStr(locator_parts(part_idx)))
             If frame_selector = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame selector は空にできません。(" & LocatorValue & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementsResponse", Description:="frame selector は空にできません。(" & LocatorValue & ")"
             End If
 
             Dim frame_response As String
@@ -325,7 +325,7 @@ Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal Locato
             Dim frame_element_id As String
             frame_element_id = pExtractElementId(frame_response)
             If frame_element_id = "" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame element id を取得できません。(" & frame_response & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementsResponse", Description:="frame element id を取得できません。(" & frame_response & ")"
             End If
 
             Call pSwitchToFrame(frame_element_id)
@@ -334,7 +334,7 @@ Private Function pFindElementsResponse(ByVal LocatorType As String, ByVal Locato
         target_locator_type = "css selector"
         target_locator_value = Trim$(CStr(locator_parts(UBound(locator_parts))))
         If target_locator_value = "" Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="target selector は空にできません。(" & LocatorValue & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElementsResponse", Description:="target selector は空にできません。(" & LocatorValue & ")"
         End If
     End If
 
@@ -399,7 +399,7 @@ Public Function ReadElementText(ByVal Selector As String) As String
     Call pRequireSession
 
     If Trim$(Selector) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Selector は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.ReadElementText", Description:="Selector は必須です。"
     End If
 
     Dim element_id As String
@@ -426,7 +426,7 @@ Private Function pFindElement(ByVal LocatorType As String, ByVal LocatorValue As
 
     pFindElement = pExtractElementId(response_body)
     If pFindElement = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver element id を取得できません。(" & response_body & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pFindElement", Description:="WebDriver element id を取得できません。(" & response_body & ")"
     End If
     Exit Function
 
@@ -440,7 +440,7 @@ FIND_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    Err.Raise err_num, "Class WebDriverSessionClient", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
+    Err.Raise err_num, "Class WebDriverSessionClient.pFindElement", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
 End Function
 
 '* 詳細ページ列定義に対応する値を読み取ります。
@@ -456,7 +456,7 @@ Public Function ReadDetailColumnValues(ByVal DetailColumnDefinitions As ObjectLi
     Call pRequireSession
 
     If DetailColumnDefinitions Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="DetailColumnDefinitions は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.ReadDetailColumnValues", Description:="DetailColumnDefinitions は必須です。"
     End If
 
     Dim response_body As String
@@ -500,7 +500,7 @@ Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName
     Dim key_idx As Long
     key_idx = InStr(1, JsonText, """" & KeyName & """", vbBinaryCompare)
     If key_idx = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="JSON 配列のキーを取得できません。(" & KeyName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExtractJsonStringArray", Description:="JSON 配列のキーを取得できません。(" & KeyName & ")"
     End If
 
     Dim open_idx As Long
@@ -509,7 +509,7 @@ Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName
     Dim close_idx As Long
     close_idx = InStrRev(JsonText, "]", -1, vbBinaryCompare)
     If open_idx = 0 Or close_idx <= open_idx Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="JSON 配列を取得できません。(" & JsonText & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExtractJsonStringArray", Description:="JSON 配列を取得できません。(" & JsonText & ")"
     End If
 
     Dim array_text As String
@@ -549,13 +549,13 @@ Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
     Call pRequireSession
 
     If Operation Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Operation は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.RunTransitionOperation", Description:="Operation は必須です。"
     End If
 
     If Trim$(Operation.LocatorType) <> "" Then
         If Trim$(Operation.LocatorInnerText) <> "" Then
             If LCase$(Trim$(Operation.LocatorType)) <> "css selector" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.RunTransitionOperation", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。"
             End If
         End If
 
@@ -599,7 +599,7 @@ End Sub
 
 Private Sub pExecuteScript(ByVal Script As String)
     If Trim$(Script) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="Script は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExecuteScript", Description:="Script は必須です。"
     End If
 
     Dim response_body As String
@@ -645,7 +645,7 @@ Public Sub QuitSession(Optional ByVal SessionId As String = "")
     If target_session_id = "" Then target_session_id = pSessionId
 
     If target_session_id = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="終了対象の WebDriver session id がありません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.QuitSession", Description:="終了対象の WebDriver session id がありません。"
     End If
 
     Dim response_body As String
@@ -693,7 +693,7 @@ Private Function pExtractElementIds(ByVal ResponseBody As String) As ArrayObject
     Dim key_idx As Long
     key_idx = InStr(1, ResponseBody, """value""", vbBinaryCompare)
     If key_idx = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExtractElementIds", Description:="WebDriver elements response の value を取得できません。(" & ResponseBody & ")"
     End If
 
     Dim open_idx As Long
@@ -702,7 +702,7 @@ Private Function pExtractElementIds(ByVal ResponseBody As String) As ArrayObject
     Dim close_idx As Long
     close_idx = InStrRev(ResponseBody, "]", -1, vbBinaryCompare)
     If open_idx = 0 Or close_idx < open_idx Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExtractElementIds", Description:="WebDriver elements response の配列を取得できません。(" & ResponseBody & ")"
     End If
 
     Dim array_text As String
@@ -733,7 +733,7 @@ End Function
 
 Private Function pCreateTemporaryDownloadDirectory() As String
     If pFileSystem Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="FileSystem は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pCreateTemporaryDownloadDirectory", Description:="FileSystem は必須です。"
     End If
 
     pCreateTemporaryDownloadDirectory = pFileSystem.CreateTemporaryDirectory(C_DOWNLOAD_DIRECTORY_PREFIX)
@@ -908,7 +908,7 @@ Private Function pFindElementByInnerText( _
 
     If match_count <> 1 Then
         Err.Raise Number:=C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED, _
-                Source:="Class WebDriverSessionClient", _
+                Source:="Class WebDriverSessionClient.pFindElementByInnerText", _
                 Description:="LocatorInnerText の対象を確定できません。OperationName=" & OperationName _
                         & ", LocatorValue=" & LocatorValue _
                         & ", LocatorInnerText=" & LocatorInnerText _
@@ -993,7 +993,7 @@ End Function
 
 Private Sub pRequireSession()
     If pSessionId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver session が作成されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pRequireSession", Description:="WebDriver session が作成されていません。"
     End If
 End Sub
 
@@ -1006,7 +1006,7 @@ Private Function pSplitFrameChain(ByVal LocatorValue As String) As Variant
     Dim locator_parts As Variant
     locator_parts = Split(LocatorValue, ">>")
     If UBound(locator_parts) < 1 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="frame chain selector が不正です。(" & LocatorValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pSplitFrameChain", Description:="frame chain selector が不正です。(" & LocatorValue & ")"
     End If
 
     pSplitFrameChain = locator_parts
@@ -1024,7 +1024,7 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 
@@ -1036,5 +1036,5 @@ Private Sub pRaiseIfWebDriverError(ByVal ResponseBody As String)
     Dim error_message As String
     error_message = pExtractJsonString(ResponseBody, "message")
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient", Description:="WebDriver error: " & error_name & "。" & error_message
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pRaiseIfWebDriverError", Description:="WebDriver error: " & error_name & "。" & error_message
 End Sub

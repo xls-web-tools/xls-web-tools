@@ -241,7 +241,7 @@ Private Function pGetRequiredParam(ByVal Name As String) As String
     Dim result_value As String
     result_value = pGetOptionalParam(Name, "")
     If Trim$(result_value) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pGetRequiredParam", Description:=Name & " は必須です。"
     End If
 
     pGetRequiredParam = result_value
@@ -278,13 +278,13 @@ Private Function pGetOptionalLongParam(ByVal Name As String, ByVal DefaultValue 
     param_value = pGetOptionalParam(Name, CStr(DefaultValue))
 
     If Trim$(param_value) = "" Or Not IsNumeric(param_value) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は数値である必要があります。(" & param_value & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pGetOptionalLongParam", Description:=Name & " は数値である必要があります。(" & param_value & ")"
     End If
 
     Dim result_value As Long
     result_value = CLng(param_value)
     If result_value <= 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は 1 以上である必要があります。(" & param_value & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pGetOptionalLongParam", Description:=Name & " は 1 以上である必要があります。(" & param_value & ")"
     End If
 
     pGetOptionalLongParam = result_value
@@ -307,7 +307,7 @@ Private Function pGetOptionalBooleanParam(ByVal Name As String, ByVal DefaultVal
         Case "FALSE", "0", "NO"
             pGetOptionalBooleanParam = False
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=Name & " は True または False である必要があります。(" & param_value & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pGetOptionalBooleanParam", Description:=Name & " は True または False である必要があります。(" & param_value & ")"
     End Select
 End Function
 
@@ -318,13 +318,13 @@ Private Function pNormalizeExistingRowMode(ByVal ModeText As String) As String
         Case UCase$(G_WEB_ROW_MODE_OVERWRITE)
             pNormalizeExistingRowMode = G_WEB_ROW_MODE_OVERWRITE
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="ExistingRowMode が不正です。(値: " & ModeText & "、有効値: " & G_WEB_ROW_MODE_SKIP_EXISTING & ", " & G_WEB_ROW_MODE_OVERWRITE & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pNormalizeExistingRowMode", Description:="ExistingRowMode が不正です。(値: " & ModeText & "、有効値: " & G_WEB_ROW_MODE_SKIP_EXISTING & ", " & G_WEB_ROW_MODE_OVERWRITE & ")"
     End Select
 End Function
 
 Private Function pResolvePath(ByVal PathLikeString As String) As String
     If FsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pResolvePath", Description:="InitializeCommonService が呼ばれていません。"
     End If
 
     pResolvePath = FsSrv.GetAbsolutePath(PathLikeString)
@@ -350,7 +350,7 @@ Private Function pReadTransitionOperations() As ObjectList
                 Dim locator_inner_text As String
                 locator_inner_text = pTableText(table_values, row_idx, 4)
                 If Trim$(locator_inner_text) <> "" And LCase$(Trim$(locator_type)) <> "css selector" Then
-                    Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。(OperationName=" & operation_name & ")"
+                    Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pReadTransitionOperations", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。(OperationName=" & operation_name & ")"
                 End If
 
                 Call result_value.Add(New_TransitionOperation( _
@@ -457,6 +457,6 @@ Private Function pParseBoolean(ByVal TargetText As String, ByVal DefaultValue As
         Case "FALSE", "0", "NO"
             pParseBoolean = False
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings", Description:=SourceName & " は True / False / 1 / 0 / Yes / No のいずれかである必要があります。(" & TargetText & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pParseBoolean", Description:=SourceName & " は True / False / 1 / 0 / Yes / No のいずれかである必要があります。(" & TargetText & ")"
     End Select
 End Function

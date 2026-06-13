@@ -39,13 +39,13 @@ Public Sub Initialize( _
         ByVal FileSaver As DownloadedFileSaver)
 
     If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="SessionClient は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader.Initialize", Description:="SessionClient は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader.Initialize", Description:="Settings は必須です。"
     End If
     If FileSaver Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="FileSaver は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader.Initialize", Description:="FileSaver は必須です。"
     End If
 
     Set pSessionClient = SessionClient
@@ -117,7 +117,7 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 
@@ -239,7 +239,7 @@ End Sub
 
 Private Sub pRequireDownloadDirectory()
     If pSessionClient.DownloadDirectoryPath = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader", Description:="一時ダウンロード領域がありません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailFileDownloader.pRequireDownloadDirectory", Description:="一時ダウンロード領域がありません。"
     End If
 End Sub
 

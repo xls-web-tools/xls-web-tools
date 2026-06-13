@@ -78,10 +78,10 @@ Public Sub Initialize( _
         ByVal Settings As IToolSettings)
 
     If Lifecycle Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="Lifecycle は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.Initialize", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pLifecycle = Lifecycle
@@ -149,7 +149,7 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailR
         item_count = pSessionClient.CountElements(pSettings.ListItemSelector)
         If item_count = 0 Then
             If pPageCount = 1 Then Exit Sub
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後に一覧項目がありません。"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pCollectPages", Description:="次ページ操作後に一覧項目がありません。"
         End If
         Call pAddProgressTotal(item_count)
 
@@ -159,7 +159,7 @@ Private Sub pCollectPages(ByVal OutputWriter As OutputSheetWriter, ByVal DetailR
         Dim first_target_id As String
         first_target_id = CStr(target_snapshot.Item(0))
         If first_target_ids.Exists(first_target_id) Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="ページングが循環しました。(" & first_target_id & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pCollectPages", Description:="ページングが循環しました。(" & first_target_id & ")"
         End If
         Call first_target_ids.Add(first_target_id)
 
@@ -202,7 +202,7 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 
@@ -294,7 +294,7 @@ Private Function pReadListItemTargetId(ByVal ItemIndex As Long) As String
     Dim result_value As String
     result_value = Trim$(pSessionClient.ReadElementText(selector_value))
     If result_value = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="一覧上の対象IDを取得できません。(index=" & CStr(ItemIndex) & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pReadListItemTargetId", Description:="一覧上の対象IDを取得できません。(index=" & CStr(ItemIndex) & ")"
     End If
 
     pReadListItemTargetId = result_value
@@ -308,7 +308,7 @@ Private Sub pRaiseIfListItemChanged( _
     If StrComp(ExpectedTargetId, ActualTargetId, vbBinaryCompare) = 0 Then Exit Sub
 
     Err.Raise Number:=vbObjectError + 1, _
-            Source:="Class WebCollectionRunner", _
+            Source:="Class WebCollectionRunner.pRaiseIfListItemChanged", _
             Description:="一覧項目が収集中に変化しました。(index=" & CStr(ItemIndex) & ", expected=" & ExpectedTargetId & ", actual=" & ActualTargetId & ")"
 End Sub
 
@@ -355,8 +355,8 @@ Private Sub pWaitForFirstTargetChange(ByVal PreviousFirstTargetId As String)
     Loop While Now < deadline_time
 
     If Not has_read_target Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後に先頭対象IDを取得できません。" & vbCrLf & last_error_description
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pWaitForFirstTargetChange", Description:="次ページ操作後に先頭対象IDを取得できません。" & vbCrLf & last_error_description
     End If
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner", Description:="次ページ操作後にページが進みません。(" & PreviousFirstTargetId & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunner.pWaitForFirstTargetChange", Description:="次ページ操作後にページが進みません。(" & PreviousFirstTargetId & ")"
 End Sub

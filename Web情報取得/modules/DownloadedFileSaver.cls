@@ -43,10 +43,10 @@ Public Sub Initialize( _
         ByVal ZipExtractor As IZipExtractor)
 
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.Initialize", Description:="Settings は必須です。"
     End If
     If ZipExtractor Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="ZipExtractor は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.Initialize", Description:="ZipExtractor は必須です。"
     End If
 
     Set pSettings = Settings
@@ -170,19 +170,19 @@ End Function
 
 Private Sub pValidateTargetId(ByVal TargetId As String)
     If TargetId = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが空です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.pValidateTargetId", Description:="対象IDが空です。"
     End If
 
     If pContainsInvalidFolderNameCharacter(TargetId) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDを Windows フォルダー名として使えません。(" & TargetId & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.pValidateTargetId", Description:="対象IDを Windows フォルダー名として使えません。(" & TargetId & ")"
     End If
 
     If Right$(TargetId, 1) = "." Or Right$(TargetId, 1) = " " Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDの末尾が Windows フォルダー名として使えません。(" & TargetId & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.pValidateTargetId", Description:="対象IDの末尾が Windows フォルダー名として使えません。(" & TargetId & ")"
     End If
 
     If pIsReservedFolderName(TargetId) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="対象IDが Windows の予約名です。(" & TargetId & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.pValidateTargetId", Description:="対象IDが Windows の予約名です。(" & TargetId & ")"
     End If
 End Sub
 
@@ -192,7 +192,7 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DownloadedFileSaver.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 

@@ -38,13 +38,13 @@ Public Sub ExtractZip( _
     Dim zip_namespace As Object
     Set zip_namespace = shell_app.NameSpace(ZipFilePath)
     If zip_namespace Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ShellZipExtractor", Description:="ZIP を開けません。(" & ZipFilePath & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ShellZipExtractor.ExtractZip", Description:="ZIP を開けません。(" & ZipFilePath & ")"
     End If
 
     Dim destination_namespace As Object
     Set destination_namespace = shell_app.NameSpace(DestinationDirectoryPath)
     If destination_namespace Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ShellZipExtractor", Description:="ZIP 展開先を開けません。(" & DestinationDirectoryPath & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ShellZipExtractor.ExtractZip", Description:="ZIP 展開先を開けません。(" & DestinationDirectoryPath & ")"
     End If
 
     Call destination_namespace.CopyHere(zip_namespace.Items, C_COPY_HERE_NO_UI)

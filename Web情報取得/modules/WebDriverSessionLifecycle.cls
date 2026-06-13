@@ -41,7 +41,7 @@ End Property
 Public Property Set BrowserProfilePrompt(ByVal NewValue As IBrowserProfilePrompt)
     Call pCheckInit
     If NewValue Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="BrowserProfilePrompt は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.BrowserProfilePrompt", Description:="BrowserProfilePrompt は必須です。"
     End If
 
     Set pBrowserProfilePrompt = NewValue
@@ -63,13 +63,13 @@ Public Sub Initialize( _
         Optional ByVal KeepVisibleBrowserOnError As Boolean = False)
 
     If Process Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="Process は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.Initialize", Description:="Process は必須です。"
     End If
     If SessionClient Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="SessionClient は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.Initialize", Description:="SessionClient は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pProcess = Process
@@ -102,7 +102,7 @@ End Function
 
 Private Function pPrepareBrowserProfileDirectory() As Boolean
     If FsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.pPrepareBrowserProfileDirectory", Description:="InitializeCommonService が呼ばれていません。"
     End If
 
     If FsSrv.IsDirectory(pSettings.BrowserProfilePath) Then
@@ -160,6 +160,6 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionLifecycle.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

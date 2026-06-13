@@ -107,7 +107,7 @@ Public Sub Initialize( _
         Optional ByVal BlankMode As String = "AllowBlank")
 
     If Trim$(OutputColumnName) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="OutputColumnName は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition.Initialize", Description:="OutputColumnName は必須です。"
     End If
 
     Dim has_selector As Boolean
@@ -117,10 +117,10 @@ Public Sub Initialize( _
     has_value_expression = (Trim$(ValueExpression) <> "")
 
     If has_selector = has_value_expression Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="Selector と ValueExpression はどちらか一方だけを指定してください。(" & OutputColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition.Initialize", Description:="Selector と ValueExpression はどちらか一方だけを指定してください。(" & OutputColumnName & ")"
     End If
     If has_value_expression And IsRequired Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="派生列では IsRequired=True を指定できません。(" & OutputColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition.Initialize", Description:="派生列では IsRequired=True を指定できません。(" & OutputColumnName & ")"
     End If
 
     Dim normalized_output_value_type As String
@@ -148,12 +148,12 @@ Private Function pNormalizeOutputValueType(ByVal OutputValueType As String, ByVa
     ElseIf StrComp(trimmed_value, "Auto", vbTextCompare) = 0 Then
         pNormalizeOutputValueType = "Auto"
     Else
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="OutputValueType は String または Auto を指定してください。(" & OutputColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition.pNormalizeOutputValueType", Description:="OutputValueType は String または Auto を指定してください。(" & OutputColumnName & ")"
     End If
 End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class DetailColumnDefinition.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

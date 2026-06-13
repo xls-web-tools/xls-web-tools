@@ -42,7 +42,7 @@ End Property
 '* 詳細ページ列定義を保持し、WebDriver から直接抽出が必要な列と派生式で解決する列を分けて扱えるようにします。
 Public Sub Initialize(ByVal DetailColumnDefinitions As ObjectList)
     If DetailColumnDefinitions Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="DetailColumnDefinitions は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".Initialize", Description:="DetailColumnDefinitions は必須です。"
     End If
 
     Set pDefinitions = DetailColumnDefinitions
@@ -74,7 +74,7 @@ Private Sub pValidateUniqueOutputColumnNames()
         Set detail_def = pDefinitions.Item(def_idx)
 
         If known_names.Exists(detail_def.OutputColumnName) Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="OutputColumnName が重複しています。(" & detail_def.OutputColumnName & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pValidateUniqueOutputColumnNames", Description:="OutputColumnName が重複しています。(" & detail_def.OutputColumnName & ")"
         End If
         Call known_names.Add(detail_def.OutputColumnName)
     Next def_idx
@@ -133,7 +133,7 @@ Public Function BuildDependentDefinitions( _
 
     Call pCheckInit
     If TargetDefinitions Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="TargetDefinitions は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".BuildDependentDefinitions", Description:="TargetDefinitions は必須です。"
     End If
 
     Set BuildDependentDefinitions = BuildDependentDefinitionsByNames( _
@@ -172,7 +172,7 @@ Public Function BuildDependentDefinitionsByNames( _
 
     Call pCheckInit
     If TargetColumnNames Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="TargetColumnNames は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".BuildDependentDefinitionsByNames", Description:="TargetColumnNames は必須です。"
     End If
 
     Dim needed() As Boolean
@@ -186,7 +186,7 @@ Public Function BuildDependentDefinitionsByNames( _
         Dim def_idx As Long
         def_idx = pFindDefinitionIndex(target_name)
         If def_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & target_name & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".BuildDependentDefinitionsByNames", Description:="依存列が未定義の OutputColumnName を参照しています。(" & target_name & ")"
         End If
         Call pMarkDependentDefinition(def_idx, needed)
     Next target_idx
@@ -228,7 +228,7 @@ Private Sub pMarkDependentDefinition( _
         Dim ref_idx As Long
         ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="依存列が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pMarkDependentDefinition", Description:="依存列が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         Call pMarkDependentDefinition(ref_idx, Needed)
     Next ref_idx_in_list
@@ -298,7 +298,7 @@ Public Function ResolveValues( _
 
     Call pCheckInit
     If ExtractionValues Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ExtractionValues は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".ResolveValues", Description:="ExtractionValues は必須です。"
     End If
 
     Set pResolvedValues = New_ObjectDictionary()
@@ -338,7 +338,7 @@ Private Sub pValidateDerivedBlankMode( _
     If StrComp(DetailDefinition.BlankMode, "ErrorIfBlank", vbTextCompare) <> 0 Then Exit Sub
     If DerivedValue <> "" Then Exit Sub
 
-    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列の値が空欄です。(" & DetailDefinition.OutputColumnName & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pValidateDerivedBlankMode", Description:="派生列の値が空欄です。(" & DetailDefinition.OutputColumnName & ")"
 End Sub
 
 Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As String
@@ -350,7 +350,7 @@ Private Function pResolveDefinitionValue(ByVal DefinitionIndex As Long) As Strin
         Exit Function
     End If
     If pResolveState(DefinitionIndex) = C_STATE_VISITING Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & detail_def.OutputColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pResolveDefinitionValue", Description:="派生列同士の循環参照があります。(" & detail_def.OutputColumnName & ")"
     End If
 
     pResolveState(DefinitionIndex) = C_STATE_VISITING
@@ -375,7 +375,7 @@ End Function
 Public Function BuildOutputValues(ByVal ValuesByName As ObjectDictionary) As ArrayObject
     Call pCheckInit
     If ValuesByName Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValuesByName は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".BuildOutputValues", Description:="ValuesByName は必須です。"
     End If
 
     Dim result_values As ArrayObject
@@ -387,7 +387,7 @@ Public Function BuildOutputValues(ByVal ValuesByName As ObjectDictionary) As Arr
         Dim detail_def As DetailColumnDefinition
         Set detail_def = pDefinitions.Item(def_idx)
         If Not ValuesByName.Exists(detail_def.OutputColumnName) Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValuesByName に OutputColumnName がありません。(" & detail_def.OutputColumnName & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".BuildOutputValues", Description:="ValuesByName に OutputColumnName がありません。(" & detail_def.OutputColumnName & ")"
         End If
         Call result_values.Update(def_idx, CStr(ValuesByName.Item(detail_def.OutputColumnName)))
     Next def_idx
@@ -407,7 +407,7 @@ Private Sub pResolveReferencedValues(ByVal DefinitionIndex As Long)
         Dim ref_idx As Long
         ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pResolveReferencedValues", Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
 
         Dim ref_def As DetailColumnDefinition
@@ -428,12 +428,12 @@ Private Sub pValidateExpressionReferences(ByVal DefinitionIndex As Long)
         Dim ref_idx As Long
         ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pValidateExpressionReferences", Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         If ref_idx = DefinitionIndex Then
             Dim detail_def As DetailColumnDefinition
             Set detail_def = pDefinitions.Item(DefinitionIndex)
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が自己参照しています。(" & detail_def.OutputColumnName & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pValidateExpressionReferences", Description:="ValueExpression が自己参照しています。(" & detail_def.OutputColumnName & ")"
         End If
     Next ref_idx_in_list
 End Sub
@@ -446,7 +446,7 @@ Private Sub pVisitDerivedDefinition( _
     If VisitState(DefinitionIndex) = C_STATE_VISITING Then
         Dim loop_def As DetailColumnDefinition
         Set loop_def = pDefinitions.Item(DefinitionIndex)
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="派生列同士の循環参照があります。(" & loop_def.OutputColumnName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pVisitDerivedDefinition", Description:="派生列同士の循環参照があります。(" & loop_def.OutputColumnName & ")"
     End If
 
     VisitState(DefinitionIndex) = C_STATE_VISITING
@@ -462,12 +462,12 @@ Private Sub pVisitDerivedDefinition( _
         Dim ref_idx As Long
         ref_idx = pFindDefinitionIndex(ref_name)
         If ref_idx < 0 Then
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pVisitDerivedDefinition", Description:="ValueExpression が未定義の OutputColumnName を参照しています。(" & ref_name & ")"
         End If
         If ref_idx = DefinitionIndex Then
             Dim self_def As DetailColumnDefinition
             Set self_def = pDefinitions.Item(DefinitionIndex)
-            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="ValueExpression が自己参照しています。(" & self_def.OutputColumnName & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pVisitDerivedDefinition", Description:="ValueExpression が自己参照しています。(" & self_def.OutputColumnName & ")"
         End If
 
         Dim ref_def As DetailColumnDefinition
@@ -484,6 +484,6 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE, Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:=C_SOURCE & ".pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

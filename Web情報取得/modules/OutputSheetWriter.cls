@@ -38,7 +38,7 @@ Private pSettings As IToolSettings
 '* Settings が Nothing の場合はエラーにします。
 Public Sub Initialize(ByVal Settings As IToolSettings)
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pSettings = Settings
@@ -90,7 +90,7 @@ Public Sub WriteDiagnosticRow( _
     Call pCheckInit
 
     If DetailValues Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="DetailValues は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.WriteDiagnosticRow", Description:="DetailValues は必須です。"
     End If
 
     Dim output_row As Long
@@ -129,7 +129,7 @@ Public Sub WriteCollectionRow( _
     Call pCheckInit
 
     If DetailValues Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="DetailValues は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.WriteCollectionRow", Description:="DetailValues は必須です。"
     End If
 
     Dim output_row As Long
@@ -161,7 +161,7 @@ Public Function ShouldCollectTarget(ByVal TargetId As String) As Boolean
     Call pCheckInit
 
     If Trim$(TargetId) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="TargetId は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.ShouldCollectTarget", Description:="TargetId は必須です。"
     End If
 
     Dim target_row As Long
@@ -222,7 +222,7 @@ Public Function ShouldWriteExistingRow(ByVal ExistingStatus As String, Optional 
         Case G_WEB_ROW_MODE_OVERWRITE
             ShouldWriteExistingRow = True
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="ExistingRowMode が不正です。(" & pSettings.ExistingRowMode & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.ShouldWriteExistingRow", Description:="ExistingRowMode が不正です。(" & pSettings.ExistingRowMode & ")"
     End Select
 End Function
 
@@ -231,7 +231,7 @@ Private Sub pValidateExistingStatus(ByVal ExistingStatus As String)
         Case G_WEB_STATUS_OK, G_WEB_STATUS_ERROR
             Exit Sub
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="既存行の取得状態が不正です。(" & ExistingStatus & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.pValidateExistingStatus", Description:="既存行の取得状態が不正です。(" & ExistingStatus & ")"
     End Select
 End Sub
 
@@ -355,6 +355,6 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class OutputSheetWriter.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

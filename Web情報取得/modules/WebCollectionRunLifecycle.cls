@@ -33,10 +33,10 @@ Public Sub Initialize( _
         ByVal Settings As IToolSettings)
 
     If Lifecycle Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle", Description:="Lifecycle は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle.Initialize", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pLifecycle = Lifecycle
@@ -54,7 +54,7 @@ End Sub
 Public Function Run(ByVal Body As IWebCollectionRunBody) As String
     Call pCheckInit
     If Body Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle", Description:="Body は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle.Run", Description:="Body は必須です。"
     End If
 
     Dim result_value As String
@@ -100,6 +100,6 @@ End Function
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebCollectionRunLifecycle.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub

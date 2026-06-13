@@ -60,10 +60,10 @@ Public Sub Initialize( _
         ByVal Settings As IToolSettings)
 
     If Lifecycle Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="Lifecycle は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner.Initialize", Description:="Lifecycle は必須です。"
     End If
     If Settings Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="Settings は必須です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner.Initialize", Description:="Settings は必須です。"
     End If
 
     Set pLifecycle = Lifecycle
@@ -150,7 +150,7 @@ End Sub
 
 Private Sub pCheckInit()
     If Not pIsInitialized Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="初期化されていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner.pCheckInit", Description:="初期化されていません。"
     End If
 End Sub
 
@@ -161,7 +161,7 @@ Private Function pReadFirstListItemTargetId() As String
     Dim result_value As String
     result_value = Trim$(pSessionClient.ReadElementText(selector_value))
     If result_value = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner", Description:="一覧上の対象IDを取得できません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebNavDiagnosticRunner.pReadFirstListItemTargetId", Description:="一覧上の対象IDを取得できません。"
     End If
 
     pReadFirstListItemTargetId = result_value
