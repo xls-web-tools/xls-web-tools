@@ -92,14 +92,14 @@ Public Property Get Target() As Variant
 End Property
 Private Property Let Target(ByVal NewValue As Variant)
     If Not IsArray(NewValue) Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "配列ではありません。"
+        Err.Raise vbObjectError + 1, "Class Enumerator.Target", "配列ではありません。"
     End If
 
     Dim lbound_arr() As Long
     Dim ubound_arr() As Long
     Call GetArrayBounds(lbound_arr, ubound_arr, NewValue)
     If LBound(lbound_arr) <> UBound(lbound_arr) Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "配列列挙子は 1 次元配列のみ対応しています。"
+        Err.Raise vbObjectError + 1, "Class Enumerator.Target", "配列列挙子は 1 次元配列のみ対応しています。"
     End If
 
     pArray = NewValue
@@ -128,10 +128,10 @@ End Property
 '* @details
 '* このオブジェクトを初期化します。オブジェクトは Count / Item を持つものとして扱います。
 Public Sub Initialize(ByVal TargetCollection As Variant, Optional ByVal Descending As Boolean = False, Optional ByVal IsReadOnly As Boolean = False)
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class Enumerator", "初期化済みです。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class Enumerator.Initialize", "初期化済みです。"
 
     If IsObject(TargetCollection) Then
-        If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class Enumerator", "列挙対象が Nothing です。"
+        If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class Enumerator.Initialize", "列挙対象が Nothing です。"
         Set Target = TargetCollection
     Else
         Target = TargetCollection
@@ -201,11 +201,11 @@ End Sub
 ' 指定されたインデックスまで現在位置を進めます。現在位置より前やリストの範囲外を指定するとエラーを発生させます。
 Public Sub SkipTo(ByVal TargetIndex As Long)
     Call pCheckInit
-    If TargetIndex < pMinIndex Or pGetCount() <= TargetIndex Then Err.Raise vbObjectError + 1, "Class Enumerator", "移動先が範囲外です。(min: " & pMinIndex & " / max: " & (pGetCount() - 1) & " / target: " & TargetIndex & ")"
+    If TargetIndex < pMinIndex Or pGetCount() <= TargetIndex Then Err.Raise vbObjectError + 1, "Class Enumerator.SkipTo", "移動先が範囲外です。(min: " & pMinIndex & " / max: " & (pGetCount() - 1) & " / target: " & TargetIndex & ")"
     If Descending Then
-        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class Enumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class Enumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     Else
-        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class Enumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class Enumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     End If
     pIndex = TargetIndex
 End Sub
@@ -227,7 +227,7 @@ Public Function Remove() As Variant
     Call pCheckWritable
 
     If pIsArray Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "配列では使用できません。"
+        Err.Raise vbObjectError + 1, "Class Enumerator.Remove", "配列では使用できません。"
     Else
         If IsObject(pList.Item(pIndex)) Then
             Set Remove = pList.Remove(pIndex)
@@ -247,7 +247,7 @@ Private Function IEnumerator_Remove() As Variant
     Call pCheckWritable
 
     If pIsArray Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "配列では使用できません。"
+        Err.Raise vbObjectError + 1, "Class Enumerator.IEnumerator_Remove", "配列では使用できません。"
     Else
         If IsObject(pList.Item(pIndex)) Then
             Set IEnumerator_Remove = pList.Remove(pIndex)
@@ -275,7 +275,7 @@ Public Sub Update(ByVal ItemObject As Variant)
     Call pCheckWritable
 
     If pIsArray Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "配列では使用できません。"
+        Err.Raise vbObjectError + 1, "Class Enumerator.Update", "配列では使用できません。"
     Else
         Call pList.Update(pIndex, ItemObject)
     End If
@@ -285,11 +285,11 @@ Private Sub IEnumerator_Update(ByVal ItemObject As Variant)
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class Enumerator", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class Enumerator.pCheckInit", "未初期化状態です。"
 End Sub
 
 Private Sub pCheckWritable()
-    If pIsReadOnly Then Err.Raise vbObjectError + 1, "Class Enumerator", "読み取り専用の列挙子では要素を更新または削除できません。"
+    If pIsReadOnly Then Err.Raise vbObjectError + 1, "Class Enumerator.pCheckWritable", "読み取り専用の列挙子では要素を更新または削除できません。"
 End Sub
 
 Private Function pGetCount() As Long
@@ -309,6 +309,6 @@ Private Sub pCheckEndOfList()
     count_var = pGetCount()
 
     If pIndex < pMinIndex Or count_var <= pIndex Then
-        Err.Raise vbObjectError + 1, "Class Enumerator", "現在の要素がありません。(index: " & pIndex & " / min: " & pMinIndex & " / max: " & (count_var - 1) & ")"
+        Err.Raise vbObjectError + 1, "Class Enumerator.pCheckEndOfList", "現在の要素がありません。(index: " & pIndex & " / min: " & pMinIndex & " / max: " & (count_var - 1) & ")"
     End If
 End Sub

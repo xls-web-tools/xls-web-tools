@@ -44,7 +44,7 @@ Public Property Get BlockCount() As Long
 End Property
 Public Property Let BlockCount(ByVal NewValue As Long)
     If NewValue < 1 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus", Description:="ブロック数は正の整数である必要があります。(" & NewValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.BlockCount", Description:="ブロック数は正の整数である必要があります。(" & NewValue & ")"
         Exit Property
     End If
     pBlockCount = NewValue
@@ -57,7 +57,7 @@ Public Property Get StartValue() As Double
 End Property
 Public Property Let StartValue(ByVal NewValue As Double)
     If TotalValue <= NewValue Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus", Description:="開始値は終了値より小さい必要があります。(新しい値: " & NewValue & " / TotalValue: " & pTotalValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.StartValue", Description:="開始値は終了値より小さい必要があります。(新しい値: " & NewValue & " / TotalValue: " & pTotalValue & ")"
         Exit Property
     End If
     Dim value_diff As Double
@@ -73,7 +73,7 @@ Public Property Get TotalValue() As Double
 End Property
 Public Property Let TotalValue(ByVal NewValue As Double)
     If NewValue <= StartValue Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus", Description:="終了値は開始値より大きい必要があります。(新しい値: " & NewValue & " / StartValue: " & pStartValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.TotalValue", Description:="終了値は開始値より大きい必要があります。(新しい値: " & NewValue & " / StartValue: " & pStartValue & ")"
         Exit Property
     End If
     pTotalValue = NewValue
@@ -123,7 +123,7 @@ Public Sub SetForLoop(ByVal FinishIndex As Long, Optional ByVal StartIndex As Lo
     total_value = CDbl(FinishIndex)
 
     If total_value <= start_value Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus", Description:="終了値は開始値より大きい必要があります。(FinishIndex: " & FinishIndex & " / StartIndex: " & StartIndex & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.SetForLoop", Description:="終了値は開始値より大きい必要があります。(FinishIndex: " & FinishIndex & " / StartIndex: " & StartIndex & ")"
         Exit Sub
     End If
 

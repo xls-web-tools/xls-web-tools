@@ -99,7 +99,7 @@ Private Function pBuildObjectItemKey(ByVal Value As Variant) As String
             End If
 
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pBuildObjectItemKey", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
     End Select
 
     pBuildObjectItemKey = GetTypedValueKey(Value, effective_object_key_mode)
@@ -110,6 +110,6 @@ Private Sub pValidateObjectKeyMode(ByVal NewValue As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder", "未対応のオブジェクト キー化モードです。(" & CStr(NewValue) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pValidateObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(NewValue) & ")"
     End Select
 End Sub

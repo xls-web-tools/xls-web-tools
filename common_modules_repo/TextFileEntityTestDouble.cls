@@ -145,8 +145,8 @@ End Sub
 
 '* Initialize の spy only です。初期化パスを記録します。
 Public Sub Initialize(ByVal FilePath As String)
-    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble", "すでに初期化されています。(" & pFilePath & ")"
+    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "すでに初期化されています。(" & pFilePath & ")"
 
     Call Store.RecordCall("Initialize", FilePath)
     pFilePath = FilePath
@@ -160,8 +160,8 @@ Public Sub OpenFile( _
         Optional ByVal Force As Boolean = False)
 
     Call pCheckInit
-    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble", "ファイルは既に開かれています。(" & pFilePath & ")"
-    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble", "AsWrite が False のときに AsAppend が True となりました。"
+    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "ファイルは既に開かれています。(" & pFilePath & ")"
+    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "AsWrite が False のときに AsAppend が True となりました。"
 
     Call Store.RecordCall("OpenFile", AsWrite, AsAppend, GetReadLock, GetWriteLock, Force)
 
@@ -183,10 +183,10 @@ End Sub
 '* ReadLine の strict stub です。読み取り行は Store に明示登録してください。
 Public Function ReadLine() As String
     Call pCheckOpened
-    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble", "書き込み用で開かれています。(" & pFilePath & ")"
+    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.ReadLine", "書き込み用で開かれています。(" & pFilePath & ")"
 
     If Not Store.HasReturn("ReadLine", ReadCount) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntityTestDouble", Description:="読み取り行が登録されていません。(read_count: " & ReadCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntityTestDouble.ReadLine", Description:="読み取り行が登録されていません。(read_count: " & ReadCount & ")"
     End If
 
     Dim result_value As String
@@ -203,7 +203,7 @@ End Function
 '* WriteLine の spy only です。書き込み行を記録し、状態に基づいて WriteCount を更新します。
 Public Sub WriteLine(ByVal Expression As String)
     Call pCheckOpened
-    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble", "読み取り用で開かれています。(" & pFilePath & ")"
+    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.WriteLine", "読み取り用で開かれています。(" & pFilePath & ")"
 
     Call Store.RecordCall("WriteLine", Expression)
     WriteCount = WriteCount + 1
@@ -236,10 +236,10 @@ Private Sub pResetOpenState()
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble", "初期化前です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckInit", "初期化前です。"
 End Sub
 
 Private Sub pCheckOpened()
     Call pCheckInit
-    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble", "ファイルがオープンされていません。"
+    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckOpened", "ファイルがオープンされていません。"
 End Sub

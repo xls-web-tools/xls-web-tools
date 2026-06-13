@@ -94,7 +94,7 @@ Public Function FinishTask(Optional ByVal TaskName As String = "", Optional ByVa
             FinishTask = True
         Else
             If RaiseError Then
-                Err.Raise vbObjectError + 1, "Class DebugInformation", "タスクが開始されていません。"
+                Err.Raise vbObjectError + 1, "Class DebugInformation.FinishTask", "タスクが開始されていません。"
             Else
                 FinishTask = False
             End If
@@ -108,7 +108,7 @@ Public Function FinishTask(Optional ByVal TaskName As String = "", Optional ByVa
 
     If target_idx < 0 Then
         If RaiseError Then
-            Err.Raise vbObjectError + 1, "Class DebugInformation", "終了しようとしたタスクが存在しません。(" & TaskName & ")"
+            Err.Raise vbObjectError + 1, "Class DebugInformation.FinishTask", "終了しようとしたタスクが存在しません。(" & TaskName & ")"
         Else
             FinishTask = False
         End If

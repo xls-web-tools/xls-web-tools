@@ -60,10 +60,10 @@ Private Sub pValidateEntityFilePath(ByVal TextFileEntity As ITextFileEntity, ByV
 
     On Error GoTo 0
     If actual_path <> ExpectedFilePath Then
-        Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble", "“o˜^Ï‚İ TextFileEntity ‚Ì FilePath ‚ªˆê’v‚µ‚Ü‚¹‚ñB(expected: " & ExpectedFilePath & ", actual: " & actual_path & ")"
+        Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "“o˜^Ï‚İ TextFileEntity ‚Ì FilePath ‚ªˆê’v‚µ‚Ü‚¹‚ñB(expected: " & ExpectedFilePath & ", actual: " & actual_path & ")"
     End If
     Exit Sub
 
 INVALID_ENTITY:
-    Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble", "“o˜^Ï‚İ TextFileEntity ‚ªw’èƒpƒX‚Å‰Šú‰»‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB(" & ExpectedFilePath & ")"
+    Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "“o˜^Ï‚İ TextFileEntity ‚ªw’èƒpƒX‚Å‰Šú‰»‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB(" & ExpectedFilePath & ")"
 End Sub

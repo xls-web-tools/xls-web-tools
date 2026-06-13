@@ -180,10 +180,10 @@ Public Sub Initialize( _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE)
 
     If pCount <> 0 Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "初期化済みのリストを再初期化することはできません。"
     End If
     If Not IsValidElementTypeKey(ElementTypeName) Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "ElementTypeName はクラス モジュール名に使用可能な文字で指定してください。(" & ElementTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "ElementTypeName はクラス モジュール名に使用可能な文字で指定してください。(" & ElementTypeName & ")"
     End If
 
     Call pCheckObjectKeyMode(ObjectKeyMode)
@@ -206,7 +206,7 @@ End Sub
 '* 他のリストが管理している要素型状態をこのリストへ引き継ぎます。
 Public Sub InitializeFromOther(ByVal Other As ObjectList)
     If pCount <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromOther", "初期化済みのリストを再初期化することはできません。"
     End If
 
     pTypeName = Other.ItemTypeName
@@ -229,7 +229,7 @@ End Sub
 '* 他の集合が管理している要素型状態をこのリストへ引き継ぎます。
 Public Sub InitializeFromSet(ByVal OtherSet As ObjectSet)
     If pCount <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromSet", "初期化済みのリストを再初期化することはできません。"
     End If
 
     pTypeName = OtherSet.ItemTypeName
@@ -248,7 +248,7 @@ Private Sub pCheckObjectKeyMode(ByVal ObjectKeyMode As Long)
     Select Case ObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectList", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -423,7 +423,7 @@ End Sub
 '* @details
 '* 配列の各要素をリストに追加します。
 Public Sub AddArray(ByVal ItemArray As Variant)
-    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectList", "引数が配列ではありません"
+    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectList.AddArray", "引数が配列ではありません"
     If IsEmptyArray(ItemArray) Then Exit Sub
 
     Dim item_obj As Variant
@@ -856,7 +856,7 @@ Private Sub pPrepareToAddObjectContract( _
     If StrComp(pElementTypeName, SourceElementTypeName, vbTextCompare) <> 0 _
             Or pRequireComparable <> SourceRequireComparable _
             Or pObjectKeyMode <> SourceObjectKeyMode Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "取り込み元と取り込み先の要素型契約が異なります。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pPrepareToAddObjectContract", "取り込み元と取り込み先の要素型契約が異なります。"
     End If
 End Sub
 
@@ -1035,11 +1035,11 @@ End Function
 
 Private Sub pCheckIndex(ByVal ItemIndex As Long)
     If pCount = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
     End If
 
     If ItemIndex < 0 Or pCount <= ItemIndex Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
     End If
 End Sub
 
@@ -1090,7 +1090,7 @@ Private Sub pInitializeItemType(ByVal ItemObject As Variant)
         End If
     Else
         If pIsObject Then
-            Err.Raise vbObjectError + 1, "Class ObjectList", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pInitializeItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
         Else
             ' プリミティブ型
             pTypeName = GetTypeString(ItemObject)
@@ -1106,7 +1106,7 @@ Private Function pGetElementTypeName(ByVal ItemObject As Object) As String
         Set element_type_provider = ItemObject
         result_value = element_type_provider.ElementTypeKey
         If Not IsValidElementTypeKey(result_value) Then
-            Err.Raise vbObjectError + 1, "Class ObjectList", "ElementTypeKey はクラス モジュール名に使用可能な文字で指定してください。(" & result_value & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pGetElementTypeName", "ElementTypeKey はクラス モジュール名に使用可能な文字で指定してください。(" & result_value & ")"
         End If
     Else
         result_value = TypeName(ItemObject)
@@ -1117,21 +1117,21 @@ End Function
 
 Private Sub pCheckObjectItemAbilities(ByVal ItemObject As Object)
     If pRequireComparable And Not TypeOf ItemObject Is IComparable Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "IComparable ではないオブジェクトを RequireComparable=True のリストへ追加しようとしました。(" & pTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IComparable ではないオブジェクトを RequireComparable=True のリストへ追加しようとしました。(" & pTypeName & ")"
     End If
 
     Select Case pObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE
         Case G_OBJECT_KEY_MODE_I_EQUATABLE
             If Not TypeOf ItemObject Is IEquatable Then
-                Err.Raise vbObjectError + 1, "Class ObjectList", "IEquatable ではないオブジェクトを IEquatable モードのリストへ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IEquatable ではないオブジェクトを IEquatable モードのリストへ追加しようとしました。(" & pTypeName & ")"
             End If
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             If Not TypeOf ItemObject Is IDuplicateCheckable Then
-                Err.Raise vbObjectError + 1, "Class ObjectList", "IDuplicateCheckable ではないオブジェクトを IDuplicateCheckable モードのリストへ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IDuplicateCheckable ではないオブジェクトを IDuplicateCheckable モードのリストへ追加しようとしました。(" & pTypeName & ")"
             End If
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectList", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -1172,7 +1172,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
 
     If pIsObject Then
         If Not IsObject(ItemObject) Then
-            Err.Raise vbObjectError + 1, "Class ObjectList", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
         End If
         If ItemObject Is Nothing Then Exit Sub
     End If
@@ -1185,7 +1185,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
     End If
 
     If StrComp(item_type_name, pTypeName, vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class ObjectList", "最初に設定された要素と型が異なります。(list: " & pTypeName & ", item: " & item_type_name & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "最初に設定された要素と型が異なります。(list: " & pTypeName & ", item: " & item_type_name & ")"
     End If
 
     If pIsObject Then
@@ -1196,8 +1196,8 @@ End Sub
 Private Sub pCheckUnsupportedSpecialValue(ByVal ItemObject As Variant)
     If IsObject(ItemObject) Then Exit Sub
     If IsArray(ItemObject) Then Exit Sub
-    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList", "Empty は要素として使用できません。"
-    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList", "Null は要素として使用できません。"
+    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Empty は要素として使用できません。"
+    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Null は要素として使用できません。"
 End Sub
 
 Private Function pErrorValuesEqual(ByVal ErrorValue1 As Variant, ByVal ErrorValue2 As Variant) As Boolean

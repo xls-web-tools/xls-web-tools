@@ -134,7 +134,7 @@ Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "
         End If
     Next attempt_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService", Description:="一時ディレクトリを作成できませんでした。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateTemporaryDirectory", Description:="一時ディレクトリを作成できませんでした。"
 End Function
 Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
     IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
@@ -418,7 +418,7 @@ Public Function GetLastModified(ByVal PathLikeString As String) As Date
     ElseIf IsDirectory(path_str) Then
         Set path_obj = pFSO.GetFolder(path_str)
     Else
-        Err.Raise vbObjectError + 1, "Class FileSystemService", "更新日時取得対象のファイルまたはディレクトリがありません。(" & path_str & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetLastModified", "更新日時取得対象のファイルまたはディレクトリがありません。(" & path_str & ")"
     End If
     GetLastModified = path_obj.DateLastModified
 End Function
@@ -480,7 +480,7 @@ Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Fo
         CreateDirectory = True
     Else
         ' 親ディレクトリが存在しない場合
-        If Not Recursive Then Err.Raise vbObjectError + 1, "Class FileSystemService", "親ディレクトリがありません。(" & parent_dir & ")"
+        If Not Recursive Then Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "親ディレクトリがありません。(" & parent_dir & ")"
 
         Dim dir_arr() As String
 
@@ -493,7 +493,7 @@ Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Fo
 
         If dir_path = "" Then
             ' ルートが見つからなかった場合？
-            Err.Raise vbObjectError + 1, "Class FileSystemService", "ディレクトリを作成できませんでした。(" & dir_path & ")"
+            Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "ディレクトリを作成できませんでした。(" & dir_path & ")"
         Else
             ' Force なら既存ファイルを消す
             If Force And IsFile(dir_path) Then Call RemoveFile(dir_path, Force:=True)
@@ -526,7 +526,7 @@ Public Sub MoveDirectory(ByVal SourcePath As String, ByVal DestinationPath As St
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService", "移動対象のディレクトリがありません。(" & src_path & ")"
+    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveDirectory", "移動対象のディレクトリがありません。(" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -560,7 +560,7 @@ Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestinationPath As St
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService", "コピー対象のディレクトリがありません。(" & src_path & ")"
+    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyDirectory", "コピー対象のディレクトリがありません。(" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -615,7 +615,7 @@ Public Sub MoveFile(ByVal SourcePath As String, ByVal DestinationPath As String,
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService", "移動対象のファイルがありません。(" & src_path & ")"
+    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveFile", "移動対象のファイルがありません。(" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -649,7 +649,7 @@ Public Sub CopyFile(ByVal SourcePath As String, ByVal DestinationPath As String,
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService", "コピー対象のファイルがありません。(" & src_path & ")"
+    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyFile", "コピー対象のファイルがありません。(" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -777,7 +777,7 @@ Public Function CreateBackupFile( _
     ' バックアップ対象ファイルがない場合はエラー
     If Not IsFile(src_file_path) Then
         If FailIfSourceNotFound Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="バックアップ対象のファイルがありません。(" & SourceFilePath & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ対象のファイルがありません。(" & SourceFilePath & ")"
         Else
             Debug.Print "バックアップ対象のファイルがありませんでした。(" & src_file_path & ")"
             Exit Function
@@ -797,7 +797,7 @@ Public Function CreateBackupFile( _
 
     ' バックアップ先ディレクトリがない場合は作成する。
     If IsFile(dst_dir_path) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="バックアップ出力先がディレクトリではありません。(" & DestinationDirectoryPath & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ出力先がディレクトリではありません。(" & DestinationDirectoryPath & ")"
     ElseIf Not IsDirectory(dst_dir_path) Then
         Call CreateDirectory(dst_dir_path, Recursive:=True)
     End If
@@ -825,11 +825,11 @@ Public Function CreateBackupFile( _
                 CreateBackupFile = dst_file_path
                 Exit Function
             Else
-                Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="バックアップ先のファイルがすでにあります。(" & dst_file_path & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ先のファイルがすでにあります。(" & dst_file_path & ")"
             End If
         End If
     ElseIf IsDirectory(dst_file_path) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="バックアップ先のファイルと同名のディレクトリがあります。(" & dst_file_path & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ先のファイルと同名のディレクトリがあります。(" & dst_file_path & ")"
     End If
 
     ' ファイルをバックアップ
@@ -872,15 +872,15 @@ End Function
 
 Private Sub pValidateOperationDestination(ByVal SourcePath As String, ByVal DestinationPath As String, ByVal SourceIsDirectory As Boolean)
     If pPathsEqual(SourcePath, DestinationPath) Then
-        Err.Raise vbObjectError + 1, "Class FileSystemService", "コピー/移動元とコピー/移動先が同一です。(" & SourcePath & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動元とコピー/移動先が同一です。(" & SourcePath & ")"
     End If
 
     If SourceIsDirectory Then
         If pIsPathInside(DestinationPath, SourcePath) Then
-            Err.Raise vbObjectError + 1, "Class FileSystemService", "コピー/移動先がコピー/移動元の配下です。(" & DestinationPath & ")"
+            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動先がコピー/移動元の配下です。(" & DestinationPath & ")"
         End If
         If pIsPathInside(SourcePath, DestinationPath) Then
-            Err.Raise vbObjectError + 1, "Class FileSystemService", "コピー/移動先がコピー/移動元の親ディレクトリです。(" & DestinationPath & ")"
+            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動先がコピー/移動元の親ディレクトリです。(" & DestinationPath & ")"
         End If
     End If
 End Sub

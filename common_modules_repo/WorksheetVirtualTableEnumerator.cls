@@ -83,8 +83,8 @@ Public Sub Initialize( _
         ByVal TargetTable As WorksheetVirtualTable, _
         Optional ByVal Descending As Boolean = False)
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "初期化済みです。"
-    If TargetTable Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "列挙対象が Nothing です。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "初期化済みです。"
+    If TargetTable Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "列挙対象が Nothing です。"
 
     Set pTable = TargetTable
     pLength = TargetTable.RowCount
@@ -148,11 +148,11 @@ End Sub
 '* 範囲外の index、または現在位置より前へ戻る index を指定した場合はエラーになります。
 Public Sub SkipTo(ByVal TargetIndex As Long)
     Call pCheckInit
-    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
+    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
     If Descending Then
-        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     Else
-        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     End If
     pIndex = TargetIndex
 End Sub
@@ -167,7 +167,7 @@ End Sub
 '* @details
 '* `WorksheetVirtualTableEnumerator` は読み取り専用のため、常にエラーになります。
 Public Function Remove() As Variant
-    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "このコレクションは読み取り専用です。要素の削除に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Remove", "このコレクションは読み取り専用です。要素の削除に対応していません。"
 End Function
 Private Function IEnumerator_Remove() As Variant
     Set IEnumerator_Remove = Remove()
@@ -180,18 +180,18 @@ End Function
 '* @details
 '* `WorksheetVirtualTableEnumerator` は読み取り専用のため、常にエラーになります。
 Public Sub Update(ByVal ItemObject As Variant)
-    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "このコレクションは読み取り専用です。要素の更新に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Update", "このコレクションは読み取り専用です。要素の更新に対応していません。"
 End Sub
 Private Sub IEnumerator_Update(ByVal ItemObject As Variant)
     Call Update(ItemObject)
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckInit", "未初期化状態です。"
 End Sub
 
 Private Sub pCheckEndOfList()
     If pIndex < 0 Or pLength <= pIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckEndOfList", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
     End If
 End Sub

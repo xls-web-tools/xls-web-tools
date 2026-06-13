@@ -37,10 +37,10 @@ End Property
 '* @details
 '* 各プロパティを設定します。
 Public Sub Initialize(ByVal InputArea As WorksheetRangeBounds)
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet", "すでに初期化済みです。"
-    If InputArea Is Nothing Then Err.Raise vbObjectError + 1, "Class UserInputSheet", "入力領域が指定されていません。"
-    If InputArea.IsEmpty Then Err.Raise vbObjectError + 1, "Class UserInputSheet", "入力領域が空範囲です。"
-    If Not WbSrv.WorksheetExists(InputArea.WorksheetName, Book:=InputArea.WorkbookName) Then Err.Raise vbObjectError + 1, "Class UserInputSheet", "対象シートが見つかりません。(" & InputArea.WorksheetName & "@" & InputArea.WorkbookName & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "すでに初期化済みです。"
+    If InputArea Is Nothing Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "入力領域が指定されていません。"
+    If InputArea.IsEmpty Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "入力領域が空範囲です。"
+    If Not WbSrv.WorksheetExists(InputArea.WorksheetName, Book:=InputArea.WorkbookName) Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "対象シートが見つかりません。(" & InputArea.WorksheetName & "@" & InputArea.WorkbookName & ")"
 
     Set pRangeBounds = InputArea.CopyObject()
     pIsInitialized = True
@@ -147,5 +147,5 @@ Private Function IUserInputSheet_GetItemRange( _
 End Function
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.pCheckInit", "未初期化状態です。"
 End Sub

@@ -42,7 +42,7 @@ End Function
 '* 名前とカウンターオブジェクトを指定してセットに追加します。
 Public Sub AddCounter(ByVal CounterObjectName As String, ByVal CounterObject As Counter)
     If CounterObject Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet", Description:="CounterObject が Nothing です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.AddCounter", Description:="CounterObject が Nothing です。"
     End If
 
     Call pDict.Add(CounterObjectName, CounterObject)
@@ -81,6 +81,6 @@ End Function
 
 Private Sub pCheckExists(ByVal CounterObjectName As String)
     If Not pDict.Exists(CounterObjectName) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet", Description:="Counter が存在しません。(" & CounterObjectName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.pCheckExists", Description:="Counter が存在しません。(" & CounterObjectName & ")"
     End If
 End Sub

@@ -57,7 +57,7 @@ End Sub
 '* 呼び出し引数を保存します。
 Public Sub StoreArguments(ByVal Args As Variant)
     If Not IsArray(Args) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleCallRecord", "呼び出し引数は配列で指定してください。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleCallRecord.StoreArguments", "呼び出し引数は配列で指定してください。"
     End If
 
     Set pArguments = New Collection
@@ -85,7 +85,7 @@ End Sub
 '* 0 ベースの引数番号から呼び出し引数を返します。
 Public Function GetArgument(ByVal ArgumentIndex As Long) As Variant
     If ArgumentIndex < 0 Or pArguments.Count <= ArgumentIndex Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleCallRecord", "呼び出し引数番号が範囲外です。(" & CStr(ArgumentIndex) & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleCallRecord.GetArgument", "呼び出し引数番号が範囲外です。(" & CStr(ArgumentIndex) & ")"
     End If
 
     Dim value_holder As Dictionary

@@ -107,8 +107,8 @@ Public Sub Initialize( _
         Optional ByVal EnumerationMode As Long = G_RANGE_ENUM_MODE_ROWS, _
         Optional ByVal Descending As Boolean = False)
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "初期化済みです。"
-    If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "列挙対象が Nothing です。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "初期化済みです。"
+    If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "列挙対象が Nothing です。"
 
     Set Target = TargetCollection
     Call pSetEnumerationMode(EnumerationMode)
@@ -182,11 +182,11 @@ End Sub
 ' 指定されたインデックスまで現在位置を進めます。現在位置より前やリストの範囲外を指定するとエラーを発生させます。
 Public Sub SkipTo(ByVal TargetIndex As Long)
     Call pCheckInit
-    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
+    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
     If Descending Then
-        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     Else
-        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
     End If
     pIndex = TargetIndex
 End Sub
@@ -202,7 +202,7 @@ End Sub
 ' WorksheetRangeBoundsEnumerator は読み取り専用です。
 ' このメソッドは常にエラーを発生させます。
 Public Function Remove() As Variant
-    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "このコレクションは読み取り専用です。要素の削除に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Remove", "このコレクションは読み取り専用です。要素の削除に対応していません。"
 End Function
 Private Function IEnumerator_Remove() As Variant
     Set IEnumerator_Remove = Remove()
@@ -216,7 +216,7 @@ End Function
 ' WorksheetRangeBoundsEnumerator は読み取り専用です。
 ' このメソッドは常にエラーを発生させます。
 Public Sub Update(ByVal ItemObject As Variant)
-    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "このコレクションは読み取り専用です。要素の更新に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Update", "このコレクションは読み取り専用です。要素の更新に対応していません。"
 End Sub
 Private Sub IEnumerator_Update(ByVal ItemObject As Variant)
     Call Update(ItemObject)
@@ -229,12 +229,12 @@ Private Sub pCheckEnumerationMode(ByVal TargetEnumerationMode As Long)
      Case G_RANGE_ENUM_MODE_CELLS_HORIZONTAL
      Case G_RANGE_ENUM_MODE_CELLS_VERTICAL
      Case Else
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "列挙方式が不正です。(" & TargetEnumerationMode & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEnumerationMode", "列挙方式が不正です。(" & TargetEnumerationMode & ")"
     End Select
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckInit", "未初期化状態です。"
 End Sub
 
 Private Sub pCalculateLength()
@@ -255,6 +255,6 @@ End Sub
 
 Private Sub pCheckEndOfList()
     If pIndex < 0 Or pLength <= pIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEndOfList", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
     End If
 End Sub

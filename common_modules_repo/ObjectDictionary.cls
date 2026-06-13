@@ -37,7 +37,7 @@ End Property
 '* 文字列 key の比較モード。
 Public Property Let CompareMode(ByVal NewValue As Long)
     If pHasEverAdded Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary", "要素追加後に CompareMode を変更することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.CompareMode", "要素追加後に CompareMode を変更することはできません。"
     End If
 
     pKeyToIndex.CompareMode = NewValue
@@ -70,7 +70,7 @@ End Property
 '* @return 指定されたキーに対応する要素。
 Public Property Get Item(ByVal Key As Variant) As Variant
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Item", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long
@@ -123,7 +123,7 @@ End Sub
 '* @param Value 追加する値。
 Public Sub Add(ByVal Key As Variant, ByVal Value As Variant)
     If pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary", "指定されたキーは既に存在します。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Add", "指定されたキーは既に存在します。(" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim new_index As Long
@@ -183,7 +183,7 @@ End Function
 '* @param Value 新しい値。
 Public Sub Update(ByVal Key As Variant, ByVal Value As Variant)
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Update", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long
@@ -209,7 +209,7 @@ End Sub
 '* @return 削除された要素。
 Public Function Remove(ByVal Key As Variant) As Variant
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Remove", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long

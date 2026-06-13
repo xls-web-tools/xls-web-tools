@@ -125,7 +125,7 @@ Private Sub pSortCore(ByVal RangeBounds As WorksheetRangeBounds, ByVal SortKeyAn
     If IsEmptyArray(SortKeyAndOrder) Then Exit Sub
     If RangeBounds.IsEmpty Then Exit Sub
     If (UBound(SortKeyAndOrder) - LBound(SortKeyAndOrder)) Mod 2 = 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", "SortKeyAndOrder の要素数が偶数ではありません。(奇数番目の要素は、ソートのキーとなる列の番号、偶数番目の要素は、xlAscending か xlDescending)"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pSortCore", "SortKeyAndOrder の要素数が偶数ではありません。(奇数番目の要素は、ソートのキーとなる列の番号、偶数番目の要素は、xlAscending か xlDescending)"
     End If
     Call pRaiseIfSortKeyAndOrderInvalid(RangeBounds, SortKeyAndOrder)
 
@@ -160,7 +160,7 @@ End Sub
 ' @details
 ' 範囲をアクティブにします。
 Public Sub ActivateRange(ByVal RangeBounds As WorksheetRangeBounds)
-    If RangeBounds.IsEmpty Then Err.Raise vbObjectError + 1, "Class WorksheetService", "RangeBounds が空範囲です。(" & RangeBounds.ToString() & ")"
+    If RangeBounds.IsEmpty Then Err.Raise vbObjectError + 1, "Class WorksheetService.ActivateRange", "RangeBounds が空範囲です。(" & RangeBounds.ToString() & ")"
 
     Dim target_book As Workbook
     Set target_book = pGetWorkbook(RangeBounds)
@@ -198,7 +198,7 @@ Public Sub WriteCell( _
         Optional ByVal TypeConvert As Boolean = True)
 
     If RangeBounds.IsEmpty Then Exit Sub
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.WriteCell", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
 
     Dim target_cell As Range
     Set target_cell = pGetCell(RangeBounds)
@@ -441,7 +441,7 @@ Private Sub pGetTwoDimensionalArraySize( _
         ByVal TargetArray As Variant)
 
     If Not IsArray(TargetArray) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", "ValuesArray は 2 次元配列を指定してください。(" & TypeName(TargetArray) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。(" & TypeName(TargetArray) & ")"
     End If
 
     Dim lower_bounds() As Long
@@ -449,17 +449,17 @@ Private Sub pGetTwoDimensionalArraySize( _
     Call GetArrayBounds(lower_bounds, upper_bounds, TargetArray)
 
     If IsEmptyArray(lower_bounds) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", "ValuesArray は 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。"
     End If
     If UBound(lower_bounds) - LBound(lower_bounds) + 1 <> 2 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", "ValuesArray は 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。"
     End If
 
     RowCount = upper_bounds(LBound(upper_bounds)) - lower_bounds(LBound(lower_bounds)) + 1
     ColumnCount = upper_bounds(LBound(upper_bounds) + 1) - lower_bounds(LBound(lower_bounds) + 1) + 1
 
     If RowCount < 1 Or ColumnCount < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", "ValuesArray は 1 要素以上の 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 1 要素以上の 2 次元配列を指定してください。"
     End If
 End Sub
 
@@ -472,13 +472,13 @@ Private Sub pRaiseIfDestinationOutOfSheet( _
     Dim destination_finish_row As Long
     destination_finish_row = DestinationRangeBounds.Row + SourceRowCount - 1
     If G_ROW_MAX < destination_finish_row Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", OperationName & "先範囲の終了行がシート上限を超過しています。(row: " & DestinationRangeBounds.Row & ", row_count: " & SourceRowCount & ", finish_row: " & destination_finish_row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", OperationName & "先範囲の終了行がシート上限を超過しています。(row: " & DestinationRangeBounds.Row & ", row_count: " & SourceRowCount & ", finish_row: " & destination_finish_row & ")"
     End If
 
     Dim destination_finish_column As Long
     destination_finish_column = DestinationRangeBounds.Column + SourceColumnCount - 1
     If G_COL_MAX < destination_finish_column Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", OperationName & "先範囲の終了列がシート上限を超過しています。(column: " & DestinationRangeBounds.Column & ", column_count: " & SourceColumnCount & ", finish_column: " & destination_finish_column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", OperationName & "先範囲の終了列がシート上限を超過しています。(column: " & DestinationRangeBounds.Column & ", column_count: " & SourceColumnCount & ", finish_column: " & destination_finish_column & ")"
     End If
 End Sub
 
@@ -508,7 +508,7 @@ Public Function ReadCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByR
         ReadCell = ""
         Exit Function
     End If
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.ReadCell", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
 
     Dim target_cell As Range
     Set target_cell = pGetCell(RangeBounds)
@@ -724,8 +724,8 @@ Public Sub CopyCell( _
 
     If SourceRangeBounds.IsEmpty Then Exit Sub
     If DestinationRangeBounds.IsEmpty Then Exit Sub
-    If Not SourceRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService", "SourceRangeBounds がセルではありません。(" & SourceRangeBounds.ToString() & ")"
-    If Not DestinationRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService", "DestinationRangeBounds がセルではありません。(" & DestinationRangeBounds.ToString() & ")"
+    If Not SourceRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "SourceRangeBounds がセルではありません。(" & SourceRangeBounds.ToString() & ")"
+    If Not DestinationRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "DestinationRangeBounds がセルではありません。(" & DestinationRangeBounds.ToString() & ")"
 
     Dim src_sheet As Worksheet
     Set src_sheet = pGetWorksheet(SourceRangeBounds)
@@ -957,7 +957,7 @@ End Function
 '
 Public Function HasFormula(ByVal RangeBounds As WorksheetRangeBounds) As Boolean
     If RangeBounds.IsEmpty Then Exit Function
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.HasFormula", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
     HasFormula = pGetCell(RangeBounds).HasFormula
 End Function
 Private Function IWorksheetService_HasFormula(ByVal RangeBounds As WorksheetRangeBounds) As Boolean
@@ -1386,7 +1386,7 @@ End Sub
 Private Function pBuildDuplicateColumnsArgument(ByVal RangeBounds As WorksheetRangeBounds, ByVal DuplicateColumns As Variant) As Variant
     If IsArray(DuplicateColumns) Then
         If IsEmptyArray(DuplicateColumns) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetService", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
+            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
         End If
 
         Dim result_columns() As Variant
@@ -1403,7 +1403,7 @@ Private Function pBuildDuplicateColumnsArgument(ByVal RangeBounds As WorksheetRa
         Next column_item
 
         If column_count = 0 Then
-            Err.Raise vbObjectError + 1, "Class WorksheetService", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
+            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
         End If
 
         pBuildDuplicateColumnsArgument = result_columns
@@ -1679,7 +1679,7 @@ Private Sub pRaiseIfSortKeyAndOrderInvalid(ByVal RangeBounds As WorksheetRangeBo
             Dim sort_order As Long
             sort_order = pGetValidatedLong(SortKeyAndOrder(item_idx + 1), "SortKeyAndOrder")
             If sort_order <> xlAscending And sort_order <> xlDescending Then
-                Err.Raise vbObjectError + 1, "Class WorksheetService", "SortKeyAndOrder の並び順には xlAscending または xlDescending を指定してください。"
+                Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfSortKeyAndOrderInvalid", "SortKeyAndOrder の並び順には xlAscending または xlDescending を指定してください。"
             End If
         End If
     Next item_idx
@@ -1710,7 +1710,7 @@ Private Sub pRaiseIfDestinationShapeIsInvalid( _
     If DestinationRangeBounds.RowCount = SourceRowCount And DestinationRangeBounds.ColumnCount = SourceColumnCount Then Exit Sub
 
     Err.Raise vbObjectError + 1, _
-            "Class WorksheetService", _
+            "Class WorksheetService.pRaiseIfDestinationShapeIsInvalid", _
             ArgumentName & " は空範囲、1 セル、または元と同じ行数・列数を指定してください。" & _
             "(destination: " & DestinationRangeBounds.RowCount & "x" & DestinationRangeBounds.ColumnCount & _
             ", source: " & SourceRowCount & "x" & SourceColumnCount & ")"
@@ -1756,7 +1756,7 @@ Private Sub pRaiseReadCellTextColumnWidthError( _
 
     Err.Raise _
             Number:=vbObjectError + 1, _
-            Source:="Class WorksheetService", _
+            Source:="Class WorksheetService.pRaiseReadCellTextColumnWidthError", _
             Description:="セル読み取り時、列幅が足りず # 表示になっていますが、" & reason_text & _
                     "列幅を一時的に広げられませんでした。" & _
                     "(Sheet=" & TargetCell.Worksheet.Name & _
@@ -1903,7 +1903,7 @@ Private Function pGetValidatedRelativeColumnIndex(ByVal RangeBounds As Worksheet
     Dim column_num As Long
     column_num = pGetValidatedLong(ColumnIndex, ArgumentName)
     If column_num < 1 Or RangeBounds.ColumnCount < column_num Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", ArgumentName & " は対象範囲内の相対列番号を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedRelativeColumnIndex", ArgumentName & " は対象範囲内の相対列番号を指定してください。"
     End If
 
     pGetValidatedRelativeColumnIndex = column_num
@@ -1927,11 +1927,11 @@ Private Function pGetValidatedLong(ByVal TargetValue As Variant, ByVal ArgumentN
 
 INVALID_VALUE:
     On Error GoTo 0
-    Err.Raise vbObjectError + 1, "Class WorksheetService", ArgumentName & " には整数を指定してください。"
+    Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedLong", ArgumentName & " には整数を指定してください。"
 End Function
 
 Private Sub pRaiseIfNotEntireRowRange(ByVal RangeBounds As WorksheetRangeBounds, ByVal MethodName As String)
     If RangeBounds.IsEmpty Or Not RangeBounds.IsEntireRow Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService", MethodName & " には行全体の範囲を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfNotEntireRowRange", MethodName & " には行全体の範囲を指定してください。"
     End If
 End Sub

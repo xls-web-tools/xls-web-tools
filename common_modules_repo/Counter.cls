@@ -62,7 +62,7 @@ End Sub
 '* カウンタを初期化します。
 Public Sub Initialize(Optional ByVal InitialCount As Long = 0, Optional ByVal CountStepNumber As Long = 1)
     If CountStepNumber = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter", Description:="CountStepNumber は 0 以外である必要があります。(" & CountStepNumber & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.Initialize", Description:="CountStepNumber は 0 以外である必要があります。(" & CountStepNumber & ")"
         Exit Sub
     End If
 
@@ -98,7 +98,7 @@ End Function
 '* カウントを次に進め、現在のカウント値を返します。HasNext が False の場合はエラーを発生させます。
 Public Function GoNext() As Long
     If Not HasNext() Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter", Description:="次のカウントはありません。(count: " & pCount & ", step: " & pCountStep & ", max: " & pMaxCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.GoNext", Description:="次のカウントはありません。(count: " & pCount & ", step: " & pCountStep & ", max: " & pMaxCount & ")"
     End If
 
     pCount = pCount + pCountStep

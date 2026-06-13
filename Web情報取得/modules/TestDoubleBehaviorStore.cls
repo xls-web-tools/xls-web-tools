@@ -43,7 +43,7 @@ End Property
 Public Property Let DefaultObjectKeyMode(ByVal NewValue As Long)
     Call pValidateObjectKeyMode(NewValue)
     If 0 < pLockedMethods.Count Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "キー生成に使用済みのため、既定 ObjectKeyMode は変更できません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.DefaultObjectKeyMode", "キー生成に使用済みのため、既定 ObjectKeyMode は変更できません。"
     End If
 
     pDefaultObjectKeyMode = NewValue
@@ -74,7 +74,7 @@ Public Sub SetObjectKeyMode(ByVal MethodName As String, ByVal ObjectKeyMode As L
     normalized_method_name = pNormalizeMethodName(MethodName)
 
     If pLockedMethods.Exists(normalized_method_name) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "キー生成に使用済みのメソッドの ObjectKeyMode は変更できません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.SetObjectKeyMode", "キー生成に使用済みのメソッドの ObjectKeyMode は変更できません。(" & MethodName & ")"
     End If
 
     pObjectKeyModesByMethod.Item(normalized_method_name) = ObjectKeyMode
@@ -85,7 +85,7 @@ Private Sub pValidateObjectKeyMode(ByVal ObjectKeyMode As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -301,7 +301,7 @@ End Sub
 Public Sub RecordCallWithKeyArgsFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant, ByVal Args As Variant)
     Call pValidateKeyArgsArray(KeyArgs)
     If Not IsArray(Args) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "呼び出し引数は配列で指定してください。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.RecordCallWithKeyArgsFromArray", "呼び出し引数は配列で指定してください。"
     End If
 
     Dim object_key_mode As Long
@@ -334,7 +334,7 @@ End Sub
 
 Private Sub pValidateKeyArgsArray(ByVal KeyArgs As Variant)
     If Not IsArray(KeyArgs) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "照合引数は配列で指定してください。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateKeyArgsArray", "照合引数は配列で指定してください。"
     End If
 End Sub
 
@@ -403,7 +403,7 @@ End Function
 '* 0 ベースの呼び出し番号から記録を返します。
 Public Function GetCall(ByVal CallIndex As Long) As TestDoubleCallRecord
     If CallIndex < 0 Or pCalls.Count <= CallIndex Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "呼び出し番号が範囲外です。(" & CallIndex & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetCall", "呼び出し番号が範囲外です。(" & CallIndex & ")"
     End If
 
     Set GetCall = pCalls.Item(CallIndex + 1)
@@ -477,7 +477,7 @@ Public Function GetLatestCallFromArray(ByVal MethodName As String, ByVal KeyArgs
     store_key = pBuildStoreKey(MethodName, object_key_mode, key_args_part)
 
     If Not pLatestByKey.Exists(store_key) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "指定された呼び出しが記録されていません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallFromArray", "指定された呼び出しが記録されていません。(" & MethodName & ")"
     End If
 
     Set GetLatestCallFromArray = pLatestByKey.Item(store_key)
@@ -500,7 +500,7 @@ Public Function GetLatestCallAll(ByVal MethodName As String) As TestDoubleCallRe
         End If
     Next call_idx
 
-    Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "指定された呼び出しが記録されていません。(" & MethodName & ")"
+    Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallAll", "指定された呼び出しが記録されていません。(" & MethodName & ")"
 End Function
 
 Private Function pBuildMethodKey(ByVal MethodName As String, ByVal KeyArgs As Variant) As String
@@ -563,19 +563,19 @@ End Function
 
 Private Sub pValidateMethodName(ByVal MethodName As String)
     If MethodName = "" Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "メソッド名は空文字列にできません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "メソッド名は空文字列にできません。"
     End If
     If InStr(1, MethodName, vbTab, vbBinaryCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "メソッド名にタブ文字は使用できません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "メソッド名にタブ文字は使用できません。(" & MethodName & ")"
     End If
 End Sub
 
 Private Sub pValidateOutputName(ByVal OutputName As String)
     If OutputName = "" Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "出力名は空文字列にできません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "出力名は空文字列にできません。"
     End If
     If InStr(1, OutputName, vbTab, vbBinaryCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", "出力名にタブ文字は使用できません。(" & OutputName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "出力名にタブ文字は使用できません。(" & OutputName & ")"
     End If
 End Sub
 
@@ -594,7 +594,7 @@ End Sub
 
 Private Function pGetStoredItem(ByVal TargetDict As Dictionary, ByVal StoreKey As String, ByVal ErrorDescription As String) As Variant
     If Not TargetDict.Exists(StoreKey) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore", ErrorDescription
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pGetStoredItem", ErrorDescription
     End If
 
     Dim value_holder As Dictionary

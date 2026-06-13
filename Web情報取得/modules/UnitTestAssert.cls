@@ -504,7 +504,7 @@ Private Sub pValidateObjectAssertionMode(ByVal ObjectKeyMode As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class UnitTestAssert", "未対応のオブジェクト比較モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class UnitTestAssert.pValidateObjectAssertionMode", "未対応のオブジェクト比較モードです。(" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -514,12 +514,12 @@ Private Sub pRaiseIfObjectKeyModeInterfaceMissing(ByVal TargetObject As Object, 
     Select Case ObjectKeyMode
         Case G_OBJECT_KEY_MODE_I_EQUATABLE
             If Not TypeOf TargetObject Is IEquatable Then
-                Err.Raise vbObjectError + 1, "Class UnitTestAssert", TargetName & " は IEquatable ではありません。(" & TypeName(TargetObject) & ")"
+                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " は IEquatable ではありません。(" & TypeName(TargetObject) & ")"
             End If
 
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             If Not TypeOf TargetObject Is IDuplicateCheckable Then
-                Err.Raise vbObjectError + 1, "Class UnitTestAssert", TargetName & " は IDuplicateCheckable ではありません。(" & TypeName(TargetObject) & ")"
+                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " は IDuplicateCheckable ではありません。(" & TypeName(TargetObject) & ")"
             End If
     End Select
 End Sub

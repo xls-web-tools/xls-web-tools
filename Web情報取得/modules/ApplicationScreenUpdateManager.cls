@@ -116,6 +116,6 @@ End Sub
 
 Private Sub pEnsureBackupExists()
     If Not pIsBackedUp Then
-        Err.Raise vbObjectError + 1, "Class ApplicationScreenUpdateManager", "バックアップされた設定がありません。"
+        Err.Raise vbObjectError + 1, "Class ApplicationScreenUpdateManager.pEnsureBackupExists", "バックアップされた設定がありません。"
     End If
 End Sub

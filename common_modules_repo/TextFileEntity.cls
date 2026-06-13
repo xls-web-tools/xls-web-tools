@@ -134,8 +134,8 @@ End Property
 '* @details
 '* 各値を設定します。初期化済みインスタンスは再初期化できません。
 Public Sub Initialize(ByVal FilePath As String)
-    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity", "すでに初期化されています。(" & pFilePath & ")"
+    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "すでに初期化されています。(" & pFilePath & ")"
 
     pFilePath = pGetAbsolutePath(FilePath)
     pIsInitialized = True
@@ -171,11 +171,11 @@ Public Sub OpenFile( _
         Optional ByVal Force As Boolean = False)
 
     Call pCheckInit
-    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntity", "ファイルは既に開かれています。(" & pFilePath & ")"
-    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntity", "AsWrite が False のときに AsAppend が True となりました。"
+    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "ファイルは既に開かれています。(" & pFilePath & ")"
+    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "AsWrite が False のときに AsAppend が True となりました。"
 
     If Dir(pFilePath, vbNormal Or vbHidden Or vbSystem Or vbDirectory) <> "" And AsWrite And Not AsAppend Then
-        If Not Force Then Err.Raise vbObjectError + 1, "Class TextFileEntity", "すでにファイルが存在しています。(" & pFilePath & ")"
+        If Not Force Then Err.Raise vbObjectError + 1, "Class TextFileEntity.OpenFile", "すでにファイルが存在しています。(" & pFilePath & ")"
     End If
 
     pGetReadLock = GetReadLock
@@ -232,7 +232,7 @@ End Sub
 ' ファイルから文字列を 1 行分読み取ります。
 Public Function ReadLine() As String
     Call pCheckOpened
-    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntity", "書き込み用で開いています。(" & pFilePath & ")"
+    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.ReadLine", "書き込み用で開いています。(" & pFilePath & ")"
 
     Dim result_value As String
     Line Input #pFileDesc, result_value
@@ -250,7 +250,7 @@ End Function
 ' 文字列をファイルに書き込みます。末尾に改行記号が自動で付与されます。
 Public Sub WriteLine(ByVal Expression As String)
     Call pCheckOpened
-    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntity", "読み取り用で開いています。(" & pFilePath & ")"
+    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntity.WriteLine", "読み取り用で開いています。(" & pFilePath & ")"
 
     Print #pFileDesc, Expression
 End Sub
@@ -274,11 +274,11 @@ Private Sub ITextFileEntity_CloseFile()
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckInit", "未初期化状態です。"
 End Sub
 
 Private Sub pCheckOpened()
-    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity", "ファイルがオープンされていません。"
+    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckOpened", "ファイルがオープンされていません。"
 End Sub
 
 Private Sub pResetOpenState()

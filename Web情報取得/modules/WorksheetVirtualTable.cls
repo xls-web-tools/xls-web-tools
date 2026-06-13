@@ -91,7 +91,7 @@ End Function
 
 Private Sub pCheckItemIndex(ByVal ItemIndex As Long)
     If ItemIndex < 0 Or pCount <= ItemIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "行 index が範囲外です。(" & CStr(ItemIndex) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckItemIndex", "行 index が範囲外です。(" & CStr(ItemIndex) & ")"
     End If
 End Sub
 
@@ -114,7 +114,7 @@ Public Sub Initialize( _
         Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
         Optional ByVal HeaderJoinDelimiter As String = "")
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "すでに初期化済みです。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "すでに初期化済みです。"
     Call pValidateColumnRangeList(ColumnRangeList)
     If TreatFirstRowAsHeader Then
         pHeaderRowCount = 1
@@ -122,13 +122,13 @@ Public Sub Initialize( _
     Else
         pHeaderRowCount = 0
         If IsMissing(HeaderNames) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "HeaderNames が指定されていません。"
+            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "HeaderNames が指定されていません。"
         End If
         pHeaders = pGetHeaderNamesArray(HeaderNames)
     End If
 
     If pHeaderCount() <> ColumnRangeList.Count Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "HeaderNames と ColumnRangeList の件数が一致しません。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "HeaderNames と ColumnRangeList の件数が一致しません。"
     End If
 
     pHeaderCompareMode = HeaderCompareMode
@@ -156,8 +156,8 @@ Public Sub InitializeFromRangeBounds( _
         Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
         Optional ByVal HeaderJoinDelimiter As String = "")
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "すでに初期化済みです。"
-    If TableRange Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "TableRange が指定されていません。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "すでに初期化済みです。"
+    If TableRange Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "TableRange が指定されていません。"
 
     Call Initialize( _
             ColumnRangeList:=TableRange.GetColumns(), _
@@ -169,13 +169,13 @@ End Sub
 
 Private Sub pValidateColumnRangeList(ByVal ColumnRangeList As ObjectList)
     If ColumnRangeList Is Nothing Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "ColumnRangeList が指定されていません。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList が指定されていません。"
     End If
     If Not ColumnRangeList.HasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "ColumnRangeList には WorksheetRangeBounds の型契約が必要です。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList には WorksheetRangeBounds の型契約が必要です。"
     End If
     If StrComp(ColumnRangeList.ElementTypeName, "WorksheetRangeBounds", vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "ColumnRangeList の要素型契約は WorksheetRangeBounds を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList の要素型契約は WorksheetRangeBounds を指定してください。"
     End If
 End Sub
 
@@ -186,7 +186,7 @@ Private Function pGetHeaderNamesArray(ByVal HeaderNames As Variant) As String()
     Dim ubound_arr() As Long
     Call GetArrayBounds(lbound_arr, ubound_arr, HeaderNames)
     If LBound(lbound_arr) <> UBound(lbound_arr) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pGetHeaderNamesArray", "HeaderNames には 1 次元の文字列配列を指定してください。"
     End If
 
     If IsEmptyArray(HeaderNames) Then
@@ -233,7 +233,7 @@ Private Sub pValidateDuplicateHeaders()
     Dim header_idx As Long
     For header_idx = LBound(pHeaders) To UBound(pHeaders)
         If header_dict.Exists(pHeaders(header_idx)) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "header が重複しています。(" & pHeaders(header_idx) & ")"
+            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateDuplicateHeaders", "header が重複しています。(" & pHeaders(header_idx) & ")"
         End If
         Call header_dict.Add(pHeaders(header_idx), True)
     Next header_idx
@@ -275,7 +275,7 @@ End Function
 Public Function GetRow(ByVal RowIndex As Long) As ObjectDictionary
     Call pCheckInit
     If RowIndex = 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "行 index が範囲外です。(0)"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.GetRow", "行 index が範囲外です。(0)"
     End If
 
     Dim item_idx As Long
@@ -307,13 +307,13 @@ End Function
 
 Private Sub pValidateHeaderNamesType(ByVal HeaderNames As Variant)
     If Not IsArray(HeaderNames) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames には 1 次元の文字列配列を指定してください。"
     End If
 
     Dim header_var_type As Long
     header_var_type = VarType(HeaderNames)
     If (header_var_type And vbArray) = 0 Or header_var_type - vbArray <> vbString Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames には 1 次元の文字列配列を指定してください。"
     End If
 End Sub
 
@@ -368,5 +368,5 @@ Private Function pCreateNewEnumSnapshot() As Collection
 End Function
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckInit", "未初期化状態です。"
 End Sub
