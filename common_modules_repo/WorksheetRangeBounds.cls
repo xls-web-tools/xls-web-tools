@@ -502,6 +502,28 @@ Public Function GetCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long) As Wo
     Set GetCell = result_value
 End Function
 
+'* この範囲を 1 行単位で分割した一覧を得ます。
+'*
+'* @param Descending [省略可] 降順で列挙するか否か。
+'* @return 1 行範囲の WorksheetRangeBounds を格納した ObjectList。
+'*
+'* @details
+'* この範囲を 1 行単位の WorksheetRangeBounds に分割し、型付き ObjectList として返します。
+Public Function GetRows(Optional ByVal Descending As Boolean = False) As ObjectList
+    Set GetRows = pGetBoundsList(EnumerationMode:=G_RANGE_ENUM_MODE_ROWS, Descending:=Descending)
+End Function
+
+'* この範囲を 1 列単位で分割した一覧を得ます。
+'*
+'* @param Descending [省略可] 降順で列挙するか否か。
+'* @return 1 列範囲の WorksheetRangeBounds を格納した ObjectList。
+'*
+'* @details
+'* この範囲を 1 列単位の WorksheetRangeBounds に分割し、型付き ObjectList として返します。
+Public Function GetColumns(Optional ByVal Descending As Boolean = False) As ObjectList
+    Set GetColumns = pGetBoundsList(EnumerationMode:=G_RANGE_ENUM_MODE_COLUMNS, Descending:=Descending)
+End Function
+
 '* この範囲を変形した新しい範囲を得ます。
 '*
 '* @param Row 行番号。
@@ -911,6 +933,21 @@ Public Function GetEnumerator( _
     Set result_value = New WorksheetRangeBoundsEnumerator
     Call result_value.Initialize(Me, EnumerationMode:=EnumerationMode, Descending:=Descending)
     Set GetEnumerator = result_value
+End Function
+
+Private Function pGetBoundsList(ByVal EnumerationMode As Long, ByVal Descending As Boolean) As ObjectList
+    Call pCheckInit
+
+    Dim result_value As ObjectList
+    Set result_value = New_ObjectList("WorksheetRangeBounds")
+
+    Dim enum_obj As IEnumerator
+    Set enum_obj = Me.GetEnumerator(EnumerationMode:=EnumerationMode, Descending:=Descending)
+    Do While enum_obj.MoveNext()
+        Call result_value.Add(enum_obj.Current)
+    Loop
+
+    Set pGetBoundsList = result_value
 End Function
 
 Private Sub pCheckInit()

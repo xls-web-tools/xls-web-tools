@@ -248,6 +248,7 @@ Public Function New_ObjectSet( _
 
     Set New_ObjectSet = result_value
 End Function
+
 '* ObjectDictionary インスタンスを新規作成し、必要に応じて要素型契約を設定します。
 '*
 '* @param ElementTypeName [省略可] 要素型契約名。
@@ -289,6 +290,131 @@ Public Function New_RangeBoundsFromAddress(ByVal AddressString As String) As Wor
     Set New_RangeBoundsFromAddress = result_value
 End Function
 
+'* WorksheetVirtualTable インスタンスを新規作成します。
+'*
+'* @param ColumnRangeList 仮想表の列として扱う WorksheetRangeBounds 一覧。
+'* @param HeaderNames [省略可] header 名の文字列配列。
+'* @param TreatFirstRowAsHeader True の場合は各範囲の 1 行目を header として読み取ります。
+'* @param HeaderCompareMode header の重複判定と行 Dictionary の比較モード。
+'* @param HeaderJoinDelimiter 複数列範囲の header セルを連結するときの区切り文字。
+'* @return 初期化済みの WorksheetVirtualTable インスタンス。
+'*
+'* @details
+'* New_ 系の処理は薄いファクトリに留め、実処理は WorksheetVirtualTable.Initialize に委譲します。
+Public Function New_WorksheetVirtualTable( _
+        ByVal ColumnRangeList As ObjectList, _
+        Optional ByVal HeaderNames As Variant, _
+        Optional ByVal TreatFirstRowAsHeader As Boolean = False, _
+        Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
+        Optional ByVal HeaderJoinDelimiter As String = "") As WorksheetVirtualTable
+
+    Dim result_value As WorksheetVirtualTable
+    Set result_value = New WorksheetVirtualTable
+    Call result_value.Initialize( _
+            ColumnRangeList:=ColumnRangeList, _
+            HeaderNames:=HeaderNames, _
+            TreatFirstRowAsHeader:=TreatFirstRowAsHeader, _
+            HeaderCompareMode:=HeaderCompareMode, _
+            HeaderJoinDelimiter:=HeaderJoinDelimiter)
+
+    Set New_WorksheetVirtualTable = result_value
+End Function
+
+'* WorksheetRangeBounds から WorksheetVirtualTable インスタンスを新規作成します。
+'*
+'* @param TableRange 仮想表の列に分割する WorksheetRangeBounds。
+'* @param HeaderNames [省略可] header 名の文字列配列。
+'* @param TreatFirstRowAsHeader True の場合は各範囲の 1 行目を header として読み取ります。
+'* @param HeaderCompareMode header の重複判定と行 Dictionary の比較モード。
+'* @param HeaderJoinDelimiter 複数列範囲の header セルを連結するときの区切り文字。
+'* @return 初期化済みの WorksheetVirtualTable インスタンス。
+'*
+'* @details
+'* New_ 系の処理は薄いファクトリに留め、実処理は WorksheetVirtualTable.InitializeFromRangeBounds に委譲します。
+Public Function New_WorksheetVirtualTableFromRangeBounds( _
+        ByVal TableRange As WorksheetRangeBounds, _
+        Optional ByVal HeaderNames As Variant, _
+        Optional ByVal TreatFirstRowAsHeader As Boolean = False, _
+        Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
+        Optional ByVal HeaderJoinDelimiter As String = "") As WorksheetVirtualTable
+
+    Dim result_value As WorksheetVirtualTable
+    Set result_value = New WorksheetVirtualTable
+    Call result_value.InitializeFromRangeBounds( _
+            TableRange:=TableRange, _
+            HeaderNames:=HeaderNames, _
+            TreatFirstRowAsHeader:=TreatFirstRowAsHeader, _
+            HeaderCompareMode:=HeaderCompareMode, _
+            HeaderJoinDelimiter:=HeaderJoinDelimiter)
+
+    Set New_WorksheetVirtualTableFromRangeBounds = result_value
+End Function
+
+'* 複数の WorksheetRangeBounds を最大の範囲形状へ拡張します。
+'*
+'* @param ExpandRows 行数を最大行数へ拡張するか否か。
+'* @param ExpandColumns 列数を最大列数へ拡張するか否か。
+'* @param RangeBoundsList 拡張対象の WorksheetRangeBounds 一覧。
+'* @return 入力順に対応する WorksheetRangeBounds を保持する ObjectList。
+'*
+'* @details
+'* 入力された全範囲の最大 RowCount / ColumnCount を計算し、指定された方向だけ各範囲を最大寸法へ拡張します。
+'* workbook / worksheet はグループ分けせず、各返却範囲では入力元の workbook / worksheet を維持します。
+Public Function ExpandRangeBoundsToMax( _
+        ByVal ExpandRows As Boolean, _
+        ByVal ExpandColumns As Boolean, _
+        ParamArray RangeBoundsList() As Variant) As ObjectList
+
+    Dim result_value As ObjectList
+    Set result_value = New_ObjectList("WorksheetRangeBounds")
+
+    Dim max_row_count As Long
+    Dim max_col_count As Long
+    max_row_count = 0
+    max_col_count = 0
+
+    Dim item_idx As Long
+    If UBound(RangeBoundsList) <> -1 Then
+        For item_idx = LBound(RangeBoundsList) To UBound(RangeBoundsList)
+            Dim target_bounds As WorksheetRangeBounds
+            Set target_bounds = pGetRangeBoundsArgument(RangeBoundsList(item_idx), item_idx)
+
+            If max_row_count < target_bounds.RowCount Then max_row_count = target_bounds.RowCount
+            If max_col_count < target_bounds.ColumnCount Then max_col_count = target_bounds.ColumnCount
+        Next item_idx
+
+        For item_idx = LBound(RangeBoundsList) To UBound(RangeBoundsList)
+            Set target_bounds = pGetRangeBoundsArgument(RangeBoundsList(item_idx), item_idx)
+
+            Dim add_row As Long
+            Dim add_col As Long
+            add_row = 0
+            add_col = 0
+            If ExpandRows Then add_row = max_row_count - target_bounds.RowCount
+            If ExpandColumns Then add_col = max_col_count - target_bounds.ColumnCount
+
+            Call result_value.Add(target_bounds.Transform(AddRow:=add_row, AddColumn:=add_col))
+        Next item_idx
+    End If
+
+    Set ExpandRangeBoundsToMax = result_value
+End Function
+
+Private Function pGetRangeBoundsArgument(ByVal RangeBoundsValue As Variant, ByVal ArgumentIndex As Long) As WorksheetRangeBounds
+    If Not IsObject(RangeBoundsValue) Then
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList には WorksheetRangeBounds を指定してください。(" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
+    End If
+
+    If RangeBoundsValue Is Nothing Then
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList に Nothing は指定できません。(" & CStr(ArgumentIndex) & ")"
+    End If
+
+    If TypeName(RangeBoundsValue) <> "WorksheetRangeBounds" Then
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList には WorksheetRangeBounds を指定してください。(" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
+    End If
+
+    Set pGetRangeBoundsArgument = RangeBoundsValue
+End Function
 
 ' #############################################################################
 '
