@@ -29,6 +29,9 @@ Private Const C_DETAIL_COL_FINISH As Long = 19
 Private Const C_DEFAULT_WEB_DRIVER_PORT As Long = 9515
 Private Const C_DEFAULT_TIMEOUT_SECONDS As Long = 30
 
+Private pSettingsSheet As IUserInputSheet
+Private pHasReadSettings As Boolean
+
 '* Edge WebDriver 実行ファイルのパス。
 Public Property Get WebDriverPath() As String
     WebDriverPath = pResolvePath(pGetOptionalParam("WebDriverPath", "bin" & G_FS_PATH_SEP & "msedgedriver.exe"))
@@ -237,6 +240,27 @@ Private Property Get IToolSettings_DetailColumnDefinitions() As ObjectList
     Set IToolSettings_DetailColumnDefinitions = DetailColumnDefinitions
 End Property
 
+'* settings シート読み取り元を差し替えます。
+'*
+'* @param SettingsSheet ユニットテスト用途で差し替える入力シート。
+'*
+'* @details
+'* ユニットテスト用途の初期化 API です。通常実行では呼び出さず、settings 読み取り時に production の UserInputSheet を lazy 作成します。
+'* 最初の settings 読み取りより前に 1 回だけ呼び出せます。
+Public Sub Initialize(ByVal SettingsSheet As IUserInputSheet)
+    If SettingsSheet Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.Initialize", Description:="SettingsSheet は必須です。"
+    End If
+    If pHasReadSettings Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.Initialize", Description:="settings 読み取り開始後は初期化できません。"
+    End If
+    If Not pSettingsSheet Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.Initialize", Description:="すでに初期化済みです。"
+    End If
+
+    Set pSettingsSheet = SettingsSheet
+End Sub
+
 Private Function pGetRequiredParam(ByVal Name As String) As String
     Dim result_value As String
     result_value = pGetOptionalParam(Name, "")
@@ -248,26 +272,18 @@ Private Function pGetRequiredParam(ByVal Name As String) As String
 End Function
 
 Private Function pGetOptionalParam(ByVal Name As String, ByVal DefaultValue As String) As String
-    Dim param_range As WorksheetRangeBounds
-    Set param_range = WsSrv.GetUsedRangeBounds(New_RangeBounds( _
-            Row:=C_PARAM_START_ROW, _
-            Column:=C_PARAM_COL_NAME, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=C_PARAM_COL_NAME, _
-            Sheet:=G_WEB_SETTINGS_SHEET))
+    Dim settings_sheet As IUserInputSheet
+    Set settings_sheet = pGetSettingsSheet()
 
-    Dim found_cells As ObjectList
-    Set found_cells = WsSrv.Find(Name, param_range)
-    If found_cells.Count = 0 Then
+    Dim item_range As WorksheetRangeBounds
+    Set item_range = settings_sheet.GetItemRange(Name)
+    If item_range Is Nothing Then
         pGetOptionalParam = DefaultValue
         Exit Function
     End If
 
-    Dim found_bounds As WorksheetRangeBounds
-    Set found_bounds = found_cells.Item(0)
-
     Dim result_value As String
-    result_value = "" & WsSrv.ReadCell(New_RangeBounds(Row:=found_bounds.Row, Column:=C_PARAM_COL_VALUE, Sheet:=G_WEB_SETTINGS_SHEET))
+    result_value = "" & WsSrv.ReadCell(item_range.GetCell(1, 1))
     If Trim$(result_value) = "" Then result_value = DefaultValue
 
     pGetOptionalParam = result_value
@@ -330,108 +346,173 @@ Private Function pResolvePath(ByVal PathLikeString As String) As String
     pResolvePath = FsSrv.GetAbsolutePath(PathLikeString)
 End Function
 
+Private Function pGetSettingsSheet() As IUserInputSheet
+    pHasReadSettings = True
+    If pSettingsSheet Is Nothing Then
+        Set pSettingsSheet = New_InputSheet(New_RangeBounds(Sheet:=G_WEB_SETTINGS_SHEET))
+    End If
+
+    Set pGetSettingsSheet = pSettingsSheet
+End Function
+
 Private Function pReadTransitionOperations() As ObjectList
     Dim result_value As ObjectList
     Set result_value = New_ObjectList("TransitionOperation")
 
-    Dim table_values() As Variant
-    table_values = pReadTableValues(C_TRANSITION_COL_START, C_TRANSITION_COL_FINISH)
+    Dim header_names() As String
+    header_names = pTransitionOperationHeaders()
 
-    If Not IsEmptyArray(table_values) Then
-        Dim row_idx As Long
-        For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
-            If Not pIsEmptyTableRow(table_values, row_idx, 1, 6) Then
-                Dim operation_name As String
-                operation_name = pTableText(table_values, row_idx, 1)
+    Dim table As WorksheetVirtualTable
+    Set table = pReadVirtualTable("TransitionOperations", header_names)
 
-                Dim locator_type As String
-                locator_type = pTableText(table_values, row_idx, 2)
-
-                Dim locator_inner_text As String
-                locator_inner_text = pTableText(table_values, row_idx, 4)
-                If Trim$(locator_inner_text) <> "" And LCase$(Trim$(locator_type)) <> "css selector" Then
-                    Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pReadTransitionOperations", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。(OperationName=" & operation_name & ")"
-                End If
-
-                Call result_value.Add(New_TransitionOperation( _
-                        OperationName:=operation_name, _
-                        LocatorType:=locator_type, _
-                        LocatorValue:=pTableText(table_values, row_idx, 3), _
-                        LocatorInnerText:=locator_inner_text, _
-                        Script:=pTableText(table_values, row_idx, 5), _
-                        WaitConditionName:=pTableText(table_values, row_idx, 6)))
+    Dim row_idx As Long
+    For row_idx = 0 To table.Count - 1
+        Dim row_values As ObjectDictionary
+        Set row_values = table.Item(row_idx)
+        If Not pIsEmptyVirtualTableRow(row_values, header_names) Then
+            Dim operation_name As String
+            operation_name = pVirtualTableText(row_values, "OperationName")
+            If Trim$(operation_name) = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pReadTransitionOperations", Description:="TransitionOperations.OperationName は必須です。"
             End If
-        Next row_idx
-    End If
+
+            Call result_value.Add(New_TransitionOperation( _
+                    OperationName:=operation_name, _
+                    ActionSelector:=pVirtualTableText(row_values, "ActionSelector"), _
+                    ActionInnerText:=pVirtualTableText(row_values, "ActionInnerText"), _
+                    Script:=pVirtualTableText(row_values, "Script"), _
+                    WaitConditionName:=pVirtualTableText(row_values, "WaitConditionName")))
+        End If
+    Next row_idx
 
     Set pReadTransitionOperations = result_value
+End Function
+
+Private Function pTransitionOperationHeaders() As String()
+    Dim result_value(0 To 4) As String
+    result_value(0) = "OperationName"
+    result_value(1) = "ActionSelector"
+    result_value(2) = "ActionInnerText"
+    result_value(3) = "Script"
+    result_value(4) = "WaitConditionName"
+
+    pTransitionOperationHeaders = result_value
 End Function
 
 Private Function pReadDetailColumnDefinitions() As ObjectList
     Dim result_value As ObjectList
     Set result_value = New_ObjectList("DetailColumnDefinition")
 
-    Dim table_values() As Variant
-    table_values = pReadTableValues(C_DETAIL_COL_START, C_DETAIL_COL_FINISH)
+    Dim header_names() As String
+    header_names = pDetailColumnDefinitionHeaders()
 
-    If Not IsEmptyArray(table_values) Then
-        Dim row_idx As Long
-        For row_idx = LBound(table_values, 1) To UBound(table_values, 1)
-            If Not pIsEmptyTableRow(table_values, row_idx, 1, 8) Then
-                Call result_value.Add(New_DetailColumnDefinition( _
-                        OutputColumnName:=pTableText(table_values, row_idx, 1), _
-                        Selector:=pTableText(table_values, row_idx, 2), _
-                        ExtractType:=pDefaultIfBlank(pTableText(table_values, row_idx, 3), "InnerText"), _
-                        AttributeName:=pTableText(table_values, row_idx, 4), _
-                        IsRequired:=pParseBoolean(pTableText(table_values, row_idx, 5), False, "IsRequired"), _
-                        ValueExpression:=pTableText(table_values, row_idx, 6), _
-                        OutputValueType:=pDefaultIfBlank(pTableText(table_values, row_idx, 7), "String"), _
-                        BlankMode:=pDefaultIfBlank(pTableText(table_values, row_idx, 8), "AllowBlank")))
+    Dim table As WorksheetVirtualTable
+    Set table = pReadVirtualTable("DetailColumnDefinitions", header_names)
+
+    Dim row_idx As Long
+    For row_idx = 0 To table.Count - 1
+        Dim row_values As ObjectDictionary
+        Set row_values = table.Item(row_idx)
+        If Not pIsEmptyVirtualTableRow(row_values, header_names) Then
+            Dim output_column_name As String
+            output_column_name = pVirtualTableText(row_values, "OutputColumnName")
+            If Trim$(output_column_name) = "" Then
+                Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pReadDetailColumnDefinitions", Description:="DetailColumnDefinitions.OutputColumnName は必須です。"
             End If
-        Next row_idx
-    End If
+
+            Call result_value.Add(New_DetailColumnDefinition( _
+                    OutputColumnName:=output_column_name, _
+                    Selector:=pVirtualTableText(row_values, "Selector"), _
+                    ExtractType:=pDefaultIfBlank(pVirtualTableText(row_values, "ExtractType"), "InnerText"), _
+                    AttributeName:=pVirtualTableText(row_values, "AttributeName"), _
+                    IsRequired:=pParseBoolean(pVirtualTableText(row_values, "IsRequired"), False, "IsRequired"), _
+                    ValueExpression:=pVirtualTableText(row_values, "ValueExpression"), _
+                    OutputValueType:=pDefaultIfBlank(pVirtualTableText(row_values, "OutputValueType"), "String"), _
+                    BlankMode:=pDefaultIfBlank(pVirtualTableText(row_values, "BlankMode"), "AllowBlank")))
+        End If
+    Next row_idx
 
     Set pReadDetailColumnDefinitions = result_value
 End Function
 
-Private Function pReadTableValues(ByVal StartColumn As Long, ByVal FinishColumn As Long) As Variant()
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds( _
-            Row:=C_PARAM_START_ROW, _
-            Column:=StartColumn, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=FinishColumn, _
-            Sheet:=G_WEB_SETTINGS_SHEET)
+Private Function pDetailColumnDefinitionHeaders() As String()
+    Dim result_value(0 To 7) As String
+    result_value(0) = "OutputColumnName"
+    result_value(1) = "Selector"
+    result_value(2) = "ExtractType"
+    result_value(3) = "AttributeName"
+    result_value(4) = "IsRequired"
+    result_value(5) = "ValueExpression"
+    result_value(6) = "OutputValueType"
+    result_value(7) = "BlankMode"
 
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = WsSrv.GetUsedRangeBounds(search_bounds)
-
-    pReadTableValues = WsSrv.ReadRange(used_bounds)
+    pDetailColumnDefinitionHeaders = result_value
 End Function
 
-Private Function pIsEmptyTableRow(ByRef TableValues() As Variant, ByVal RowIndex As Long, ByVal FirstColumnIndex As Long, ByVal LastColumnIndex As Long) As Boolean
-    Dim last_existing_column As Long
-    last_existing_column = LastColumnIndex
-    If UBound(TableValues, 2) < last_existing_column Then last_existing_column = UBound(TableValues, 2)
+Private Function pReadVirtualTable(ByVal SectionName As String, ByRef HeaderNames() As String) As WorksheetVirtualTable
+    Dim settings_sheet As IUserInputSheet
+    Set settings_sheet = pGetSettingsSheet()
 
-    Dim col_idx As Long
-    For col_idx = FirstColumnIndex To last_existing_column
-        If Trim$(pTableText(TableValues, RowIndex, col_idx)) <> "" Then
-            pIsEmptyTableRow = False
+    Dim header_ranges As ObjectList
+    Set header_ranges = New_ObjectList("WorksheetRangeBounds")
+
+    Dim header_idx As Long
+    For header_idx = LBound(HeaderNames) To UBound(HeaderNames)
+        Dim header_range As WorksheetRangeBounds
+        Set header_range = settings_sheet.GetItemRange(SectionName, HeaderNames(header_idx))
+        If header_range Is Nothing Then
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pReadVirtualTable", Description:=SectionName & "." & HeaderNames(header_idx) & " header が見つかりません。"
+        End If
+        Call header_ranges.Add(header_range)
+    Next header_idx
+
+    Dim expanded_ranges As ObjectList
+    Set expanded_ranges = pExpandHeaderRangesToMaxRows(header_ranges)
+
+    Set pReadVirtualTable = New_WorksheetVirtualTable(expanded_ranges, HeaderNames, HeaderCompareMode:=vbBinaryCompare)
+End Function
+
+Private Function pExpandHeaderRangesToMaxRows(ByVal HeaderRanges As ObjectList) As ObjectList
+    Select Case HeaderRanges.Count
+        Case 5
+            Set pExpandHeaderRangesToMaxRows = ExpandRangeBoundsToMax( _
+                    True, False, _
+                    HeaderRanges.Item(0), HeaderRanges.Item(1), HeaderRanges.Item(2), HeaderRanges.Item(3), HeaderRanges.Item(4))
+        Case 8
+            Set pExpandHeaderRangesToMaxRows = ExpandRangeBoundsToMax( _
+                    True, False, _
+                    HeaderRanges.Item(0), HeaderRanges.Item(1), HeaderRanges.Item(2), HeaderRanges.Item(3), _
+                    HeaderRanges.Item(4), HeaderRanges.Item(5), HeaderRanges.Item(6), HeaderRanges.Item(7))
+        Case Else
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pExpandHeaderRangesToMaxRows", Description:="未対応の header 件数です。(" & CStr(HeaderRanges.Count) & ")"
+    End Select
+End Function
+
+Private Function pIsEmptyVirtualTableRow(ByVal RowValues As ObjectDictionary, ByRef HeaderNames() As String) As Boolean
+    Dim header_idx As Long
+    For header_idx = LBound(HeaderNames) To UBound(HeaderNames)
+        If Trim$(pVirtualTableText(RowValues, HeaderNames(header_idx))) <> "" Then
+            pIsEmptyVirtualTableRow = False
             Exit Function
         End If
-    Next col_idx
+    Next header_idx
 
-    pIsEmptyTableRow = True
+    pIsEmptyVirtualTableRow = True
 End Function
 
-Private Function pTableText(ByRef TableValues() As Variant, ByVal RowIndex As Long, ByVal ColumnIndex As Long) As String
-    If ColumnIndex < LBound(TableValues, 2) Or UBound(TableValues, 2) < ColumnIndex Then
-        pTableText = ""
+Private Function pVirtualTableText(ByVal RowValues As ObjectDictionary, ByVal HeaderName As String) As String
+    Dim value_range As WorksheetRangeBounds
+    Set value_range = RowValues.Item(HeaderName)
+    If value_range Is Nothing Then
+        pVirtualTableText = ""
+        Exit Function
+    End If
+    If value_range.IsEmpty Then
+        pVirtualTableText = ""
         Exit Function
     End If
 
-    pTableText = CStr(TableValues(RowIndex, ColumnIndex))
+    pVirtualTableText = CStr(WsSrv.ReadCell(value_range.GetCell(1, 1)))
 End Function
 
 Private Function pDefaultIfBlank(ByVal TargetText As String, ByVal DefaultValue As String) As String

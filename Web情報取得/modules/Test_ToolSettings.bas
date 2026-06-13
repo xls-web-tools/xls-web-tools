@@ -10,6 +10,41 @@ Option Base 0
 '!
 ' #############################################################################
 
+Private pCurrentSettingsSheet As UserInputSheetTestDouble
+
+Public Sub Test_ToolSettings_SettingsƒV[ƒg_UserInputSheet‚Å’Pˆê’lİ’è‚ğ“Ç‚İæ‚é(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+
+    Dim settings_sheet As UserInputSheetTestDouble
+    Set settings_sheet = New UserInputSheetTestDouble
+
+    Dim item_range As WorksheetRangeBounds
+    Set item_range = New_RangeBounds(Row:=3, Column:=2, FinishRow:=3, FinishColumn:=3, Sheet:=G_WEB_SETTINGS_SHEET)
+    Call settings_sheet.Store.SetReturn("GetItemRange", item_range, "StartUrl", "")
+
+    Dim value_cell As WorksheetRangeBounds
+    Set value_cell = item_range.GetCell(1, 1)
+    Call ws_stub.Store.SetReturn("ReadCell", "https://example.test/start", value_cell, False)
+
+    Dim tool_settings As ToolSettings
+    Set tool_settings = New ToolSettings
+    Call tool_settings.Initialize(settings_sheet)
+
+    ' --- Act ---
+    Dim actual_start_url As String
+    actual_start_url = tool_settings.StartUrl
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals "https://example.test/start", actual_start_url
+    Assert.EqualsNumeric 1, settings_sheet.Store.GetCallCount("GetItemRange", "StartUrl", "")
+    Assert.EqualsNumeric 1, ws_stub.Store.GetCallCount("ReadCell", value_cell, False)
+End Sub
+
 Public Sub Test_ToolSettings_SettingsƒV[ƒg_’Pˆê’lİ’è‚ğ“Ç‚İæ‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -41,7 +76,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_’Pˆê’lİ’è‚ğ“Ç‚İæ‚é(ByVal Assert As
     Call pSetSetting(ws_stub, "DownloadLinkSelector", "#download", 24)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_driver_path As String
@@ -156,7 +191,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_ƒpƒXİ’è‚Íâ‘ÎƒpƒX‚Ö‰ğŒˆ‚µ‚Ä•Ô‚·(ByV
     Call fs_stub.Store.SetReturn("GetAbsolutePath", "C:\Users\tester\AppData\Local\Profile", "%LOCALAPPDATA%\Profile")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_driver_path As String
@@ -172,6 +207,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_ƒpƒXİ’è‚Íâ‘ÎƒpƒX‚Ö‰ğŒˆ‚µ‚Ä•Ô‚·(ByV
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetAbsolutePath", "%LOCALAPPDATA%\Driver\msedgedriver.exe")
     Assert.EqualsNumeric 1, fs_stub.Store.GetCallCount("GetAbsolutePath", "%LOCALAPPDATA%\Profile")
 End Sub
+
 Public Sub Test_ToolSettings_SettingsƒV[ƒg_Šù’èƒpƒX‚ÆŠù’è’l‚ğ•â‚¤(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -199,7 +235,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_Šù’èƒpƒX‚ÆŠù’è’l‚ğ•â‚¤(ByVal Assert 
     Call pSetMissingSetting(ws_stub, "DownloadLinkSelector")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_driver_path As String
@@ -268,7 +304,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_DownloadEnabledTrue‚Å•Û‘¶æƒ‹[ƒg–¢
     Call pSetMissingSetting(ws_stub, "DownloadRootPath")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_download_root_path As String
@@ -289,7 +325,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_DownloadEnabledTrue‚ÅƒŠƒ“ƒNSelector–
     Call pSetMissingSetting(ws_stub, "DownloadLinkSelector")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_download_link_selector As String
@@ -309,7 +345,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_‘€ì’è‹`‚Æ—ñ’è‹`‚ğ“Ç‚İæ‚é(ByVal Ass
     Call pSetDetailColumnTable(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim operations As ObjectList
@@ -334,11 +370,10 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_‘€ì’è‹`‚Æ—ñ’è‹`‚ğ“Ç‚İæ‚é(ByVal Ass
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
     Assert.EqualsNumeric 2, operations.Count
     Assert.Equals "OpenList", first_operation.OperationName
-    Assert.Equals "css selector", first_operation.LocatorType
-    Assert.Equals "#open-list", first_operation.LocatorValue
-    Assert.Equals "ˆê——‚ğŠJ‚­", first_operation.LocatorInnerText
+    Assert.Equals "#open-list", first_operation.ActionSelector
+    Assert.Equals "ˆê——‚ğŠJ‚­", first_operation.ActionInnerText
     Assert.Equals "ListReady", first_operation.WaitConditionName
-    Assert.Equals "", second_operation.LocatorInnerText
+    Assert.Equals "", second_operation.ActionInnerText
     Assert.EqualsNumeric 2, detail_columns.Count
     Assert.Equals "‘ÎÛID", first_column.OutputColumnName
     Assert.Equals "#target-id", first_column.Selector
@@ -364,7 +399,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_ValueExpression•t‚«—ñ’è‹`‚ğ“Ç‚İæ‚é(
     Call pSetDetailColumnTableWithValueExpression(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -398,7 +433,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_OutputValueType‚ğ“Ç‚İæ‚é(ByVal Asse
     Call pSetDetailColumnTableWithOutputValueType(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -428,7 +463,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_OutputValueType‹ó—“‚ÍString‚Æ‚µ‚Ä“Ç‚
     Call pSetDetailColumnTable(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -455,7 +490,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_OutputValueType•s³’l‚ÍƒGƒ‰[(ByVal 
     Call pSetDetailColumnTableWithInvalidOutputValueType(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -475,7 +510,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_OutputColumnName‚ÌLF‚ğ•Û‚·‚é(ByVal
     Call pSetDetailColumnTableWithLfOutputColumnName(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -499,7 +534,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—
     Call pSetInvalidDetailColumnTable(ws_stub, "", "False", "")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -509,7 +544,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—
     Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
 End Sub
 
-Public Sub Test_ToolSettings_SettingsƒV[ƒg_LocatorInnerText‚ÅCssSelectorˆÈŠO‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
+Public Sub Test_ToolSettings_SettingsƒV[ƒg_ActionInnerText‚ÅActionSelector–¢İ’è‚ÍƒGƒ‰[(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -518,7 +553,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_LocatorInnerText‚ÅCssSelectorˆÈŠO‚Íƒ
     Call pSetInvalidTransitionInnerTextTable(ws_stub)
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim operations As ObjectList
@@ -526,8 +561,8 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_LocatorInnerText‚ÅCssSelectorˆÈŠO‚Íƒ
 
     ' --- Assert ---
     Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
-    Assert.IsTrue 0 < InStr(1, Err.Description, "LocatorInnerText", vbBinaryCompare)
-    Assert.IsTrue 0 < InStr(1, Err.Description, "css selector", vbTextCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "ActionInnerText", vbBinaryCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "ActionSelector", vbTextCompare)
 End Sub
 
 Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—¼•ûw’è‚È‚çƒGƒ‰[(ByVal Assert As UnitTestAssert)
@@ -539,7 +574,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_—ñ’è‹`‚ÌSelector‚ÆValueExpression‚ª—
     Call pSetInvalidDetailColumnTable(ws_stub, "#alias", "False", "[Œ³—ñ]")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -558,7 +593,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_”h¶—ñIsRequiredTrue‚ÍƒGƒ‰[(ByVal A
     Call pSetInvalidDetailColumnTable(ws_stub, "", "True", "[Œ³—ñ]")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim detail_columns As ObjectList
@@ -577,7 +612,7 @@ Public Sub Test_ToolSettings_SettingsƒV[ƒg_•K{İ’è•s‘«‚ÍƒGƒ‰[(ByVal Assert As
     Call pSetMissingSetting(ws_stub, "StartUrl")
 
     Dim tool_settings As IToolSettings
-    Set tool_settings = New ToolSettings
+    Set tool_settings = pNewToolSettings()
 
     ' --- Act ---
     Dim actual_start_url As String
@@ -599,112 +634,87 @@ Private Function pUseSettingsStubs(ByVal WorkbookDirectoryPath As String) As Wor
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
 
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = pParamSearchRange()
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = pParamUsedRange()
-
-    Call ws_stub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
+    Set pCurrentSettingsSheet = New UserInputSheetTestDouble
 
     Set pUseSettingsStubs = ws_stub
 End Function
 
-Private Function pParamSearchRange() As WorksheetRangeBounds
-    Set pParamSearchRange = New_RangeBounds( _
-            Row:=2, _
-            Column:=1, _
-            FinishRow:=G_ROW_MAX, _
-            FinishColumn:=1, _
-            Sheet:=G_WEB_SETTINGS_SHEET)
-End Function
+Private Function pNewToolSettings() As ToolSettings
+    If pCurrentSettingsSheet Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Module Test_ToolSettings.pNewToolSettings", Description:="settings sheet stub ‚ª€”õ‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+    End If
 
-Private Function pParamUsedRange() As WorksheetRangeBounds
-    Set pParamUsedRange = New_RangeBounds( _
-            Row:=2, _
-            Column:=1, _
-            FinishRow:=100, _
-            FinishColumn:=1, _
-            Sheet:=G_WEB_SETTINGS_SHEET)
+    Dim result_value As ToolSettings
+    Set result_value = New ToolSettings
+    Call result_value.Initialize(pCurrentSettingsSheet)
+
+    Set pNewToolSettings = result_value
 End Function
 
 Private Sub pSetSetting(ByVal WsStub As WorksheetServiceTestDouble, ByVal SettingName As String, ByVal SettingValue As String, ByVal RowIndex As Long)
-    Dim found_list As ObjectList
-    Set found_list = New ObjectList
-    Call found_list.Add(New_RangeBounds(Row:=RowIndex, Column:=1, Sheet:=G_WEB_SETTINGS_SHEET))
+    Dim item_range As WorksheetRangeBounds
+    Set item_range = New_RangeBounds(Row:=RowIndex, Column:=2, FinishRow:=RowIndex, FinishColumn:=2, Sheet:=G_WEB_SETTINGS_SHEET)
 
-    Call WsStub.Store.SetReturn("Find", found_list, SettingName, pParamUsedRange(), True, True, True, True)
-    Call WsStub.Store.SetReturn("ReadCell", SettingValue, New_RangeBounds(Row:=RowIndex, Column:=2, Sheet:=G_WEB_SETTINGS_SHEET), False)
+    Call pCurrentSettingsSheet.Store.SetReturn("GetItemRange", item_range, SettingName, "")
+    Call WsStub.Store.SetReturn("ReadCell", SettingValue, item_range.GetCell(1, 1), False)
 End Sub
 
 Private Sub pSetMissingSetting(ByVal WsStub As WorksheetServiceTestDouble, ByVal SettingName As String)
-    Dim found_list As ObjectList
-    Set found_list = New ObjectList
+    Dim item_range As WorksheetRangeBounds
+    Set item_range = Nothing
 
-    Call WsStub.Store.SetReturn("Find", found_list, SettingName, pParamUsedRange(), True, True, True, True)
+    Call pCurrentSettingsSheet.Store.SetReturn("GetItemRange", item_range, SettingName, "")
 End Sub
 
 Private Sub pSetTransitionTable(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=G_ROW_MAX, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=3, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
-    ReDim table_values(1 To 2, 1 To 6)
+    ReDim table_values(1 To 2, 1 To 5)
     table_values(1, 1) = "OpenList"
-    table_values(1, 2) = "css selector"
-    table_values(1, 3) = "#open-list"
-    table_values(1, 4) = "ˆê——‚ğŠJ‚­"
-    table_values(1, 5) = ""
-    table_values(1, 6) = "ListReady"
+    table_values(1, 2) = "#open-list"
+    table_values(1, 3) = "ˆê——‚ğŠJ‚­"
+    table_values(1, 4) = ""
+    table_values(1, 5) = "ListReady"
     table_values(2, 1) = "OpenDetail"
-    table_values(2, 2) = "css selector"
-    table_values(2, 3) = ".detail-link"
+    table_values(2, 2) = ".detail-link"
+    table_values(2, 3) = ""
     table_values(2, 4) = ""
-    table_values(2, 5) = ""
-    table_values(2, 6) = "DetailReady"
+    table_values(2, 5) = "DetailReady"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Dim header_names() As String
+    header_names = pTransitionOperationHeaders()
+    Call pSetVirtualTable(WsStub, "TransitionOperations", header_names, table_values, 26, 2)
 End Sub
-
-
-
-
 
 Private Sub pSetInvalidTransitionInnerTextTable(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=G_ROW_MAX, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=5, FinishRow:=2, FinishColumn:=10, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
-    ReDim table_values(1 To 1, 1 To 6)
+    ReDim table_values(1 To 1, 1 To 5)
     table_values(1, 1) = "OpenList"
-    table_values(1, 2) = "xpath"
-    table_values(1, 3) = "//button"
-    table_values(1, 4) = "ˆê——‚ğŠJ‚­"
-    table_values(1, 5) = ""
-    table_values(1, 6) = "ListReady"
+    table_values(1, 2) = ""
+    table_values(1, 3) = "ˆê——‚ğŠJ‚­"
+    table_values(1, 4) = ""
+    table_values(1, 5) = "ListReady"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Dim header_names() As String
+    header_names = pTransitionOperationHeaders()
+    Call pSetVirtualTable(WsStub, "TransitionOperations", header_names, table_values, 26, 2)
 End Sub
+
+Private Function pTransitionOperationHeaders() As String()
+    Dim result_value(0 To 4) As String
+    result_value(0) = "OperationName"
+    result_value(1) = "ActionSelector"
+    result_value(2) = "ActionInnerText"
+    result_value(3) = "Script"
+    result_value(4) = "WaitConditionName"
+
+    pTransitionOperationHeaders = result_value
+End Function
 
 Private Sub pSetInvalidDetailColumnTable( _
         ByVal WsStub As WorksheetServiceTestDouble, _
         ByVal Selector As String, _
         ByVal IsRequiredText As String, _
         ByVal ValueExpression As String)
-
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=2, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
 
     Dim table_values() As Variant
     ReDim table_values(1 To 1, 1 To 8)
@@ -717,17 +727,10 @@ Private Sub pSetInvalidDetailColumnTable( _
     table_values(1, 7) = ""
     table_values(1, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
 End Sub
 
 Private Sub pSetDetailColumnTableWithValueExpression(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=3, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
     ReDim table_values(1 To 2, 1 To 8)
     table_values(1, 1) = "Œ³—ñ"
@@ -747,17 +750,10 @@ Private Sub pSetDetailColumnTableWithValueExpression(ByVal WsStub As WorksheetSe
     table_values(2, 7) = ""
     table_values(2, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
 End Sub
 
 Private Sub pSetDetailColumnTableWithOutputValueType(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=3, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
     ReDim table_values(1 To 2, 1 To 8)
     table_values(1, 1) = "•¶š—ñ—ñ"
@@ -777,17 +773,10 @@ Private Sub pSetDetailColumnTableWithOutputValueType(ByVal WsStub As WorksheetSe
     table_values(2, 7) = "Auto"
     table_values(2, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
 End Sub
 
 Private Sub pSetDetailColumnTableWithInvalidOutputValueType(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=2, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
     ReDim table_values(1 To 1, 1 To 8)
     table_values(1, 1) = "•s³Œ^—ñ"
@@ -799,17 +788,10 @@ Private Sub pSetDetailColumnTableWithInvalidOutputValueType(ByVal WsStub As Work
     table_values(1, 7) = "Number"
     table_values(1, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
 End Sub
 
 Private Sub pSetDetailColumnTableWithLfOutputColumnName(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=2, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
     ReDim table_values(1 To 1, 1 To 8)
     table_values(1, 1) = "Œ–¼" & vbLf & "Ú×"
@@ -821,17 +803,10 @@ Private Sub pSetDetailColumnTableWithLfOutputColumnName(ByVal WsStub As Workshee
     table_values(1, 7) = ""
     table_values(1, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
 End Sub
 
 Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
-    Dim search_bounds As WorksheetRangeBounds
-    Set search_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=G_ROW_MAX, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
-    Dim used_bounds As WorksheetRangeBounds
-    Set used_bounds = New_RangeBounds(Row:=2, Column:=12, FinishRow:=3, FinishColumn:=19, Sheet:=G_WEB_SETTINGS_SHEET)
-
     Dim table_values() As Variant
     ReDim table_values(1 To 2, 1 To 8)
     table_values(1, 1) = "‘ÎÛID"
@@ -851,6 +826,59 @@ Private Sub pSetDetailColumnTable(ByVal WsStub As WorksheetServiceTestDouble)
     table_values(2, 7) = ""
     table_values(2, 8) = "AllowBlank"
 
-    Call WsStub.Store.SetReturn("GetUsedRangeBounds", used_bounds, search_bounds, True, True, True, False)
-    Call WsStub.Store.SetReturn("ReadRange", table_values, used_bounds)
+    Call pSetDetailTableValues(WsStub, table_values)
+End Sub
+
+Private Sub pSetDetailTableValues(ByVal WsStub As WorksheetServiceTestDouble, ByRef TableValues() As Variant)
+    Dim header_names() As String
+    header_names = pDetailColumnDefinitionHeaders()
+    Call pSetVirtualTable(WsStub, "DetailColumnDefinitions", header_names, TableValues, 31, 2)
+End Sub
+
+Private Function pDetailColumnDefinitionHeaders() As String()
+    Dim result_value(0 To 7) As String
+    result_value(0) = "OutputColumnName"
+    result_value(1) = "Selector"
+    result_value(2) = "ExtractType"
+    result_value(3) = "AttributeName"
+    result_value(4) = "IsRequired"
+    result_value(5) = "ValueExpression"
+    result_value(6) = "OutputValueType"
+    result_value(7) = "BlankMode"
+
+    pDetailColumnDefinitionHeaders = result_value
+End Function
+
+Private Sub pSetVirtualTable( _
+        ByVal WsStub As WorksheetServiceTestDouble, _
+        ByVal SectionName As String, _
+        ByRef HeaderNames() As String, _
+        ByRef TableValues() As Variant, _
+        ByVal StartRow As Long, _
+        ByVal StartColumn As Long)
+
+    Dim header_idx As Long
+    For header_idx = LBound(HeaderNames) To UBound(HeaderNames)
+        Dim value_col_idx As Long
+        value_col_idx = LBound(TableValues, 2) + header_idx - LBound(HeaderNames)
+
+        Dim value_range As WorksheetRangeBounds
+        Set value_range = New_RangeBounds( _
+                Row:=StartRow, _
+                Column:=StartColumn + header_idx - LBound(HeaderNames), _
+                FinishRow:=StartRow + UBound(TableValues, 1) - LBound(TableValues, 1), _
+                FinishColumn:=StartColumn + header_idx - LBound(HeaderNames), _
+                Sheet:=G_WEB_SETTINGS_SHEET)
+
+        Call pCurrentSettingsSheet.Store.SetReturn("GetItemRange", value_range, SectionName, HeaderNames(header_idx))
+
+        Dim value_row_idx As Long
+        For value_row_idx = LBound(TableValues, 1) To UBound(TableValues, 1)
+            Call WsStub.Store.SetReturn( _
+                    "ReadCell", _
+                    CStr(TableValues(value_row_idx, value_col_idx)), _
+                    value_range.GetCell(value_row_idx - LBound(TableValues, 1) + 1, 1), _
+                    False)
+        Next value_row_idx
+    Next header_idx
 End Sub

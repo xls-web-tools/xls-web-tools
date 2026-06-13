@@ -114,7 +114,7 @@ Public Sub Test_WebCollectionRunLifecycle_BrowserProfilePathçÏê¨íÜé~Ç»ÇÁBodyÇé¿
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim fs_stub As FileSystemServiceTestDouble
@@ -173,7 +173,7 @@ Private Function pCreateToolSettings() As ToolSettingsTestDouble
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
     Set result_value.TransitionOperations = operations
 
     Set pCreateToolSettings = result_value

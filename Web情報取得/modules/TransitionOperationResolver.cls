@@ -63,7 +63,7 @@ End Function
 '* @param ItemIndex 0-based の一覧項目 index。
 '*
 '* @details
-'* LocatorValue と Script には {{index}} / {{rowNumber}} の置換を適用します。
+'* ActionSelector と Script には {{index}} / {{rowNumber}} の置換を適用します。
 Public Function ResolveDetailTransitionOperation(ByVal ItemIndex As Long) As TransitionOperation
     Call pCheckInit
     Set ResolveDetailTransitionOperation = pResolveIndexedTransitionOperation(pSettings.DetailTransitionOperationName, ItemIndex)
@@ -78,9 +78,8 @@ Private Function pResolveIndexedTransitionOperation( _
 
     Set pResolveIndexedTransitionOperation = New_TransitionOperation( _
             base_operation.OperationName, _
-            base_operation.LocatorType, _
-            pIndexTemplate.Apply(base_operation.LocatorValue, ItemIndex), _
-            LocatorInnerText:=base_operation.LocatorInnerText, _
+            pIndexTemplate.Apply(base_operation.ActionSelector, ItemIndex), _
+            ActionInnerText:=base_operation.ActionInnerText, _
             Script:=pIndexTemplate.Apply(base_operation.Script, ItemIndex), _
             WaitConditionName:=base_operation.WaitConditionName)
 End Function

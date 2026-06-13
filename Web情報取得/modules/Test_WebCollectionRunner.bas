@@ -66,9 +66,9 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -177,9 +177,9 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -263,9 +263,9 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -370,10 +370,10 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("NextPage", "css selector", "#next-link", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -473,10 +473,10 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("NextPage", "css selector", "#next-link", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList

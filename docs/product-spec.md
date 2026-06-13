@@ -77,26 +77,26 @@ Web情報取得の VBA では、他ツールと同様に `IToolSettings`、`Tool
 
 画面遷移操作定義:
 
-settings シートでは C 列を利用者メモ、D 列を空列、画面遷移操作定義を E:J、K 列を空列、詳細ページ列定義を L:S に置く。旧 workbook レイアウトとの互換は対象外とし、テンプレートと workbook 側の列構成を更新して使う。
+settings シートでは、A 列の `TransitionOperations` section に画面遷移操作定義を置く。`ToolSettings` は `UserInputSheet` と `WorksheetVirtualTable` を使い、固定列位置ではなく section/header 名で読み取る。旧 workbook レイアウトとの互換は対象外とし、テンプレートと workbook 側の列構成を更新して使う。
 
-- 操作名。
-- locator 種別。`LocatorInnerText` を指定する場合は `css selector` とする。
-- locator 値。
-- locator 表示テキスト絞り込み値。locator だけでは操作対象を一意に決められない場合にだけ使う。
-- JavaScript 関数名または script 本文。click が難しい場合、または画面遷移が不要な場合に使う。
-- 待機条件名。実行時の待機には使わず、設定上の識別またはメモとして扱う。
+- `OperationName`: 操作名。
+- `ActionSelector`: 操作対象の CSS selector。
+- `ActionInnerText`: 操作対象の DOM `innerText` 絞り込み値。`ActionSelector` だけでは操作対象を一意に決められない場合にだけ使う。
+- `Script`: JavaScript 関数名または script 本文。click が難しい場合、または画面遷移が不要な場合に使う。
+- `WaitConditionName`: 待機条件名。実行時の待機には使わず、設定上の識別またはメモとして扱う。
+- `WaitSelector`, `WaitInnerText`: 将来の待機条件用予約 header。今回の `ToolSettings` は読み取らない。
 
-画面遷移操作は `OperationName` で参照する。`LocatorType` と `LocatorValue` がある場合は WebDriver click を先に実行し、click が失敗して `Script` が指定されている場合だけ script 実行へ切り替える。`LocatorType` が空で `Script` が指定されている場合は script だけを実行する。`OperationName` は必須であり、`LocatorType` または `Script` の少なくとも一方を指定する。`LocatorType` を指定する場合は `LocatorValue` も必須とする。`LocatorInnerText` は任意とし、空欄の場合は locator 単独で操作対象を探す。`LocatorInnerText` が指定されていて `LocatorType` が空または `css selector` 以外の場合は settings エラーとする。`OperationName` の照合は大文字小文字を区別しない。
+画面遷移操作は `OperationName` で参照する。`ActionSelector` がある場合は CSS selector click を先に実行し、click が失敗して `Script` が指定されている場合だけ script 実行へ切り替える。`ActionSelector` が空で `Script` が指定されている場合は script だけを実行する。`OperationName` は必須であり、`ActionSelector` または `Script` の少なくとも一方を指定する。`ActionInnerText` を指定する場合は `ActionSelector` も必須とする。`OperationName` の照合は大文字小文字を区別しない。`LocatorType` は廃止し、操作対象 selector は CSS selector 固定とする。
 
-`LocatorInnerText` を指定した場合は、`LocatorValue` に一致する候補要素の DOM `innerText` を読み取り、前後空白、改行、連続空白を正規化した文字列で完全一致する要素だけを操作対象とする。大文字小文字、全角半角、かなは区別する。一致件数が 0 件または 2 件以上の場合は操作対象を確定できないためエラーとし、`Script` fallback へは進まない。1 件に確定した後の click 失敗は、既存どおり `Script` が指定されている場合だけ script 実行へ切り替える。対象未確定エラーには `OperationName`、`LocatorValue`、`LocatorInnerText`、一致件数を含める。
+`ActionInnerText` を指定した場合は、`ActionSelector` に一致する候補要素の DOM `innerText` を読み取り、前後空白、改行、連続空白を正規化した文字列で完全一致する要素だけを操作対象とする。大文字小文字、全角半角、かなは区別する。一致件数が 0 件または 2 件以上の場合は操作対象を確定できないためエラーとし、`Script` fallback へは進まない。1 件に確定した後の click 失敗は、既存どおり `Script` が指定されている場合だけ script 実行へ切り替える。対象未確定エラーには `OperationName`、`ActionSelector`、`ActionInnerText`、一致件数を含める。
 
-CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を使う。`>>` で区切った途中要素は frame selector、最後の要素は target selector として扱う。frame selector と target selector は空にできない。`LocatorInnerText` は最後の target selector に一致する候補要素へ適用する。具体的な selector 値は取得対象の環境に依存するため、ドキュメントや配布テンプレートには実サイトの値を残さず、利用者が settings に入力する。settings テンプレートには `OpenList`、`OpenDetail`、`ReturnToList`、`NextPage` の操作名だけを用意し、locator 値、selector 値、`LocatorInnerText` は空欄にする。
+CSS selector で iframe / frame 内の要素を指定する場合は、`frame selector >> target selector` の形式を `ActionSelector` に書く。`>>` で区切った途中要素は frame selector、最後の要素は target selector として扱う。frame selector と target selector は空にできない。`ActionInnerText` は最後の target selector に一致する候補要素へ適用する。具体的な selector 値は取得対象の環境に依存するため、ドキュメントや配布テンプレートには実サイトの値を残さず、利用者が settings に入力する。settings テンプレートには `OpenList`、`OpenDetail`、`ReturnToList`、`NextPage` の操作名だけを用意し、selector 値、`ActionInnerText` は空欄にする。
 
 本番収集で一覧項目ごとに変わる selector / script には、0-based の `{{index}}` と 1-based の `{{rowNumber}}` を使える。`{{index}}` は `querySelectorAll(...)[{{index}}]` などに使い、`{{rowNumber}}` は CSS の `nth-child({{rowNumber}})` などに使う。
 
 詳細ページ列定義:
 
-詳細ページ列定義テーブルの列順は `OutputColumnName`, `Selector`, `ExtractType`, `AttributeName`, `IsRequired`, `ValueExpression`, `OutputValueType`, `BlankMode` とする。`ValueExpression` 列または `OutputValueType` 列がない旧形式の workbook との互換は対象外とし、テンプレートと workbook 側の列構成を更新して使う。
+settings シートでは、A 列の `DetailColumnDefinitions` section に詳細ページ列定義を置く。表 header は `OutputColumnName`, `Selector`, `ExtractType`, `AttributeName`, `IsRequired`, `ValueExpression`, `OutputValueType`, `BlankMode` とする。旧 workbook レイアウトとの互換は対象外とし、テンプレートと workbook 側の列構成を更新して使う。
 
 - 出力列名。
 - `OutputColumnName` には LF を含められる。settings シートの列定義、output シートのヘッダー、`OutputConditionExpression` / `ValueExpression` の列参照は、LF を含む文字列全体で完全一致させる。

@@ -26,7 +26,7 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -107,8 +107,8 @@ Public Sub Test_WebNavDiagnosticRunner_æ“ªˆê——€–Ú‚©‚çÚ×ƒy[ƒW‚Ö“ü‚è‘ÎÛID‚ğ’
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -219,8 +219,8 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚ÉŠî‚Ã‚­f’fo—Ís‚ğ‘‚­(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -342,8 +342,8 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñƒwƒbƒ_[‚É’Pƒ—ñQÆ‚Ì’l‚ğ‘‚­(ByVa
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -429,8 +429,8 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñ‚ğo—Í‘ÎÛğŒ‚ÅQÆ‚µ‚Äf’fs‚ğ‘‚
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -519,8 +519,8 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒˆê’vŒã‚Ì”h¶—ñBlankMode‹ó—“‚ÍERRORs‚
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -606,8 +606,8 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚ç”h¶—ñBlankMode‹ó—“‚Å‚àERRO
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -692,9 +692,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àŒÅ’èŠÇ——ñ‚¾‚¯‚Ìf’fs‚
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -789,9 +789,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚ÅDownloadRequired‚È‚çNO_FI
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -899,9 +899,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -991,9 +991,9 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚çf’fo—Ís‚ğ‘‚©‚È‚¢(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -1084,9 +1084,9 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -1184,8 +1184,8 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——ã‚ÆÚ×ƒy[ƒW‚Ì‘ÎÛID•sˆê’v‚ÍƒGƒ‰[(
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -1316,9 +1316,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×ƒy[ƒWŒã‚Éˆê——•œ‹AƒŠƒ“ƒN‚Å–ß‚é(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -1405,9 +1405,9 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——•œ‹A¸”s‚Í•œ‹A•s”\ƒGƒ‰[‚É‚·‚é(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "css selector", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "css selector", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String

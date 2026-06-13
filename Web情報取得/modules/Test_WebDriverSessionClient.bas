@@ -257,7 +257,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅClick‚ğ—Dæ‚·‚é(B
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", "#open-list", Script:="openList()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", "#open-list", Script:="openList()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -272,7 +272,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅClick‚ğ—Dæ‚·‚é(B
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", script_body)
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆê’v—v‘f‚ğClick‚·‚é(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerTextˆê’v—v‘f‚ğClick‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -309,7 +309,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="ˆê—— ‚ğ ŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="ˆê—— ‚ğ ŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -326,7 +326,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", fallback_script_body)
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆê’v0Œ‚È‚çScriptFallback‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerTextˆê’v0Œ‚È‚çScriptFallback‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -362,7 +362,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="ˆê——‚ğŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="ˆê——‚ğŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -373,13 +373,13 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     ' --- Assert ---
     Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
     Assert.IsTrue 0 < InStr(1, Err.Description, "OperationName=OpenList", vbBinaryCompare)
-    Assert.IsTrue 0 < InStr(1, Err.Description, "LocatorValue=.menu-button", vbBinaryCompare)
-    Assert.IsTrue 0 < InStr(1, Err.Description, "LocatorInnerText=ˆê——‚ğŠJ‚­", vbBinaryCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "ActionSelector=.menu-button", vbBinaryCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "ActionInnerText=ˆê——‚ğŠJ‚­", vbBinaryCompare)
     Assert.IsTrue 0 < InStr(1, Err.Description, "MatchCount=0", vbBinaryCompare)
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", fallback_script_body)
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆê’v•¡”Œ‚È‚çScriptFallback‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerTextˆê’v•¡”Œ‚È‚çScriptFallback‚µ‚È‚¢(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -415,7 +415,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="ˆê—— ‚ğ ŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="ˆê—— ‚ğ ŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -429,7 +429,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextˆ
     Assert.EqualsNumeric 0, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/execute/sync", fallback_script_body)
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‚Í•¶ší‚ğ‹æ•Ê‚·‚é(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerText‚Í•¶ší‚ğ‹æ•Ê‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -456,7 +456,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‚
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="abc ƒA ‚ ", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="abc ƒA ‚ ", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -469,7 +469,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‚
     Assert.IsTrue 0 < InStr(1, Err.Description, "MatchCount=0", vbBinaryCompare)
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‘ÎÛ‚ªStale‚È‚çÄ’Tõ‚·‚é(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerText‘ÎÛ‚ªStale‚È‚çÄ’Tõ‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -504,7 +504,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‘
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="ˆê——‚ğŠJ‚­", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="ˆê——‚ğŠJ‚­", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -521,7 +521,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerText‘
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/element-new/click", "{}")
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅFrame“àLocatorInnerTextˆê’v—v‘f‚ğClick‚·‚é(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅFrame“àActionInnerTextˆê’v—v‘f‚ğClick‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -566,7 +566,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅFrame“àLocatorInn
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenDetail", "css selector", "iframe[name='right'] >> .menu-button", LocatorInnerText:="Ú×‚ğŠJ‚­", WaitConditionName:="DetailReady")
+    Set operation = New_TransitionOperation("OpenDetail", "iframe[name='right'] >> .menu-button", ActionInnerText:="Ú×‚ğŠJ‚­", WaitConditionName:="DetailReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -585,7 +585,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅFrame“àLocatorInn
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/target-2/click", "{}")
 End Sub
 
-Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextŠm’èŒãClick¸”s‚È‚çScriptFallback‚·‚é(ByVal Assert As UnitTestAssert)
+Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅActionInnerTextŠm’èŒãClick¸”s‚È‚çScriptFallback‚·‚é(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
@@ -618,7 +618,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅLocatorInnerTextŠ
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", ".menu-button", LocatorInnerText:="ˆê——‚ğŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", ".menu-button", ActionInnerText:="ˆê——‚ğŠJ‚­", Script:="fallback()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -670,7 +670,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅFrame“à—v‘f‚ğClic
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", "iframe[name='right'] >> #list tbody tr:first-child td:nth-child(2)", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", "iframe[name='right'] >> #list tbody tr:first-child td:nth-child(2)", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -715,7 +715,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚Å’ÊíClick•s”\‚È‚ç
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "css selector", "#open-list", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear
@@ -753,7 +753,7 @@ Public Sub Test_WebDriverSessionClient_RunTransitionOperation‚ÅScriptOnly‚ğÀs‚
     Set session_client = New_WebDriverSessionClient(client_double, tool_settings)
 
     Dim operation As TransitionOperation
-    Set operation = New_TransitionOperation("OpenList", "", "", Script:="openList()", WaitConditionName:="ListReady")
+    Set operation = New_TransitionOperation("OpenList", "", Script:="openList()", WaitConditionName:="ListReady")
 
     Call session_client.CreateSession
     Err.Clear

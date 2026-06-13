@@ -13,9 +13,8 @@ Option Private Module
 '* 画面遷移操作定義を生成します。
 '*
 '* @param OperationName 操作名。
-'* @param LocatorType locator 種別。
-'* @param LocatorValue locator 値。
-'* @param LocatorInnerText locator 表示テキスト絞り込み値。
+'* @param ActionSelector 操作対象の CSS selector。
+'* @param ActionInnerText 操作対象の innerText 絞り込み値。
 '* @param Script click で再現できない場合だけ使う JavaScript。
 '* @param WaitConditionName 操作後の待機条件名。
 '* @return 初期化済みの画面遷移操作定義。
@@ -24,15 +23,14 @@ Option Private Module
 '* New_ 系の処理は生成と Initialize 呼び出しに留め、検証は TransitionOperation.Initialize に委譲します。
 Public Function New_TransitionOperation( _
         ByVal OperationName As String, _
-        ByVal LocatorType As String, _
-        ByVal LocatorValue As String, _
-        Optional ByVal LocatorInnerText As String = "", _
+        ByVal ActionSelector As String, _
+        Optional ByVal ActionInnerText As String = "", _
         Optional ByVal Script As String = "", _
         Optional ByVal WaitConditionName As String = "") As TransitionOperation
 
     Dim result_value As TransitionOperation
     Set result_value = New TransitionOperation
-    Call result_value.Initialize(OperationName, LocatorType, LocatorValue, LocatorInnerText:=LocatorInnerText, Script:=Script, WaitConditionName:=WaitConditionName)
+    Call result_value.Initialize(OperationName, ActionSelector, ActionInnerText:=ActionInnerText, Script:=Script, WaitConditionName:=WaitConditionName)
 
     Set New_TransitionOperation = result_value
 End Function

@@ -18,7 +18,7 @@ Option Base 0
 ' #############################################################################
 
 Private Const C_DOWNLOAD_DIRECTORY_PREFIX As String = "xls-web-tools_"
-Private Const C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED As Long = vbObjectError + 3301
+Private Const C_ERR_ACTION_INNER_TEXT_UNRESOLVED As Long = vbObjectError + 3301
 
 Private pClient As IWebDriverClient
 Private pSettings As IToolSettings
@@ -440,7 +440,7 @@ FIND_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    Err.Raise err_num, "Class WebDriverSessionClient.pFindElement", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", LocatorValue=" & LocatorValue, err_help_file, err_help_context
+    Err.Raise err_num, "Class WebDriverSessionClient.pFindElement", err_desc & vbCrLf & "LocatorType=" & LocatorType & ", ActionSelector=" & LocatorValue, err_help_file, err_help_context
 End Function
 
 '* 詳細ページ列定義に対応する値を読み取ります。
@@ -543,7 +543,7 @@ End Function
 '* @param Operation 実行する画面遷移操作定義。
 '*
 '* @details
-'* locator がある場合は WebDriver click を第一候補にします。locator がない場合、または click が失敗して Script が指定されている場合だけ script 実行に切り替えます。
+'* ActionSelector がある場合は CSS selector click を第一候補にします。ActionSelector がない場合、または click が失敗して Script が指定されている場合だけ script 実行に切り替えます。
 Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
     Call pCheckInit
     Call pRequireSession
@@ -552,16 +552,10 @@ Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
         Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.RunTransitionOperation", Description:="Operation は必須です。"
     End If
 
-    If Trim$(Operation.LocatorType) <> "" Then
-        If Trim$(Operation.LocatorInnerText) <> "" Then
-            If LCase$(Trim$(Operation.LocatorType)) <> "css selector" Then
-                Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.RunTransitionOperation", Description:="LocatorInnerText を指定する場合、LocatorType は css selector である必要があります。"
-            End If
-        End If
-
+    If Trim$(Operation.ActionSelector) <> "" Then
         On Error GoTo CLICK_ERROR
-        If Trim$(Operation.LocatorInnerText) = "" Then
-            Call pClickElement(Operation.LocatorType, Operation.LocatorValue)
+        If Trim$(Operation.ActionInnerText) = "" Then
+            Call pClickElement("css selector", Operation.ActionSelector)
         Else
             Call pClickElementByInnerText(Operation)
         End If
@@ -584,7 +578,7 @@ CLICK_ERROR:
     err_help_file = Err.HelpFile
     err_help_context = Err.HelpContext
 
-    If err_num = C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED Then
+    If err_num = C_ERR_ACTION_INNER_TEXT_UNRESOLVED Then
         Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
     End If
 
@@ -619,7 +613,7 @@ Private Sub pClickElementByInnerText(ByVal Operation As TransitionOperation)
 
     Do
         If pTryClickElementByInnerText(Operation, err_num, err_source, err_desc, err_help_file, err_help_context) Then Exit Sub
-        If err_num = C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED Then
+        If err_num = C_ERR_ACTION_INNER_TEXT_UNRESOLVED Then
             Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
         End If
         If Not pIsRetryableElementLookupError(err_desc) Then
@@ -666,7 +660,7 @@ Private Function pTryClickElementByInnerText( _
     On Error GoTo CLICK_ERROR
 
     Dim element_id As String
-    element_id = pFindElementByInnerText(Operation.OperationName, Operation.LocatorValue, Operation.LocatorInnerText)
+    element_id = pFindElementByInnerText(Operation.OperationName, Operation.ActionSelector, Operation.ActionInnerText)
 
     Dim response_body As String
     response_body = pClient.Execute("POST", "/session/" & pSessionId & "/element/" & element_id & "/click", "{}")
@@ -790,14 +784,14 @@ Private Function pBuildDetailDefinitionJson(ByVal DetailColumnDefinitions As Obj
     pBuildDetailDefinitionJson = result_text
 End Function
 
-Private Function pNormalizeLocatorInnerText(ByVal TargetText As String) As String
+Private Function pNormalizeActionInnerText(ByVal TargetText As String) As String
     Dim whitespace_re As RegExp
     Set whitespace_re = New RegExp
     whitespace_re.Global = True
     whitespace_re.IgnoreCase = False
     whitespace_re.Pattern = "[\s" & ChrW$(&H3000) & "]+"
 
-    pNormalizeLocatorInnerText = Trim$(whitespace_re.Replace(TargetText, " "))
+    pNormalizeActionInnerText = Trim$(whitespace_re.Replace(TargetText, " "))
 End Function
 
 Private Function pJsonBoolean(ByVal TargetValue As Boolean) As String
@@ -877,7 +871,7 @@ End Function
 Private Function pFindElementByInnerText( _
         ByVal OperationName As String, _
         ByVal LocatorValue As String, _
-        ByVal LocatorInnerText As String) As String
+        ByVal ActionInnerText As String) As String
 
     Dim response_body As String
     response_body = pFindElementsResponse("css selector", LocatorValue)
@@ -887,7 +881,7 @@ Private Function pFindElementByInnerText( _
     Set element_ids = pExtractElementIds(response_body)
 
     Dim expected_text As String
-    expected_text = pNormalizeLocatorInnerText(LocatorInnerText)
+    expected_text = pNormalizeActionInnerText(ActionInnerText)
 
     Dim match_count As Long
     match_count = 0
@@ -900,18 +894,18 @@ Private Function pFindElementByInnerText( _
         Dim element_id As String
         element_id = CStr(element_ids.Item(element_idx))
 
-        If StrComp(pNormalizeLocatorInnerText(pReadElementInnerText(element_id)), expected_text, vbBinaryCompare) = 0 Then
+        If StrComp(pNormalizeActionInnerText(pReadElementInnerText(element_id)), expected_text, vbBinaryCompare) = 0 Then
             match_count = match_count + 1
             matched_element_id = element_id
         End If
     Next element_idx
 
     If match_count <> 1 Then
-        Err.Raise Number:=C_ERR_LOCATOR_INNER_TEXT_UNRESOLVED, _
+        Err.Raise Number:=C_ERR_ACTION_INNER_TEXT_UNRESOLVED, _
                 Source:="Class WebDriverSessionClient.pFindElementByInnerText", _
-                Description:="LocatorInnerText の対象を確定できません。OperationName=" & OperationName _
-                        & ", LocatorValue=" & LocatorValue _
-                        & ", LocatorInnerText=" & LocatorInnerText _
+                Description:="ActionInnerText の対象を確定できません。OperationName=" & OperationName _
+                        & ", ActionSelector=" & LocatorValue _
+                        & ", ActionInnerText=" & ActionInnerText _
                         & ", MatchCount=" & CStr(match_count)
     End If
 
