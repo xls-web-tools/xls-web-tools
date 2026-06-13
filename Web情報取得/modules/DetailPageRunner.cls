@@ -94,12 +94,10 @@ Public Function Run( _
 
     On Error GoTo DETAIL_ERROR
 
-    Dim detail_operation As TransitionOperation
-    Set detail_operation = pTransitionResolver.ResolveDetailTransitionOperation(ItemIndex)
-    Call pSessionClient.RunTransitionOperation(detail_operation)
+    Dim detail_operation_chain As TransitionOperationChain
+    Set detail_operation_chain = pTransitionResolver.ResolveDetailTransitionOperation(ItemIndex)
+    Call pSessionClient.RunTransitionOperationChain(detail_operation_chain)
     needs_return = True
-
-    Call pSessionClient.WaitForSelector(detail_operation.WaitSelector)
 
     Dim detail_target_id As String
     detail_target_id = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
@@ -256,10 +254,9 @@ Private Sub pReturnToListIfNeeded(ByVal NeedsReturn As Boolean)
 
     On Error GoTo RETURN_ERROR
 
-    Dim return_operation As TransitionOperation
-    Set return_operation = pTransitionResolver.ResolveReturnToListOperation()
-    Call pSessionClient.RunTransitionOperation(return_operation)
-    Call pSessionClient.WaitForSelector(return_operation.WaitSelector)
+    Dim return_operation_chain As TransitionOperationChain
+    Set return_operation_chain = pTransitionResolver.ResolveReturnToListOperation()
+    Call pSessionClient.RunTransitionOperationChain(return_operation_chain)
 
     On Error GoTo 0
     Exit Sub

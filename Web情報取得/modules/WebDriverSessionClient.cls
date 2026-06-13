@@ -538,6 +538,29 @@ Private Function pExtractJsonStringArray(ByVal JsonText As String, ByVal KeyName
     Set pExtractJsonStringArray = result_values
 End Function
 
+'* 画面遷移操作チェーンを実行します。
+'*
+'* @param OperationChain 実行する画面遷移操作チェーン。
+'*
+'* @details
+'* 各操作を実行した直後に、その操作の WaitSelector で到達確認します。
+Public Sub RunTransitionOperationChain(ByVal OperationChain As TransitionOperationChain)
+    Call pCheckInit
+    Call pRequireSession
+
+    If OperationChain Is Nothing Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.RunTransitionOperationChain", Description:="OperationChain は必須です。"
+    End If
+
+    Dim operation_idx As Long
+    For operation_idx = 0 To OperationChain.Count - 1
+        Dim operation As TransitionOperation
+        Set operation = OperationChain.Item(operation_idx)
+        Call RunTransitionOperation(operation)
+        Call WaitForSelector(operation.WaitSelector)
+    Next operation_idx
+End Sub
+
 '* 画面遷移操作を実行します。
 '*
 '* @param Operation 実行する画面遷移操作定義。

@@ -34,6 +34,19 @@ Public Function New_TransitionOperation( _
 
     Set New_TransitionOperation = result_value
 End Function
+
+'* 画面遷移操作チェーンを生成します。
+'*
+'* @param Operations 実行順の画面遷移操作一覧。
+'* @return 初期化済みの画面遷移操作チェーン。
+Public Function New_TransitionOperationChain(ByVal Operations As ObjectList) As TransitionOperationChain
+    Dim result_value As TransitionOperationChain
+    Set result_value = New TransitionOperationChain
+    Call result_value.Initialize(Operations)
+
+    Set New_TransitionOperationChain = result_value
+End Function
+
 '* 一覧項目 index テンプレートを生成します。
 '*
 '* @return 新しい一覧項目 index テンプレート。

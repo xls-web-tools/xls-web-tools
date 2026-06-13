@@ -76,10 +76,9 @@ Public Function Run() As String
     Call pSessionClient.WaitForSelector(pSettings.AuthenticatedStartSelector)
     Call pAdvanceProgress
 
-    Dim list_operation As TransitionOperation
-    Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
-    Call pSessionClient.RunTransitionOperation(list_operation)
-    Call pSessionClient.WaitForSelector(list_operation.WaitSelector)
+    Dim list_operation_chain As TransitionOperationChain
+    Set list_operation_chain = pTransitionResolver.ResolveListTransitionOperation()
+    Call pSessionClient.RunTransitionOperationChain(list_operation_chain)
     Call pAdvanceProgress
 
     Call pAdvanceProgress

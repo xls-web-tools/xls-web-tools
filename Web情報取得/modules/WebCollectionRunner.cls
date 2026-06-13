@@ -322,10 +322,9 @@ Private Function pHasNextPage() As Boolean
 End Function
 
 Private Sub pMoveToNextPage(ByVal PreviousFirstTargetId As String)
-    Dim next_operation As TransitionOperation
-    Set next_operation = pTransitionResolver.ResolveNextPageOperation()
-    Call pSessionClient.RunTransitionOperation(next_operation)
-    Call pSessionClient.WaitForSelector(next_operation.WaitSelector)
+    Dim next_operation_chain As TransitionOperationChain
+    Set next_operation_chain = pTransitionResolver.ResolveNextPageOperation()
+    Call pSessionClient.RunTransitionOperationChain(next_operation_chain)
     Call pWaitForFirstTargetChange(PreviousFirstTargetId)
 End Sub
 
