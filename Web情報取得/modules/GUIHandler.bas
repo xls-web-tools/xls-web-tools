@@ -13,7 +13,6 @@ Option Private Module
 '* 取得開始 URL から詳細ページの対象ID取得までの診断を実行します。
 '*
 '* @details
-'* settings の StartUrl、AuthenticatedStartSelector、ListTransitionOperationName、ListPageSelector、ListItemTargetIdSelector、DetailTransitionOperationName、TargetIdSelector、ReturnToListOperationName を使って詳細ページ出力と一覧復帰までを確認します。
 '* 認証情報は Excel ブック、VBA、settings、ログに保存しません。
 Public Sub RunDiagnostic_Click()
     Call InitializeCommonService(Force:=True)

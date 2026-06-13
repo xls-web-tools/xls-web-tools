@@ -88,13 +88,6 @@ Private Property Get IToolSettings_AuthenticatedStartSelector() As String
     IToolSettings_AuthenticatedStartSelector = AuthenticatedStartSelector
 End Property
 
-'* 一覧画面到達を判定する selector。
-Public Property Get ListPageSelector() As String
-    ListPageSelector = pGetRequiredParam("ListPageSelector")
-End Property
-Private Property Get IToolSettings_ListPageSelector() As String
-    IToolSettings_ListPageSelector = ListPageSelector
-End Property
 
 '* 一覧画面への画面遷移操作名。
 Public Property Get ListTransitionOperationName() As String
@@ -146,7 +139,14 @@ End Property
 
 '* 次ページへ進む画面遷移操作名。
 Public Property Get NextPageOperationName() As String
-    NextPageOperationName = pGetOptionalParam("NextPageOperationName", "NextPage")
+    Dim operation_name As String
+    operation_name = pGetOptionalParam("NextPageOperationName", "")
+
+    Dim available_selector As String
+    available_selector = pGetOptionalParam("NextPageAvailableSelector", "")
+
+    Call pValidateNextPageSettings(operation_name, available_selector)
+    NextPageOperationName = operation_name
 End Property
 Private Property Get IToolSettings_NextPageOperationName() As String
     IToolSettings_NextPageOperationName = NextPageOperationName
@@ -154,11 +154,27 @@ End Property
 
 '* 次ページ操作が有効な場合だけ一致する selector。
 Public Property Get NextPageAvailableSelector() As String
-    NextPageAvailableSelector = pGetOptionalParam("NextPageAvailableSelector", "")
+    Dim operation_name As String
+    operation_name = pGetOptionalParam("NextPageOperationName", "")
+
+    Dim available_selector As String
+    available_selector = pGetOptionalParam("NextPageAvailableSelector", "")
+
+    Call pValidateNextPageSettings(operation_name, available_selector)
+    NextPageAvailableSelector = available_selector
 End Property
 Private Property Get IToolSettings_NextPageAvailableSelector() As String
     IToolSettings_NextPageAvailableSelector = NextPageAvailableSelector
 End Property
+
+Private Sub pValidateNextPageSettings( _
+        ByVal NextPageOperationNameText As String, _
+        ByVal NextPageAvailableSelectorText As String)
+
+    If (Trim$(NextPageOperationNameText) = "") <> (Trim$(NextPageAvailableSelectorText) = "") Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pValidateNextPageSettings", Description:="NextPageOperationName と NextPageAvailableSelector は両方指定するか、両方空にしてください。"
+    End If
+End Sub
 
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
@@ -380,8 +396,8 @@ Private Function pReadTransitionOperations() As ObjectList
                     OperationName:=operation_name, _
                     ActionSelector:=pVirtualTableText(row_values, "ActionSelector"), _
                     ActionInnerText:=pVirtualTableText(row_values, "ActionInnerText"), _
-                    Script:=pVirtualTableText(row_values, "Script"), _
-                    WaitConditionName:=pVirtualTableText(row_values, "WaitConditionName")))
+                    ActionScript:=pVirtualTableText(row_values, "ActionScript"), _
+                    WaitSelector:=pVirtualTableText(row_values, "WaitSelector")))
         End If
     Next row_idx
 
@@ -393,8 +409,8 @@ Private Function pTransitionOperationHeaders() As String()
     result_value(0) = "OperationName"
     result_value(1) = "ActionSelector"
     result_value(2) = "ActionInnerText"
-    result_value(3) = "Script"
-    result_value(4) = "WaitConditionName"
+    result_value(3) = "ActionScript"
+    result_value(4) = "WaitSelector"
 
     pTransitionOperationHeaders = result_value
 End Function

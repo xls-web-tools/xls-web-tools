@@ -325,7 +325,7 @@ Private Sub pMoveToNextPage(ByVal PreviousFirstTargetId As String)
     Dim next_operation As TransitionOperation
     Set next_operation = pTransitionResolver.ResolveNextPageOperation()
     Call pSessionClient.RunTransitionOperation(next_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+    Call pSessionClient.WaitForSelector(next_operation.WaitSelector)
     Call pWaitForFirstTargetChange(PreviousFirstTargetId)
 End Sub
 

@@ -26,7 +26,6 @@ Private pHeadless As Boolean
 Private pStartUrl As String
 Private pOutputSheetName As String
 Private pAuthenticatedStartSelector As String
-Private pListPageSelector As String
 Private pListTransitionOperationName As String
 Private pListItemSelector As String
 Private pListItemTargetIdSelector As String
@@ -122,16 +121,6 @@ Private Property Get IToolSettings_AuthenticatedStartSelector() As String
     IToolSettings_AuthenticatedStartSelector = AuthenticatedStartSelector
 End Property
 
-'* àÍóóâÊñ ìûíBÇîªíËÇ∑ÇÈ selectorÅB
-Public Property Get ListPageSelector() As String
-    ListPageSelector = pListPageSelector
-End Property
-Public Property Let ListPageSelector(ByVal NewValue As String)
-    pListPageSelector = NewValue
-End Property
-Private Property Get IToolSettings_ListPageSelector() As String
-    IToolSettings_ListPageSelector = ListPageSelector
-End Property
 
 '* àÍóóâÊñ Ç÷ÇÃâÊñ ëJà⁄ëÄçÏñºÅB
 Public Property Get ListTransitionOperationName() As String
@@ -328,14 +317,13 @@ Private Sub Class_Initialize()
     pStartUrl = "https://example.test/start"
     pOutputSheetName = "output"
     pAuthenticatedStartSelector = "#authenticated-start"
-    pListPageSelector = "#list-page"
     pListTransitionOperationName = "OpenList"
     pListItemSelector = ""
     pListItemTargetIdSelector = ""
     pDetailTransitionOperationName = ""
     pTargetIdSelector = ""
     pReturnToListOperationName = ""
-    pNextPageOperationName = "NextPage"
+    pNextPageOperationName = ""
     pNextPageAvailableSelector = ""
     pExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
     pOutputConditionExpression = ""

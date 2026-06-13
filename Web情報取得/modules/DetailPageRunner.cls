@@ -99,7 +99,7 @@ Public Function Run( _
     Call pSessionClient.RunTransitionOperation(detail_operation)
     needs_return = True
 
-    Call pSessionClient.WaitForSelector(pSettings.TargetIdSelector)
+    Call pSessionClient.WaitForSelector(detail_operation.WaitSelector)
 
     Dim detail_target_id As String
     detail_target_id = Trim$(pSessionClient.ReadElementText(pSettings.TargetIdSelector))
@@ -253,14 +253,13 @@ End Function
 
 Private Sub pReturnToListIfNeeded(ByVal NeedsReturn As Boolean)
     If Not NeedsReturn Then Exit Sub
-    If Not pTransitionResolver.HasReturnToListOperation Then Exit Sub
 
     On Error GoTo RETURN_ERROR
 
     Dim return_operation As TransitionOperation
     Set return_operation = pTransitionResolver.ResolveReturnToListOperation()
     Call pSessionClient.RunTransitionOperation(return_operation)
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
+    Call pSessionClient.WaitForSelector(return_operation.WaitSelector)
 
     On Error GoTo 0
     Exit Sub

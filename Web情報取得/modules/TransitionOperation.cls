@@ -21,8 +21,8 @@ Private pIsInitialized As Boolean
 Private pOperationName As String
 Private pActionSelector As String
 Private pActionInnerText As String
-Private pScript As String
-Private pWaitConditionName As String
+Private pActionScript As String
+Private pWaitSelector As String
 
 '* 操作名。
 Public Property Get OperationName() As String
@@ -43,15 +43,15 @@ Public Property Get ActionInnerText() As String
 End Property
 
 '* click で再現できない場合だけ使う JavaScript。
-Public Property Get Script() As String
+Public Property Get ActionScript() As String
     Call pCheckInit
-    Script = pScript
+    ActionScript = pActionScript
 End Property
 
-'* 操作後の待機条件名。
-Public Property Get WaitConditionName() As String
+'* 操作後に到達を確認する CSS selector。
+Public Property Get WaitSelector() As String
     Call pCheckInit
-    WaitConditionName = pWaitConditionName
+    WaitSelector = pWaitSelector
 End Property
 
 '* 操作定義を初期化します。
@@ -59,18 +59,18 @@ End Property
 '* @param OperationName 操作名。
 '* @param ActionSelector 操作対象の CSS selector。
 '* @param ActionInnerText 操作対象の innerText 絞り込み値。
-'* @param Script click で再現できない場合だけ使う JavaScript。
-'* @param WaitConditionName 操作後の待機条件名。
+'* @param ActionScript click で再現できない場合だけ使う JavaScript。
+'* @param WaitSelector 操作後に到達を確認する CSS selector。
 '*
 '* @details
-'* OperationName は必須です。ActionSelector と Script がどちらも空の場合は、実行可能な画面遷移操作にならないためエラーにします。
+'* OperationName と WaitSelector は必須です。ActionSelector と ActionScript がどちらも空の場合は、実行可能な画面遷移操作にならないためエラーにします。
 '* ActionInnerText を指定する場合は ActionSelector も必須です。
 Public Sub Initialize( _
         ByVal OperationName As String, _
         ByVal ActionSelector As String, _
         Optional ByVal ActionInnerText As String = "", _
-        Optional ByVal Script As String = "", _
-        Optional ByVal WaitConditionName As String = "")
+        Optional ByVal ActionScript As String = "", _
+        Optional ByVal WaitSelector As String = "")
 
     If Trim$(OperationName) = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="OperationName は必須です。"
@@ -78,15 +78,18 @@ Public Sub Initialize( _
     If Trim$(ActionInnerText) <> "" And Trim$(ActionSelector) = "" Then
         Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="ActionInnerText を指定する場合、ActionSelector は必須です。(" & OperationName & ")"
     End If
-    If Trim$(ActionSelector) = "" And Trim$(Script) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="ActionSelector または Script は必須です。(" & OperationName & ")"
+    If Trim$(ActionSelector) = "" And Trim$(ActionScript) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="ActionSelector または ActionScript は必須です。(" & OperationName & ")"
+    End If
+    If Trim$(WaitSelector) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperation.Initialize", Description:="WaitSelector は必須です。(" & OperationName & ")"
     End If
 
     pOperationName = OperationName
     pActionSelector = ActionSelector
     pActionInnerText = ActionInnerText
-    pScript = Script
-    pWaitConditionName = WaitConditionName
+    pActionScript = ActionScript
+    pWaitSelector = WaitSelector
     pIsInitialized = True
 End Sub
 

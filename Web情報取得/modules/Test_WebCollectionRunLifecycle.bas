@@ -109,12 +109,11 @@ Public Sub Test_WebCollectionRunLifecycle_BrowserProfilePathçÏê¨íÜé~Ç»ÇÁBodyÇé¿
     tool_settings.BrowserProfilePath = "C:\Missing\Profile"
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim fs_stub As FileSystemServiceTestDouble
@@ -168,12 +167,11 @@ Private Function pCreateToolSettings() As ToolSettingsTestDouble
     Call pUseProfileDirectory("C:\Profile", True)
     result_value.StartUrl = "https://example.test/start"
     result_value.AuthenticatedStartSelector = "#top-ready"
-    result_value.ListPageSelector = "#list-ready"
     result_value.ListTransitionOperationName = "OpenList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
     Set result_value.TransitionOperations = operations
 
     Set pCreateToolSettings = result_value

@@ -543,7 +543,7 @@ End Function
 '* @param Operation 実行する画面遷移操作定義。
 '*
 '* @details
-'* ActionSelector がある場合は CSS selector click を第一候補にします。ActionSelector がない場合、または click が失敗して Script が指定されている場合だけ script 実行に切り替えます。
+'* ActionSelector がある場合は CSS selector click を第一候補にします。ActionSelector がない場合、または click が失敗して ActionScript が指定されている場合だけ script 実行に切り替えます。
 Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
     Call pCheckInit
     Call pRequireSession
@@ -563,7 +563,7 @@ Public Sub RunTransitionOperation(ByVal Operation As TransitionOperation)
         Exit Sub
     End If
 
-    Call pExecuteScript(Operation.Script)
+    Call pExecuteScript(Operation.ActionScript)
     Exit Sub
 
 CLICK_ERROR:
@@ -582,22 +582,22 @@ CLICK_ERROR:
         Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
     End If
 
-    If Trim$(Operation.Script) = "" Then
+    If Trim$(Operation.ActionScript) = "" Then
         Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
     End If
 
     Err.Clear
     On Error GoTo 0
-    Call pExecuteScript(Operation.Script)
+    Call pExecuteScript(Operation.ActionScript)
 End Sub
 
-Private Sub pExecuteScript(ByVal Script As String)
-    If Trim$(Script) = "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExecuteScript", Description:="Script は必須です。"
+Private Sub pExecuteScript(ByVal ActionScript As String)
+    If Trim$(ActionScript) = "" Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WebDriverSessionClient.pExecuteScript", Description:="ActionScript は必須です。"
     End If
 
     Dim response_body As String
-    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", "{""script"":""" & pJsonEscape(Script) & """,""args"":[]}")
+    response_body = pClient.Execute("POST", "/session/" & pSessionId & "/execute/sync", "{""script"":""" & pJsonEscape(ActionScript) & """,""args"":[]}")
     Call pRaiseIfWebDriverError(response_body)
 End Sub
 

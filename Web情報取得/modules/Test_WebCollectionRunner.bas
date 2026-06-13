@@ -51,7 +51,6 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemSelector = "#list tbody tr"
     tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
@@ -66,9 +65,9 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="openDetail({{index}})", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -165,7 +164,6 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemSelector = "#list tbody tr"
     tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
@@ -177,9 +175,9 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="openDetail({{index}})", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -250,7 +248,6 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemSelector = "#list tbody tr"
     tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
@@ -263,9 +260,9 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="openDetail({{index}})", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -356,7 +353,6 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemSelector = "#list tbody tr"
     tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
@@ -370,10 +366,10 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="openDetail({{index}})", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -459,7 +455,6 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemSelector = "#list tbody tr"
     tool_settings.ListItemTargetIdSelector = "#list tbody tr:nth-child({{rowNumber}}) td.id"
@@ -473,10 +468,10 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", "", Script:="openDetail({{index}})", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="openDetail({{index}})", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("NextPage", "#next-link", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList

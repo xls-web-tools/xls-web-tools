@@ -42,32 +42,33 @@
 | `StartUrl` | 最初に開く URL。 |
 | `OutputSheetName` | 出力先シート名。通常は `output` です。 |
 | `AuthenticatedStartSelector` | ログイン後または取得開始画面に到達したことを判定する CSS selector。 |
-| `ListPageSelector` | 一覧画面に到達したことを判定する CSS selector。 |
 | `ListTransitionOperationName` | 一覧画面へ移動する操作名。右側の画面遷移操作表の `OperationName` と一致させます。 |
 | `ListItemSelector` | 一覧画面上の一覧項目を数える CSS selector。 |
 | `ListItemTargetIdSelector` | 一覧項目ごとの対象IDを読む CSS selector。`{{index}}` または `{{rowNumber}}` を使えます。 |
 | `DetailTransitionOperationName` | 一覧項目から詳細ページへ移動する操作名。 |
 | `TargetIdSelector` | 詳細ページ上の対象IDを読む CSS selector。 |
 | `ReturnToListOperationName` | 詳細ページから一覧画面へ戻る操作名。 |
-| `NextPageOperationName` | 次ページへ移動する操作名。通常は `NextPage` です。 |
-| `NextPageAvailableSelector` | 次ページがある場合だけ見つかる CSS selector。空欄なら 1 ページだけ処理します。 |
+| `NextPageOperationName` | 次ページへ移動する操作名。空欄ならページングしません。指定する場合は `NextPageAvailableSelector` も指定します。 |
+| `NextPageAvailableSelector` | 次ページ操作前に、次ページがある場合だけ見つかる CSS selector。指定する場合は `NextPageOperationName` も指定します。 |
 | `ExistingRowMode` | `SkipExisting` なら既存の `OK` 行をスキップします。`Overwrite` なら既存行も再取得します。 |
 | `TimeoutSeconds` | 画面や selector の出現を待つ秒数。通常は `30` です。 |
 | `OutputConditionExpression` | 出力対象を絞り込む条件式。不要なら空欄にします。 |
 
 ## 画面遷移操作
 
-`settings` シートでは、A 列に `TransitionOperations` と書いた行の右側に画面遷移操作表を置きます。表 header は `OperationName`, `WaitSelector`, `ActionSelector`, `ActionInnerText`, `Script`, `WaitConditionName`, `WaitInnerText` を想定します。`WaitSelector` と `WaitInnerText` は将来用の予約列で、現在の実行時待機には使いません。
+`settings` シートでは、A 列に `TransitionOperations` と書いた行の右側に画面遷移操作表を置きます。表 header は `OperationName`, `ActionSelector`, `ActionInnerText`, `ActionScript`, `WaitSelector` です。
 
 | 列 | 説明 |
 | --- | --- |
 | `OperationName` | 操作名。基本設定の各 `...OperationName` から参照します。 |
 | `ActionSelector` | クリックする要素の CSS selector。詳細ページへ入る操作では `{{index}}` や `{{rowNumber}}` を使えます。 |
 | `ActionInnerText` | selector の候補が複数ある場合に、画面上の `innerText` でクリック対象を 1 件に絞り込む任意列です。空白正規化後の完全一致で比較します。 |
-| `Script` | クリックだけで動かない画面で使う JavaScript。通常は空欄です。 |
-| `WaitConditionName` | 操作後の待機条件名。メモ用の列です。 |
+| `ActionScript` | クリックだけで動かない画面で使う JavaScript。`ActionSelector` が空欄の場合は script-only 操作として実行します。 |
+| `WaitSelector` | 操作後に遷移先へ到達したことを判定する CSS selector。 |
 
-frame 内の要素を指定する場合は、`frame selector >> target selector` の形で `ActionSelector` を書きます。`ActionInnerText` は最後の target selector に一致する候補へ適用されます。`LocatorType` は廃止され、操作対象 selector は CSS selector 固定です。
+`OperationName` がある行では、`ActionSelector` または `ActionScript` の少なくとも片方と、`WaitSelector` が必須です。遷移不要で一覧到達だけ確認したい場合は、`ActionSelector` を空欄にし、`ActionScript` に `return true;` のような副作用のない script を入れ、`WaitSelector` に一覧到達 selector を指定します。
+
+frame 内の要素を指定する場合は、`frame selector >> target selector` の形で `ActionSelector` または `WaitSelector` を書きます。`ActionInnerText` は最後の target selector に一致する候補へ適用されます。`LocatorType` は廃止され、操作対象 selector は CSS selector 固定です。
 
 ## 詳細ページ列定義
 

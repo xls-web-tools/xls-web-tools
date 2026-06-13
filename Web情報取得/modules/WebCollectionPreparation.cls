@@ -79,9 +79,9 @@ Public Function Run() As String
     Dim list_operation As TransitionOperation
     Set list_operation = pTransitionResolver.ResolveListTransitionOperation()
     Call pSessionClient.RunTransitionOperation(list_operation)
+    Call pSessionClient.WaitForSelector(list_operation.WaitSelector)
     Call pAdvanceProgress
 
-    Call pSessionClient.WaitForSelector(pSettings.ListPageSelector)
     Call pAdvanceProgress
 
     Run = result_value

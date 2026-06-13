@@ -21,18 +21,6 @@ Private pSettings As IToolSettings
 Private pIndexTemplate As ListItemIndexTemplate
 Private pIsInitialized As Boolean
 
-'* 詳細ページへの画面遷移操作名が指定されているか否か。
-Public Property Get HasDetailTransitionOperation() As Boolean
-    Call pCheckInit
-    HasDetailTransitionOperation = (Trim$(pSettings.DetailTransitionOperationName) <> "")
-End Property
-
-'* 一覧画面へ戻る画面遷移操作名が指定されているか否か。
-Public Property Get HasReturnToListOperation() As Boolean
-    Call pCheckInit
-    HasReturnToListOperation = (Trim$(pSettings.ReturnToListOperationName) <> "")
-End Property
-
 '* 画面遷移操作 resolver を初期化します。
 '*
 '* @param Settings Web情報取得の設定。
@@ -63,7 +51,7 @@ End Function
 '* @param ItemIndex 0-based の一覧項目 index。
 '*
 '* @details
-'* ActionSelector と Script には {{index}} / {{rowNumber}} の置換を適用します。
+'* ActionSelector、ActionScript、WaitSelector には {{index}} / {{rowNumber}} の置換を適用します。
 Public Function ResolveDetailTransitionOperation(ByVal ItemIndex As Long) As TransitionOperation
     Call pCheckInit
     Set ResolveDetailTransitionOperation = pResolveIndexedTransitionOperation(pSettings.DetailTransitionOperationName, ItemIndex)
@@ -80,8 +68,8 @@ Private Function pResolveIndexedTransitionOperation( _
             base_operation.OperationName, _
             pIndexTemplate.Apply(base_operation.ActionSelector, ItemIndex), _
             ActionInnerText:=base_operation.ActionInnerText, _
-            Script:=pIndexTemplate.Apply(base_operation.Script, ItemIndex), _
-            WaitConditionName:=base_operation.WaitConditionName)
+            ActionScript:=pIndexTemplate.Apply(base_operation.ActionScript, ItemIndex), _
+            WaitSelector:=pIndexTemplate.Apply(base_operation.WaitSelector, ItemIndex))
 End Function
 
 '* 一覧画面へ戻る画面遷移操作を解決します。
@@ -116,7 +104,7 @@ Private Function pFindTransitionOperation(ByVal OperationName As String) As Tran
         End If
     Next operation_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver.pFindTransitionOperation", Description:="画面遷移操作が見つかりません。(" & OperationName & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class TransitionOperationResolver.pFindTransitionOperation", Description:="TransitionOperations に OperationName が見つかりません。(" & OperationName & ")"
 End Function
 
 Private Sub pCheckInit()

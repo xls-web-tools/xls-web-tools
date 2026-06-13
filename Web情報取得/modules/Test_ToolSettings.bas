@@ -58,7 +58,6 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Call pSetSetting(ws_stub, "StartUrl", "https://example.test/start", 6)
     Call pSetSetting(ws_stub, "OutputSheetName", "result", 7)
     Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
-    Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
     Call pSetSetting(ws_stub, "ListItemSelector", "#list tbody tr", 11)
     Call pSetSetting(ws_stub, "ListItemTargetIdSelector", "#list-item-target-id", 12)
@@ -100,8 +99,6 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Dim actual_authenticated_selector As String
     actual_authenticated_selector = tool_settings.AuthenticatedStartSelector
 
-    Dim actual_list_selector As String
-    actual_list_selector = tool_settings.ListPageSelector
 
     Dim actual_list_operation_name As String
     actual_list_operation_name = tool_settings.ListTransitionOperationName
@@ -157,7 +154,6 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "https://example.test/start", actual_start_url
     Assert.Equals "result", actual_output_sheet
     Assert.Equals "#top-ready", actual_authenticated_selector
-    Assert.Equals "#list-ready", actual_list_selector
     Assert.Equals "OpenList", actual_list_operation_name
     Assert.Equals "#list tbody tr", actual_list_item_selector
     Assert.Equals "#list-item-target-id", actual_list_target_selector
@@ -221,7 +217,6 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Call pSetSetting(ws_stub, "StartUrl", "https://example.test/start", 6)
     Call pSetSetting(ws_stub, "OutputSheetName", "result", 7)
     Call pSetSetting(ws_stub, "AuthenticatedStartSelector", "#top-ready", 8)
-    Call pSetSetting(ws_stub, "ListPageSelector", "#list-ready", 9)
     Call pSetSetting(ws_stub, "ListTransitionOperationName", "OpenList", 10)
     Call pSetSetting(ws_stub, "ListItemSelector", "#list tbody tr", 11)
     Call pSetMissingSetting(ws_stub, "NextPageOperationName")
@@ -283,7 +278,7 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Assert.EqualsNumeric 9515, actual_port
     Assert.Equals "C:\Workbook\browser-profile", actual_profile_path
     Assert.IsTrue actual_headless
-    Assert.Equals "NextPage", actual_next_operation_name
+    Assert.Equals "", actual_next_operation_name
     Assert.Equals "", actual_next_available_selector
     Assert.Equals G_WEB_ROW_MODE_SKIP_EXISTING, actual_existing_mode
     Assert.Equals "", actual_condition_expression
@@ -292,6 +287,50 @@ Public Sub Test_ToolSettings_Settingsシート_既定パスと既定値を補う(ByVal Assert 
     Assert.IsFalse actual_download_required
     Assert.Equals "", actual_download_root_path
     Assert.Equals "", actual_download_link_selector
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_NextPageOperationNameのみ指定はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetSetting(ws_stub, "NextPageOperationName", "NextPage", 16)
+    Call pSetMissingSetting(ws_stub, "NextPageAvailableSelector")
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = pNewToolSettings()
+
+    ' --- Act ---
+    Dim actual_next_operation_name As String
+    actual_next_operation_name = tool_settings.NextPageOperationName
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.IsTrue 0 < InStr(1, Err.Description, "NextPageOperationName", vbTextCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "NextPageAvailableSelector", vbTextCompare)
+End Sub
+
+Public Sub Test_ToolSettings_Settingsシート_NextPageAvailableSelectorのみ指定はエラー(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetMissingSetting(ws_stub, "NextPageOperationName")
+    Call pSetSetting(ws_stub, "NextPageAvailableSelector", "#next-page", 17)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = pNewToolSettings()
+
+    ' --- Act ---
+    Dim actual_next_available_selector As String
+    actual_next_available_selector = tool_settings.NextPageAvailableSelector
+
+    ' --- Assert ---
+    Assert.ErrorRaised 0, Err.Number, Err.Source, Err.Description
+    Assert.IsTrue 0 < InStr(1, Err.Description, "NextPageOperationName", vbTextCompare)
+    Assert.IsTrue 0 < InStr(1, Err.Description, "NextPageAvailableSelector", vbTextCompare)
 End Sub
 
 Public Sub Test_ToolSettings_Settingsシート_DownloadEnabledTrueで保存先ルート未設定はエラー(ByVal Assert As UnitTestAssert)
@@ -372,7 +411,7 @@ Public Sub Test_ToolSettings_Settingsシート_操作定義と列定義を読み取る(ByVal Ass
     Assert.Equals "OpenList", first_operation.OperationName
     Assert.Equals "#open-list", first_operation.ActionSelector
     Assert.Equals "一覧を開く", first_operation.ActionInnerText
-    Assert.Equals "ListReady", first_operation.WaitConditionName
+    Assert.Equals "#list-ready", first_operation.WaitSelector
     Assert.Equals "", second_operation.ActionInnerText
     Assert.EqualsNumeric 2, detail_columns.Count
     Assert.Equals "対象ID", first_column.OutputColumnName
@@ -673,12 +712,12 @@ Private Sub pSetTransitionTable(ByVal WsStub As WorksheetServiceTestDouble)
     table_values(1, 2) = "#open-list"
     table_values(1, 3) = "一覧を開く"
     table_values(1, 4) = ""
-    table_values(1, 5) = "ListReady"
+    table_values(1, 5) = "#list-ready"
     table_values(2, 1) = "OpenDetail"
     table_values(2, 2) = ".detail-link"
     table_values(2, 3) = ""
     table_values(2, 4) = ""
-    table_values(2, 5) = "DetailReady"
+    table_values(2, 5) = "#target-id"
 
     Dim header_names() As String
     header_names = pTransitionOperationHeaders()
@@ -692,7 +731,7 @@ Private Sub pSetInvalidTransitionInnerTextTable(ByVal WsStub As WorksheetService
     table_values(1, 2) = ""
     table_values(1, 3) = "一覧を開く"
     table_values(1, 4) = ""
-    table_values(1, 5) = "ListReady"
+    table_values(1, 5) = "#list-ready"
 
     Dim header_names() As String
     header_names = pTransitionOperationHeaders()
@@ -704,8 +743,8 @@ Private Function pTransitionOperationHeaders() As String()
     result_value(0) = "OperationName"
     result_value(1) = "ActionSelector"
     result_value(2) = "ActionInnerText"
-    result_value(3) = "Script"
-    result_value(4) = "WaitConditionName"
+    result_value(3) = "ActionScript"
+    result_value(4) = "WaitSelector"
 
     pTransitionOperationHeaders = result_value
 End Function

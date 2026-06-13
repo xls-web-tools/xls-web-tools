@@ -15,8 +15,8 @@ Option Private Module
 '* @param OperationName 操作名。
 '* @param ActionSelector 操作対象の CSS selector。
 '* @param ActionInnerText 操作対象の innerText 絞り込み値。
-'* @param Script click で再現できない場合だけ使う JavaScript。
-'* @param WaitConditionName 操作後の待機条件名。
+'* @param ActionScript click で再現できない場合だけ使う JavaScript。
+'* @param WaitSelector 操作後に到達を確認する CSS selector。
 '* @return 初期化済みの画面遷移操作定義。
 '*
 '* @details
@@ -25,16 +25,15 @@ Public Function New_TransitionOperation( _
         ByVal OperationName As String, _
         ByVal ActionSelector As String, _
         Optional ByVal ActionInnerText As String = "", _
-        Optional ByVal Script As String = "", _
-        Optional ByVal WaitConditionName As String = "") As TransitionOperation
+        Optional ByVal ActionScript As String = "", _
+        Optional ByVal WaitSelector As String = "") As TransitionOperation
 
     Dim result_value As TransitionOperation
     Set result_value = New TransitionOperation
-    Call result_value.Initialize(OperationName, ActionSelector, ActionInnerText:=ActionInnerText, Script:=Script, WaitConditionName:=WaitConditionName)
+    Call result_value.Initialize(OperationName, ActionSelector, ActionInnerText:=ActionInnerText, ActionScript:=ActionScript, WaitSelector:=WaitSelector)
 
     Set New_TransitionOperation = result_value
 End Function
-
 '* 一覧項目 index テンプレートを生成します。
 '*
 '* @return 新しい一覧項目 index テンプレート。

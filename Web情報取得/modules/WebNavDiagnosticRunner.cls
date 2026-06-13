@@ -110,8 +110,6 @@ Private Sub IWebCollectionRunBody_RunAfterPreparation()
 End Sub
 
 Private Sub pRunFirstDetail(ByVal DetailRunner As DetailPageRunner)
-    If Not pTransitionResolver.HasDetailTransitionOperation Then Exit Sub
-
     pListItemTargetId = pReadFirstListItemTargetId()
 
     Dim run_result As DetailPageRunResult

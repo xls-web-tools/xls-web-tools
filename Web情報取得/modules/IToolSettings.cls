@@ -51,9 +51,6 @@ End Property
 Public Property Get AuthenticatedStartSelector() As String
 End Property
 
-'* ˆê——‰æ–Ê“’B‚ğ”»’è‚·‚é selectorB
-Public Property Get ListPageSelector() As String
-End Property
 
 '* ˆê——‰æ–Ê‚Ö‚Ì‰æ–Ê‘JˆÚ‘€ì–¼B
 Public Property Get ListTransitionOperationName() As String

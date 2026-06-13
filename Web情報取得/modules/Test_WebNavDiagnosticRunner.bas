@@ -21,12 +21,17 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
     Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
+    tool_settings.ListItemTargetIdSelector = "#list-ready"
+    tool_settings.DetailTransitionOperationName = "OpenDetail"
+    tool_settings.TargetIdSelector = "#list-ready"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -49,6 +54,7 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""open-list-element""}}", "POST", "/session/abc/element", open_list_find_body)
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "POST", "/session/abc/element/open-list-element/click", "{}")
     Call client_double.Store.SetReturn("Execute", "{""value"":{""element-6066-11e4-a52e-4f735466cecf"":""list-element""}}", "POST", "/session/abc/element", list_find_body)
+    Call client_double.Store.SetReturn("Execute", "{""value"":""T-001""}", "GET", "/session/abc/element/list-element/text", "")
     Call client_double.Store.SetReturn("Execute", "{""value"":null}", "DELETE", "/session/abc", "")
 
     Dim session_client As WebDriverSessionClient
@@ -79,7 +85,7 @@ Public Sub Test_WebNavDiagnosticRunner_StartUrl‚©‚çˆê——‰æ–Ê“’B‚Ü‚Åf’f‚·‚é(ByVa
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", auth_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", open_list_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element/open-list-element/click", "{}")
-    Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
+    Assert.EqualsNumeric 5, client_double.Store.GetCallCount("Execute", "POST", "/session/abc/element", list_find_body)
     Assert.EqualsNumeric 1, client_double.Store.GetCallCount("Execute", "DELETE", "/session/abc", "")
     Assert.Equals "æ“¾€”õ’†", ProgStat.TaskName
     Assert.EqualsNumeric 5, ProgStat.TotalValue
@@ -99,16 +105,17 @@ Public Sub Test_WebNavDiagnosticRunner_æ“ªˆê——€–Ú‚©‚çÚ×ƒy[ƒW‚Ö“ü‚è‘ÎÛID‚ğ’
     Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -208,19 +215,20 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚ÉŠî‚Ã‚­f’fo—Ís‚ğ‘‚­(ByVal 
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
     tool_settings.DownloadEnabled = True
     tool_settings.DownloadRootPath = "D:\Root"
     tool_settings.DownloadLinkSelector = "#download"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -334,16 +342,17 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñƒwƒbƒ_[‚É’Pƒ—ñQÆ‚Ì’l‚ğ‘‚­(ByVa
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -420,17 +429,18 @@ Public Sub Test_WebNavDiagnosticRunner_”h¶—ñ‚ğo—Í‘ÎÛğŒ‚ÅQÆ‚µ‚Äf’fs‚ğ‘‚
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
     tool_settings.OutputConditionExpression = "[Ì—p—ñ] == ""‘ÎÛ"""
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -510,17 +520,18 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒˆê’vŒã‚Ì”h¶—ñBlankMode‹ó—“‚ÍERRORs‚
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
     tool_settings.OutputConditionExpression = "[”»’è] == ""‘ÎÛ"""
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -597,17 +608,18 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚ç”h¶—ñBlankMode‹ó—“‚Å‚àERRO
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
     tool_settings.OutputConditionExpression = "[”»’è] == ""‘ÎÛ"""
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -683,7 +695,6 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àŒÅ’èŠÇ——ñ‚¾‚¯‚Ìf’fs‚
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -692,9 +703,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àŒÅ’èŠÇ——ñ‚¾‚¯‚Ìf’fs‚
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -776,7 +787,6 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚ÅDownloadRequired‚È‚çNO_FI
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -789,9 +799,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚ÅDownloadRequired‚È‚çNO_FI
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -887,7 +897,6 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -899,9 +908,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×—ñ’è‹`‚È‚µ‚Å‚àƒ_ƒEƒ“ƒ[ƒhÏ‚İƒtƒ@ƒCƒ
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -981,7 +990,6 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚çf’fo—Ís‚ğ‘‚©‚È‚¢(ByVal 
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -991,9 +999,9 @@ Public Sub Test_WebNavDiagnosticRunner_ğŒ•sˆê’v‚È‚çf’fo—Ís‚ğ‘‚©‚È‚¢(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -1075,7 +1083,6 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.OutputSheetName = "output"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -1084,9 +1091,9 @@ Public Sub Test_WebNavDiagnosticRunner_•K{Ú×—ñ‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍERRORs‚ğ‘
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim detail_defs As ObjectList
@@ -1176,16 +1183,17 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——ã‚ÆÚ×ƒy[ƒW‚Ì‘ÎÛID•sˆê’v‚ÍƒGƒ‰[(
     Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
     tool_settings.TargetIdSelector = "#target-id"
+    tool_settings.ReturnToListOperationName = "ReturnToList"
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "", ActionScript:="return true;", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -1307,7 +1315,6 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×ƒy[ƒWŒã‚Éˆê——•œ‹AƒŠƒ“ƒN‚Å–ß‚é(ByVal 
     Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -1316,9 +1323,9 @@ Public Sub Test_WebNavDiagnosticRunner_Ú×ƒy[ƒWŒã‚Éˆê——•œ‹AƒŠƒ“ƒN‚Å–ß‚é(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
@@ -1396,7 +1403,6 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——•œ‹A¸”s‚Í•œ‹A•s”\ƒGƒ‰[‚É‚·‚é(ByVal 
     Call pUseProfileDirectory("C:\Profile", True)
     tool_settings.StartUrl = "https://example.test/start"
     tool_settings.AuthenticatedStartSelector = "#top-ready"
-    tool_settings.ListPageSelector = "#list-ready"
     tool_settings.ListTransitionOperationName = "OpenList"
     tool_settings.ListItemTargetIdSelector = "#list-item-target-id"
     tool_settings.DetailTransitionOperationName = "OpenDetail"
@@ -1405,9 +1411,9 @@ Public Sub Test_WebNavDiagnosticRunner_ˆê——•œ‹A¸”s‚Í•œ‹A•s”\ƒGƒ‰[‚É‚·‚é(ByVal 
 
     Dim operations As ObjectList
     Set operations = New_ObjectList("TransitionOperation")
-    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitConditionName:="ListReady"))
-    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitConditionName:="DetailReady"))
-    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitConditionName:="ListReady"))
+    Call operations.Add(New_TransitionOperation("OpenList", "#open-list", WaitSelector:="#list-ready"))
+    Call operations.Add(New_TransitionOperation("OpenDetail", ".first-detail-link", WaitSelector:="#target-id"))
+    Call operations.Add(New_TransitionOperation("ReturnToList", "#return-list", WaitSelector:="#list-ready"))
     Set tool_settings.TransitionOperations = operations
 
     Dim create_body As String
