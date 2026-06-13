@@ -112,14 +112,11 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* 指定されたインデックスの要素を返します。
+'* このコレクションのインデクサ。既存 index の参照・代入であり、範囲外 index を指定した場合はエラーになります。
 '*
 '* @param ItemIndex 要素のインデックス。
-'* @return 指定されたインデックスにある要素。
-'*
-'* @details
-'* 指定されたインデックスの要素を返します。
-Public Function Item(ByVal ItemIndex As Long) As Variant
+Public Property Get Item(ByVal ItemIndex As Long) As Variant
+Attribute Item.VB_UserMemId = 0
     Call pCheckIndex(ItemIndex)
 
     Dim index_arr() As Long
@@ -139,7 +136,13 @@ Public Function Item(ByVal ItemIndex As Long) As Variant
     Else
         Item = target_arr.Item(index_arr(UBound(index_arr)))
     End If
-End Function
+End Property
+Public Property Let Item(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
+    Call Update(ItemIndex, ItemObject)
+End Property
+Public Property Set Item(ByVal ItemIndex As Long, ByVal ItemObject As Object)
+    Call Update(ItemIndex, ItemObject)
+End Property
 
 Private Sub Class_Initialize()
     Call pInitializeCore

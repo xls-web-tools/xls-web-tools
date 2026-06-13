@@ -64,11 +64,11 @@ Public Property Get Items() As ObjectList
     Set Items = pValues.CopyList()
 End Property
 
-'* 指定されたキーに対応する要素を返します。
+'* このコレクションのインデクサ。参照時は指定されたキーに対応する要素を返します。代入時は AddOrUpdate と同様に動作します。
 '*
 '* @param Key 参照するキー。
-'* @return 指定されたキーに対応する要素。
 Public Property Get Item(ByVal Key As Variant) As Variant
+Attribute Item.VB_UserMemId = 0
     If Not pKeyToIndex.Exists(Key) Then
         Err.Raise vbObjectError + 1, "Class ObjectDictionary.Item", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
     End If
@@ -82,11 +82,9 @@ Public Property Get Item(ByVal Key As Variant) As Variant
         Item = pValues.Item(item_idx)
     End If
 End Property
-'* 指定されたキーに対応する要素を追加または更新します。
 Public Property Let Item(ByVal Key As Variant, ByVal Value As Variant)
     Call AddOrUpdate(Key, Value)
 End Property
-'* 指定されたキーに対応するオブジェクト要素を追加または更新します。
 Public Property Set Item(ByVal Key As Variant, ByVal Value As Object)
     Call AddOrUpdate(Key, Value)
 End Property

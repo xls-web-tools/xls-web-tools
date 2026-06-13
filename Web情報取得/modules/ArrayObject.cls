@@ -28,20 +28,21 @@ Public Property Get UpperBound() As Long
     UpperBound = UBound(pArray)
 End Property
 
-'* 指定されたインデックスの要素を返します。
-'*
-'* @param ItemIndex 要素のインデックス。
-'* @return 指定されたインデックスの要素。
-'*
-'* @details
-'* 境界確認は行わず、VBA の配列アクセスと同じエラーを露出します。
-Public Function Item(ByVal ItemIndex As Long) As Variant
+'* このコレクションのインデクサ。境界確認は行わず、VBA の配列アクセスと同じエラーを露出します。
+Public Property Get Item(ByVal ItemIndex As Long) As Variant
+Attribute Item.VB_UserMemId = 0
     If IsObject(pArray(ItemIndex)) Then
         Set Item = pArray(ItemIndex)
     Else
         Item = pArray(ItemIndex)
     End If
-End Function
+End Property
+Public Property Let Item(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
+    Call Update(ItemIndex, ItemObject)
+End Property
+Public Property Set Item(ByVal ItemIndex As Long, ByVal ItemObject As Object)
+    Call Update(ItemIndex, ItemObject)
+End Property
 
 Private Sub Class_Initialize()
     pArray = EmptyVariantArray()

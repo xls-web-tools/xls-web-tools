@@ -107,20 +107,17 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* 指定されたインデックスの要素を返します。
+'* このコレクションのインデクサ。読み取り専用です。指定されたインデックスにある要素を返します。要素は内部的にキーに基づいてアクセスされます。
 '*
 '* @param ItemIndex 要素のインデックス。
-'* @return 指定されたインデックスの要素。
-'*
-'* @details
-'* 指定されたインデックスにある要素を返します。要素は内部的にキーに基づいてアクセスされます。
-Public Function Item(ByVal ItemIndex As Long) As Variant
+Public Property Get Item(ByVal ItemIndex As Long) As Variant
+Attribute Item.VB_UserMemId = 0
     If pIsObject Then
         Set Item = pDict(pDict.Keys(ItemIndex))
     Else
         Item = pDict(pDict.Keys(ItemIndex))
     End If
-End Function
+End Property
 
 Private Sub Class_Initialize()
     Set pDict = New Dictionary

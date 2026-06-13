@@ -232,14 +232,12 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* 番号を指定してセル範囲を取得します。
+'* このコレクションのインデクサ。読み取り専用です。番号を指定してセル範囲を取得します。
 '*
 '* @param ItemIndex 番号。
 '* @param ColumnDirection [省略可] 列 (縦) 方向に走査するか。デフォルトは False で、行 (横) 方向に走査します。
-'*
-'* @details
-'* 番号を指定してセル範囲を取得します。
-Public Function Item(ByVal ItemIndex As Long, Optional ByVal ColumnDirection As Boolean = False) As WorksheetRangeBounds
+Public Property Get Item(ByVal ItemIndex As Long, Optional ByVal ColumnDirection As Boolean = False) As WorksheetRangeBounds
+Attribute Item.VB_UserMemId = 0
     Call pCheckInit
     If ItemIndex < 0 Then
         Err.Raise vbObjectError, "Class WorksheetRangeBounds.Item", "インデックスが範囲外です。"
@@ -250,7 +248,7 @@ Public Function Item(ByVal ItemIndex As Long, Optional ByVal ColumnDirection As 
     Else
         Set Item = pGetCellHorizontal(ItemIndex)
     End If
-End Function
+End Property
 
 Private Function pGetCellVertical(ByVal ItemIndex As Long) As WorksheetRangeBounds
     If IsEmpty Then
