@@ -19,11 +19,10 @@ Option Base 0
 
 Private pObjectKeyMode As Long
 
-'* トップレベルのオブジェクト引数に適用するキー化モードを返します。
+'* トップレベルのオブジェクト引数に適用するキー化モード。
 Public Property Get ObjectKeyMode() As Long
     ObjectKeyMode = pObjectKeyMode
 End Property
-'* トップレベルのオブジェクト引数に適用するキー化モードを設定します。
 Public Property Let ObjectKeyMode(ByVal NewValue As Long)
     Call pValidateObjectKeyMode(NewValue)
     pObjectKeyMode = NewValue

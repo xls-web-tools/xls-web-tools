@@ -34,7 +34,6 @@ End Property
 Public Property Get CompareMode() As Long
     CompareMode = pKeyToIndex.CompareMode
 End Property
-'* 文字列 key の比較モード。
 Public Property Let CompareMode(ByVal NewValue As Long)
     If pHasEverAdded Then
         Err.Raise vbObjectError + 1, "Class ObjectDictionary.CompareMode", "要素追加後に CompareMode を変更することはできません。"
