@@ -114,6 +114,17 @@ Public Sub Initialize( _
             ObjectKeyMode:=ObjectKeyMode)
 End Sub
 
+'* 他の辞書と同じ value 要素型状態と key 比較モードで初期化します。
+'*
+'* @param Other 初期化元の辞書。
+'*
+'* @details
+'* 他の辞書が管理している value 要素型状態と key 比較モードをこの辞書へ引き継ぎます。
+Public Sub InitializeFromOther(ByVal Other As ObjectDictionary)
+    Call pValues.InitializeFromOther(Other.Items)
+    Me.CompareMode = Other.CompareMode
+End Sub
+
 '* 新しい key-value pair を辞書に追加します。
 '*
 '* @param Key 追加するキー。
@@ -164,6 +175,59 @@ Private Sub pAddKey(ByVal Key As Variant)
     Else
         Call pKeys.Add(Key)
     End If
+End Sub
+
+'* 他の辞書の key-value pair をこの辞書に取り込みます。
+'*
+'* @param OtherDictionary 取り込む key-value pair を持つ他の辞書。
+'* @param ErrorIfExists [省略可] key が既に存在する場合にエラーを発生させるか否か。
+'* @param UpdateIfExists [省略可] key が既に存在する場合に value を更新するか否か。
+'*
+'* @details
+'* 他の辞書の key-value pair をこの辞書に取り込みます。UpdateIfExists が True の場合、ErrorIfExists の値に関わらず既存 key の value を更新します。
+Public Sub AddOther( _
+        ByVal OtherDictionary As ObjectDictionary, _
+        Optional ByVal ErrorIfExists As Boolean = True, _
+        Optional ByVal UpdateIfExists As Boolean = False)
+
+    If pCanInitializeFromOther Then Call InitializeFromOther(OtherDictionary)
+    If ErrorIfExists And Not UpdateIfExists Then Call pCheckNoExistingKeys(OtherDictionary)
+
+    Dim other_keys() As Variant
+    other_keys = OtherDictionary.Keys
+
+    If IsEmptyArray(other_keys) Then Exit Sub
+
+    Dim dict_key As Variant
+    For Each dict_key In other_keys
+        If Me.Exists(dict_key) Then
+            If UpdateIfExists Then
+                Call Me.Update(dict_key, OtherDictionary.Item(dict_key))
+            ElseIf ErrorIfExists Then
+                Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "指定されたキーは既に存在します。(" & pKeyToDisplayString(dict_key) & ")"
+            End If
+        Else
+            Call Me.Add(dict_key, OtherDictionary.Item(dict_key))
+        End If
+    Next dict_key
+End Sub
+
+Private Function pCanInitializeFromOther() As Boolean
+    pCanInitializeFromOther = (pValues.Count = 0 And pValues.ItemTypeName = "" And Not pValues.HasItemTypeContract)
+End Function
+
+Private Sub pCheckNoExistingKeys(ByVal OtherDictionary As ObjectDictionary)
+    Dim other_keys() As Variant
+    other_keys = OtherDictionary.Keys
+
+    If IsEmptyArray(other_keys) Then Exit Sub
+
+    Dim dict_key As Variant
+    For Each dict_key In other_keys
+        If Me.Exists(dict_key) Then
+            Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "指定されたキーは既に存在します。(" & pKeyToDisplayString(dict_key) & ")"
+        End If
+    Next dict_key
 End Sub
 
 '* 指定されたキーが存在するか否かを返します。
@@ -285,6 +349,13 @@ End Function
 '* @return value の配列。
 Public Function ConvertToArray() As Variant()
     ConvertToArray = pValues.ConvertToArray()
+End Function
+
+'* value を key 順の 0-based 文字列配列として返します。
+'*
+'* @return value の文字列配列。
+Public Function ConvertToStringArray() As String()
+    ConvertToStringArray = pValues.ConvertToStringArray()
 End Function
 
 Private Sub pIncrementEnumerationVersion()
