@@ -50,7 +50,7 @@
 | `ReturnToListOperationName` | 詳細ページから一覧画面へ戻る操作名。 |
 | `NextPageOperationName` | 次ページへ移動する操作名。空欄ならページングしません。指定する場合は `NextPageAvailableSelector` も指定します。 |
 | `NextPageAvailableSelector` | 次ページ操作前に、次ページがある場合だけ見つかる CSS selector。指定する場合は `NextPageOperationName` も指定します。 |
-| `ExistingRowMode` | `SkipExisting` なら既存の `OK` 行をスキップします。`Overwrite` なら既存行も再取得します。 |
+| `ExistingRowMode` | `SkipExisting` なら既存の `OK` 行をスキップします。`Overwrite` なら既存行も再取得します。`FillBlankCells` なら既存行を保持し、本当に空白の出力セルだけ補完します。 |
 | `TimeoutSeconds` | 画面や selector の出現を待つ秒数。通常は `30` です。 |
 | `OutputConditionExpression` | 出力対象を絞り込む条件式。不要なら空欄にします。 |
 

@@ -171,6 +171,26 @@ Public Sub Test_ToolSettings_Settingsシート_単一値設定を読み取る(ByVal Assert As
     Assert.Equals "#download", actual_download_link_selector
 End Sub
 
+Public Sub Test_ToolSettings_Settingsシート_ExistingRowModeでFillBlankCellsを読み取る(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseSettingsStubs("C:\Workbook")
+    Call pSetSetting(ws_stub, "ExistingRowMode", G_WEB_ROW_MODE_FILL_BLANK_CELLS, 18)
+
+    Dim tool_settings As IToolSettings
+    Set tool_settings = pNewToolSettings()
+
+    ' --- Act ---
+    Dim actual_existing_mode As String
+    actual_existing_mode = tool_settings.ExistingRowMode
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.Equals G_WEB_ROW_MODE_FILL_BLANK_CELLS, actual_existing_mode
+End Sub
+
 Public Sub Test_ToolSettings_Settingsシート_パス設定は絶対パスへ解決して返す(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 

@@ -49,6 +49,9 @@ Public Const G_WEB_ROW_MODE_SKIP_EXISTING As String = "SkipExisting"
 '* 既存行を上書きして再取得する既存行モード。
 Public Const G_WEB_ROW_MODE_OVERWRITE As String = "Overwrite"
 
+'* 既存行の空白セルだけを補完する既存行モード。
+Public Const G_WEB_ROW_MODE_FILL_BLANK_CELLS As String = "FillBlankCells"
+
 '* 診断用の実行モード。
 Public Const G_WEB_RUN_MODE_DIAGNOSTIC As String = "Diagnostic"
 

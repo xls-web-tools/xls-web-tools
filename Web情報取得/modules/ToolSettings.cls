@@ -88,7 +88,6 @@ Private Property Get IToolSettings_AuthenticatedStartSelector() As String
     IToolSettings_AuthenticatedStartSelector = AuthenticatedStartSelector
 End Property
 
-
 '* 一覧画面への画面遷移操作名。
 Public Property Get ListTransitionOperationName() As String
     ListTransitionOperationName = pGetRequiredParam("ListTransitionOperationName")
@@ -166,15 +165,6 @@ End Property
 Private Property Get IToolSettings_NextPageAvailableSelector() As String
     IToolSettings_NextPageAvailableSelector = NextPageAvailableSelector
 End Property
-
-Private Sub pValidateNextPageSettings( _
-        ByVal NextPageOperationNameText As String, _
-        ByVal NextPageAvailableSelectorText As String)
-
-    If (Trim$(NextPageOperationNameText) = "") <> (Trim$(NextPageAvailableSelectorText) = "") Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pValidateNextPageSettings", Description:="NextPageOperationName と NextPageAvailableSelector は両方指定するか、両方空にしてください。"
-    End If
-End Sub
 
 '* 既存行の扱い。
 Public Property Get ExistingRowMode() As String
@@ -277,6 +267,15 @@ Public Sub Initialize(ByVal SettingsSheet As IUserInputSheet)
     Set pSettingsSheet = SettingsSheet
 End Sub
 
+Private Sub pValidateNextPageSettings( _
+        ByVal NextPageOperationNameText As String, _
+        ByVal NextPageAvailableSelectorText As String)
+
+    If (Trim$(NextPageOperationNameText) = "") <> (Trim$(NextPageAvailableSelectorText) = "") Then
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pValidateNextPageSettings", Description:="NextPageOperationName と NextPageAvailableSelector は両方指定するか、両方空にしてください。"
+    End If
+End Sub
+
 Private Function pGetRequiredParam(ByVal Name As String) As String
     Dim result_value As String
     result_value = pGetOptionalParam(Name, "")
@@ -349,8 +348,10 @@ Private Function pNormalizeExistingRowMode(ByVal ModeText As String) As String
             pNormalizeExistingRowMode = G_WEB_ROW_MODE_SKIP_EXISTING
         Case UCase$(G_WEB_ROW_MODE_OVERWRITE)
             pNormalizeExistingRowMode = G_WEB_ROW_MODE_OVERWRITE
+        Case UCase$(G_WEB_ROW_MODE_FILL_BLANK_CELLS)
+            pNormalizeExistingRowMode = G_WEB_ROW_MODE_FILL_BLANK_CELLS
         Case Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pNormalizeExistingRowMode", Description:="ExistingRowMode が不正です。(値: " & ModeText & "、有効値: " & G_WEB_ROW_MODE_SKIP_EXISTING & ", " & G_WEB_ROW_MODE_OVERWRITE & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class ToolSettings.pNormalizeExistingRowMode", Description:="ExistingRowMode が不正です。(値: " & ModeText & "、有効値: " & G_WEB_ROW_MODE_SKIP_EXISTING & ", " & G_WEB_ROW_MODE_OVERWRITE & ", " & G_WEB_ROW_MODE_FILL_BLANK_CELLS & ")"
     End Select
 End Function
 

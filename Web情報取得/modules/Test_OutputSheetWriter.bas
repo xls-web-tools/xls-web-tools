@@ -549,6 +549,108 @@ Public Sub Test_OutputSheetWriter_本番収集対象判定は対象ID主キーとExistingRowMod
     If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
 End Sub
 
+Public Sub Test_OutputSheetWriter_FillBlankCellsは有効な出力列に空白セルがある既存行だけ収集する(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "件名", "申請者", "", "未定義")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_FILL_BLANK_CELLS
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-BLANK", 5)
+    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=5, Column:=2, Sheet:="result"), False)
+    Call pSetCellBlank(ws_stub, 5, 5, False)
+    Call pSetCellBlank(ws_stub, 5, 6, True)
+
+    Call pSetFindRows(ws_stub, "T-FULL", 6)
+    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_OK, New_RangeBounds(Row:=6, Column:=2, Sheet:="result"), False)
+    Call pSetCellBlank(ws_stub, 6, 5, False)
+    Call pSetCellBlank(ws_stub, 6, 6, False)
+
+    Call pSetFindRows(ws_stub, "T-ERROR-FULL", 7)
+    Call ws_stub.Store.SetReturn("ReadCell", G_WEB_STATUS_ERROR, New_RangeBounds(Row:=7, Column:=2, Sheet:="result"), False)
+    Call pSetCellBlank(ws_stub, 7, 5, False)
+    Call pSetCellBlank(ws_stub, 7, 6, False)
+
+    Call pSetFindRows(ws_stub, "T-NEW", 0)
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act & Assert ---
+    Assert.IsTrue writer.ShouldCollectTarget("T-BLANK")
+    Assert.IsFalse writer.ShouldCollectTarget("T-FULL")
+    Assert.IsFalse writer.ShouldCollectTarget("T-ERROR-FULL")
+    Assert.IsTrue writer.ShouldCollectTarget("T-NEW")
+
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+End Sub
+
+Public Sub Test_OutputSheetWriter_FillBlankCellsは既存行の空白セルに非空値だけを書き込む(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetOutputHeaders(ws_stub, "件名", "申請者", "空値", "未定義")
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+    tool_settings.ExistingRowMode = G_WEB_ROW_MODE_FILL_BLANK_CELLS
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Call detail_defs.Add(New_DetailColumnDefinition("申請者", "#requester", OutputValueType:="Auto"))
+    Call detail_defs.Add(New_DetailColumnDefinition("空値", "#blank"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Call pSetFindRows(ws_stub, "T-001", 5)
+    Call pSetCellBlank(ws_stub, 5, 1, False)
+    Call pSetCellBlank(ws_stub, 5, 2, False)
+    Call pSetCellBlank(ws_stub, 5, 3, True)
+    Call pSetCellBlank(ws_stub, 5, 4, True)
+    Call pSetCellBlank(ws_stub, 5, 5, False)
+    Call pSetCellBlank(ws_stub, 5, 6, True)
+    Call pSetCellBlank(ws_stub, 5, 7, True)
+
+    Dim detail_values As ArrayObject
+    Set detail_values = New ArrayObject
+    Call detail_values.ReDimArray(0, 2)
+    Call detail_values.Update(0, "案件A")
+    Call detail_values.Update(1, "123")
+    Call detail_values.Update(2, "")
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.WriteCollectionRow("T-001", G_WEB_STATUS_OK, "", detail_values, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=1, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=2, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=3, Sheet:="result"))
+    Call pAssertWrittenCell(Assert, ws_stub, 5, 4, G_WEB_DOWNLOAD_STATUS_DOWNLOADED)
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=5, Sheet:="result"))
+    Call pAssertWrittenCellTypeConvert(Assert, ws_stub, 5, 6, "123", True)
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=7, Sheet:="result"))
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=5, Column:=8, Sheet:="result"))
+End Sub
+
 Public Sub Test_OutputSheetWriter_本番出力は対象ID一致行を更新し未登録なら末尾へ追加する(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
@@ -668,6 +770,14 @@ Private Sub pSetFindRows(ByVal WsStub As WorksheetServiceTestDouble, ByVal Targe
     End If
 
     Call WsStub.Store.SetReturn("Find", found_rows, TargetId, search_bounds, True, True, True, True)
+End Sub
+
+Private Sub pSetCellBlank(ByVal WsStub As WorksheetServiceTestDouble, ByVal RowIndex As Long, ByVal ColumnIndex As Long, ByVal IsBlank As Boolean)
+    Call WsStub.Store.SetReturn( _
+            "IsEmptyCell", _
+            IsBlank, _
+            New_RangeBounds(Row:=RowIndex, Column:=ColumnIndex, Sheet:="result"), _
+            False)
 End Sub
 
 Private Sub pSetManagedUsedBounds(ByVal WsStub As WorksheetServiceTestDouble, ByVal FinishRow As Long)
