@@ -10,12 +10,16 @@ Option Base 0
 '!
 ' #############################################################################
 
-Public Sub Test_OutputSheetWriter_固定管理列ヘッダーだけを用意する(ByVal Assert As UnitTestAssert)
+Public Sub Test_OutputSheetWriter_固定管理列ヘッダーが空白なら既定値を書く(ByVal Assert As UnitTestAssert)
     On Error Resume Next
 
     ' --- Arrange ---
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = pUseOutputSheetStubs()
+    Call pSetManagedHeaderBlank(ws_stub, 1, True)
+    Call pSetManagedHeaderBlank(ws_stub, 2, True)
+    Call pSetManagedHeaderBlank(ws_stub, 3, True)
+    Call pSetManagedHeaderBlank(ws_stub, 4, True)
 
     Dim tool_settings As ToolSettingsTestDouble
     Set tool_settings = New ToolSettingsTestDouble
@@ -40,7 +44,39 @@ Public Sub Test_OutputSheetWriter_固定管理列ヘッダーだけを用意する(ByVal Assert 
     Call pAssertWrittenCell(Assert, ws_stub, 1, 4, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteRange")
     Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("ClearRange")
-    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCount("WriteCell", New_RangeBounds(Row:=1, Column:=5, Sheet:="result"))
+End Sub
+
+Public Sub Test_OutputSheetWriter_固定管理列ヘッダーが空白でなければ変更しない(ByVal Assert As UnitTestAssert)
+    On Error Resume Next
+
+    ' --- Arrange ---
+    Dim ws_stub As WorksheetServiceTestDouble
+    Set ws_stub = pUseOutputSheetStubs()
+    Call pSetManagedHeaderBlank(ws_stub, 1, False)
+    Call pSetManagedHeaderBlank(ws_stub, 2, False)
+    Call pSetManagedHeaderBlank(ws_stub, 3, False)
+    Call pSetManagedHeaderBlank(ws_stub, 4, False)
+
+    Dim tool_settings As ToolSettingsTestDouble
+    Set tool_settings = New ToolSettingsTestDouble
+    tool_settings.OutputSheetName = "result"
+
+    Dim detail_defs As ObjectList
+    Set detail_defs = New_ObjectList("DetailColumnDefinition")
+    Call detail_defs.Add(New_DetailColumnDefinition("件名", "#title"))
+    Set tool_settings.DetailColumnDefinitions = detail_defs
+
+    Dim writer As OutputSheetWriter
+    Set writer = New_OutputSheetWriter(tool_settings)
+
+    ' --- Act ---
+    Call writer.EnsureHeaders
+
+    ' --- Assert ---
+    If Not Assert.ErrorNotRaised(0, Err.Number, Err.Source, Err.Description) Then Exit Sub
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteCell")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("WriteRange")
+    Assert.EqualsNumeric 0, ws_stub.Store.GetCallCountAll("ClearRange")
 End Sub
 
 Public Sub Test_OutputSheetWriter_診断出力はoutputヘッダーに一致する詳細列へ書き込む(ByVal Assert As UnitTestAssert)
@@ -612,6 +648,14 @@ Private Function pUseOutputSheetStubs() As WorksheetServiceTestDouble
 
     Set pUseOutputSheetStubs = ws_stub
 End Function
+
+Private Sub pSetManagedHeaderBlank(ByVal WsStub As WorksheetServiceTestDouble, ByVal ColumnIndex As Long, ByVal IsBlank As Boolean)
+    Call WsStub.Store.SetReturn( _
+            "IsEmptyCell", _
+            IsBlank, _
+            New_RangeBounds(Row:=1, Column:=ColumnIndex, Sheet:="result"), _
+            False)
+End Sub
 
 Private Sub pSetFindRows(ByVal WsStub As WorksheetServiceTestDouble, ByVal TargetId As String, ByVal RowIndex As Long)
     Dim search_bounds As WorksheetRangeBounds

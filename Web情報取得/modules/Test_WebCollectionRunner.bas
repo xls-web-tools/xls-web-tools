@@ -21,6 +21,7 @@ Public Sub Test_WebCollectionRunner_Œ»İƒy[ƒW‚ğ‘ÎÛIDåƒL[‚Å„‰ñ‚µŠù‘¶OK‚ÍƒXƒL
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetManagedHeadersBlank(ws_stub, False)
     Call pPrepareEmptyOutput(ws_stub)
 
     Dim fs_stub As FileSystemServiceTestDouble
@@ -155,6 +156,7 @@ Public Sub Test_WebCollectionRunner_‰‰ñƒy[ƒW0Œ‚È‚çûWi’»‚ğŠJn‚µ‚È‚¢(ByVal 
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetManagedHeadersBlank(ws_stub, False)
     Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
@@ -239,6 +241,7 @@ Public Sub Test_WebCollectionRunner_Šù‘¶ERRORs‚ªğŒ•sˆê’v‚È‚çŠù‘¶s‚ğXV‚¹‚¸
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetManagedHeadersBlank(ws_stub, False)
     Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
@@ -344,6 +347,7 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‚ª‚ ‚ê‚Î‘Sƒy[ƒW‚ğ„‰ñ‚·‚é(ByVal Ass
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetManagedHeadersBlank(ws_stub, False)
     Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
@@ -446,6 +450,7 @@ Public Sub Test_WebCollectionRunner_Ÿƒy[ƒW‘€ìŒã‚Éæ“ª‘ÎÛID‚ª•Ï‚í‚ç‚È‚¯‚ê‚Î’†
     Dim ws_stub As WorksheetServiceTestDouble
     Set ws_stub = New WorksheetServiceTestDouble
     Set WsSrv = ws_stub
+    Call pSetManagedHeadersBlank(ws_stub, False)
     Call pPrepareEmptyOutput(ws_stub)
 
     Dim tool_settings As ToolSettingsTestDouble
@@ -626,6 +631,17 @@ Private Sub pSetTextElementSequence( _
     For text_idx = LBound(ElementTexts) To UBound(ElementTexts)
         Call ClientDouble.Store.SetReturn("Execute.Sequence", "{""value"":""" & CStr(ElementTexts(text_idx)) & """}", "GET", "/session/abc/element/" & ElementId & "/text", "", CLng(text_idx))
     Next text_idx
+End Sub
+
+Private Sub pSetManagedHeadersBlank(ByVal WsStub As WorksheetServiceTestDouble, ByVal IsBlank As Boolean)
+    Dim col_idx As Long
+    For col_idx = 1 To 4
+        Call WsStub.Store.SetReturn( _
+                "IsEmptyCell", _
+                IsBlank, _
+                New_RangeBounds(Row:=1, Column:=col_idx, Sheet:="output"), _
+                False)
+    Next col_idx
 End Sub
 
 Private Sub pAssertWrittenCell( _

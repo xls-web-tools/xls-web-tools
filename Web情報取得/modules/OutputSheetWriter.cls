@@ -45,18 +45,27 @@ Public Sub Initialize(ByVal Settings As IToolSettings)
     pIsInitialized = True
 End Sub
 
-'* 固定管理列のヘッダーを用意します。
+'* 固定管理列の既定ヘッダーを用意します。
 '*
 '* @details
-'* A:D はツール管理列として固定順で書き込みます。E 列以降は利用者が output シート 1 行目に
-'* OutputColumnName を指定して管理するため、この処理では作成も削除もしません。
+'* A:D は列位置で固定管理列として扱います。1 行目は利用者が変更できる表示名のため、
+'* 既に値、数式、または空文字列が入っているセルは変更しません。本当に空白のセルだけ既定値を書き込みます。
 Public Sub EnsureHeaders()
     Call pCheckInit
 
-    Call pWriteOutputCell(C_HEADER_ROW, C_COL_TARGET_ID, G_WEB_OUTPUT_COL_TARGET_ID)
-    Call pWriteOutputCell(C_HEADER_ROW, C_COL_STATUS, G_WEB_OUTPUT_COL_STATUS)
-    Call pWriteOutputCell(C_HEADER_ROW, C_COL_ERROR, G_WEB_OUTPUT_COL_ERROR)
-    Call pWriteOutputCell(C_HEADER_ROW, C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
+    Call pWriteManagedHeaderIfBlank(C_COL_TARGET_ID, G_WEB_OUTPUT_COL_TARGET_ID)
+    Call pWriteManagedHeaderIfBlank(C_COL_STATUS, G_WEB_OUTPUT_COL_STATUS)
+    Call pWriteManagedHeaderIfBlank(C_COL_ERROR, G_WEB_OUTPUT_COL_ERROR)
+    Call pWriteManagedHeaderIfBlank(C_COL_DOWNLOAD_STATUS, G_WEB_OUTPUT_COL_DOWNLOAD_STATUS)
+End Sub
+
+Private Sub pWriteManagedHeaderIfBlank(ByVal ColumnIndex As Long, ByVal HeaderValue As String)
+    Dim target_bounds As WorksheetRangeBounds
+    Set target_bounds = New_RangeBounds(Row:=C_HEADER_ROW, Column:=ColumnIndex, Sheet:=pSettings.OutputSheetName)
+
+    If WsSrv.IsEmptyCell(target_bounds, IgnoreEmptyString:=False) Then
+        Call pWriteOutputCell(C_HEADER_ROW, ColumnIndex, HeaderValue)
+    End If
 End Sub
 
 Private Sub pWriteOutputCell( _
