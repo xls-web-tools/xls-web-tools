@@ -206,30 +206,23 @@ Private Function pHasBlankOutputCell(ByVal RowIndex As Long) As Boolean
     Set detail_defs = pSettings.DetailColumnDefinitions
     If detail_defs.Count = 0 Then Exit Function
 
-    Dim header_bounds As WorksheetRangeBounds
-    Set header_bounds = pOutputHeaderUsedBounds()
-    If header_bounds.IsEmpty Then Exit Function
+    Dim output_columns As ObjectDictionary
+    Set output_columns = pResolveOutputColumnSelections(detail_defs)
+    If output_columns.Count = 0 Then Exit Function
 
-    Dim header_values As Variant
-    header_values = WsSrv.ReadRange(header_bounds)
+    Dim output_col_keys() As Variant
+    output_col_keys = output_columns.Keys
 
-    Dim header_col_idx As Long
-    For header_col_idx = LBound(header_values, 2) To UBound(header_values, 2)
-        Dim header_text As String
-        header_text = Trim$(pCellText(header_values(LBound(header_values, 1), header_col_idx)))
+    Dim key_idx As Long
+    For key_idx = LBound(output_col_keys) To UBound(output_col_keys)
+        Dim output_col_idx As Long
+        output_col_idx = CLng(output_col_keys(key_idx))
 
-        If header_text <> "" Then
-            If pFindDetailDefinitionIndex(detail_defs, header_text) <> C_NOT_FOUND Then
-                Dim output_col_idx As Long
-                output_col_idx = header_bounds.Column + header_col_idx - LBound(header_values, 2)
-
-                If WsSrv.IsEmptyCell(New_RangeBounds(Row:=RowIndex, Column:=output_col_idx, Sheet:=pSettings.OutputSheetName), IgnoreEmptyString:=False) Then
-                    pHasBlankOutputCell = True
-                    Exit Function
-                End If
-            End If
+        If WsSrv.IsEmptyCell(New_RangeBounds(Row:=RowIndex, Column:=output_col_idx, Sheet:=pSettings.OutputSheetName), IgnoreEmptyString:=False) Then
+            pHasBlankOutputCell = True
+            Exit Function
         End If
-    Next header_col_idx
+    Next key_idx
 End Function
 
 '* ä˘ë∂çsÇç°âÒÇÃé¿çsÇ≈èëÇ´çûÇﬁÇ◊Ç´Ç©ï‘ÇµÇ‹Ç∑ÅB
@@ -338,9 +331,50 @@ Private Sub pWriteDetailOutputCells( _
     Set detail_defs = pSettings.DetailColumnDefinitions
     If detail_defs.Count = 0 Then Exit Sub
 
+    Dim output_columns As ObjectDictionary
+    Set output_columns = pResolveOutputColumnSelections(detail_defs)
+    If output_columns.Count = 0 Then Exit Sub
+
+    Dim output_col_keys() As Variant
+    output_col_keys = output_columns.Keys
+
+    Dim key_idx As Long
+    For key_idx = LBound(output_col_keys) To UBound(output_col_keys)
+        Dim output_col_idx As Long
+        output_col_idx = CLng(output_col_keys(key_idx))
+
+        Dim detail_idx As Long
+        detail_idx = CLng(output_columns.Item(output_col_idx))
+
+        Dim output_value As String
+        If BlankValues Then
+            output_value = ""
+        Else
+            output_value = CStr(DetailValues.Item(detail_idx))
+        End If
+
+        Dim detail_def As DetailColumnDefinition
+        Set detail_def = detail_defs.Item(detail_idx)
+
+        Call pWriteOutputCell( _
+                RowIndex, _
+                output_col_idx, _
+                output_value, _
+                pShouldTypeConvertOutputValue(detail_def, output_value), _
+                OnlyIfBlank:=FillBlankCells)
+    Next key_idx
+End Sub
+
+Private Function pResolveOutputColumnSelections(ByVal DetailDefinitions As ObjectList) As ObjectDictionary
+    Dim result_values As ObjectDictionary
+    Set result_values = New_ObjectDictionary()
+
     Dim header_bounds As WorksheetRangeBounds
     Set header_bounds = pOutputHeaderUsedBounds()
-    If header_bounds.IsEmpty Then Exit Sub
+    If header_bounds.IsEmpty Then
+        Set pResolveOutputColumnSelections = result_values
+        Exit Function
+    End If
 
     Dim header_values As Variant
     header_values = WsSrv.ReadRange(header_bounds)
@@ -352,31 +386,17 @@ Private Sub pWriteDetailOutputCells( _
 
         If header_text <> "" Then
             Dim detail_idx As Long
-            detail_idx = pFindDetailDefinitionIndex(detail_defs, header_text)
+            detail_idx = pFindDetailDefinitionIndex(DetailDefinitions, header_text)
             If detail_idx <> C_NOT_FOUND Then
                 Dim output_col_idx As Long
                 output_col_idx = header_bounds.Column + header_col_idx - LBound(header_values, 2)
-
-                Dim output_value As String
-                If BlankValues Then
-                    output_value = ""
-                Else
-                    output_value = CStr(DetailValues.Item(detail_idx))
-                End If
-
-                Dim detail_def As DetailColumnDefinition
-                Set detail_def = detail_defs.Item(detail_idx)
-
-                Call pWriteOutputCell( _
-                        RowIndex, _
-                        output_col_idx, _
-                        output_value, _
-                        pShouldTypeConvertOutputValue(detail_def, output_value), _
-                        OnlyIfBlank:=FillBlankCells)
+                Call result_values.Add(output_col_idx, detail_idx)
             End If
         End If
     Next header_col_idx
-End Sub
+
+    Set pResolveOutputColumnSelections = result_values
+End Function
 
 Private Function pShouldTypeConvertOutputValue(ByVal DetailDefinition As DetailColumnDefinition, ByVal OutputValue As String) As Boolean
     pShouldTypeConvertOutputValue = ( _
