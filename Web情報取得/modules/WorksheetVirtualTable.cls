@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! 複数の WorksheetRangeBounds を header と相対行で対応付ける仮想表です。
+'! Virtual table that associates multiple WorksheetRangeBounds objects by header and relative row.
 '!
 ' #############################################################################
 
@@ -25,24 +25,24 @@ Private pHeaderCompareMode As VbCompareMethod
 Private pHeaderRowCount As Long
 Private pNewEnumSnapshot As Collection
 
-'* 仮想表の行数
+'* Row count of the virtual table.
 Public Property Get Count() As Long
     Call pCheckInit
     Count = pCount
 End Property
 
-'* 仮想表の行数
+'* Row count of the virtual table.
 Public Property Get RowCount() As Long
     RowCount = Count
 End Property
 
-'* 解決済み header 名の配列 copy
+'* Array copy of resolved header names.
 Public Property Get Headers() As String()
     Call pCheckInit
     Headers = pCopyHeaders()
 End Property
 
-'* 標準 For Each 用の列挙子
+'* Enumerator for standard For Each.
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
@@ -52,9 +52,9 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* このコレクションのインデクサ。読み取り専用です。指定された 0-based index の行 (header を key、対応する 1 行分の `WorksheetRangeBounds` を値に持つ `ObjectDictionary`) を返します。短い field の不足行は、元 field の幅を維持した RowCount = 0 の空範囲として返します。
+'* Indexer for this collection. Read-only. Returns the row at the specified 0-based index (an `ObjectDictionary` with headers as keys and one-row `WorksheetRangeBounds` values). Missing rows in shorter fields are returned as empty ranges with RowCount = 0 while preserving the original field width.
 '*
-'* @param ItemIndex 取得する行の 0-based index。
+'* @param ItemIndex 0-based index of the row to get.
 Public Property Get Item(ByVal ItemIndex As Long) As ObjectDictionary
 Attribute Item.VB_UserMemId = 0
     Call pCheckInit
@@ -88,22 +88,22 @@ End Function
 
 Private Sub pCheckItemIndex(ByVal ItemIndex As Long)
     If ItemIndex < 0 Or pCount <= ItemIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckItemIndex", "行 index が範囲外です。(" & CStr(ItemIndex) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckItemIndex", "Row index is out of range. (" & CStr(ItemIndex) & ")"
     End If
 End Sub
 
-'* 仮想表を初期化します。
+'* Initializes the virtual table.
 '*
-'* @param ColumnRangeList 仮想表の field として扱う `WorksheetRangeBounds` の `ObjectList`。
-'* @param HeaderNames [省略可] header 名の 1 次元文字列配列。
-'* @param TreatFirstRowAsHeader [省略可] True の場合は各 field 範囲の 1 行目を header として読み取ります。
-'* @param HeaderCompareMode [省略可] header 重複判定と行 `ObjectDictionary` の比較モード。
-'* @param HeaderJoinDelimiter [省略可] 複数列 field の header セルを連結するときの区切り文字。
+'* @param ColumnRangeList `ObjectList` of `WorksheetRangeBounds` objects to treat as virtual table fields.
+'* @param HeaderNames [Optional] One-dimensional string array of header names.
+'* @param TreatFirstRowAsHeader [Optional] When True, reads the first row of each field range as the header.
+'* @param HeaderCompareMode [Optional] Comparison mode for header duplicate checks and row `ObjectDictionary` objects.
+'* @param HeaderJoinDelimiter [Optional] Delimiter used when joining header cells from multi-column fields.
 '*
 '* @details
-'* `ColumnRangeList` は `ObjectList("WorksheetRangeBounds")` の型契約を持つ必要があります。
-'* `TreatFirstRowAsHeader=True` の場合、`HeaderNames` は無視されます。
-'* header 件数不一致、重複 header、または `HeaderNames` の型不一致は初期化エラーになります。
+'* `ColumnRangeList` must have the type contract `ObjectList("WorksheetRangeBounds")`.
+'* When `TreatFirstRowAsHeader=True`, `HeaderNames` is ignored.
+'* Header count mismatches, duplicate headers, or type mismatches in `HeaderNames` are initialization errors.
 Public Sub Initialize( _
         ByVal ColumnRangeList As ObjectList, _
         Optional ByVal HeaderNames As Variant, _
@@ -111,7 +111,7 @@ Public Sub Initialize( _
         Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
         Optional ByVal HeaderJoinDelimiter As String = "")
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "すでに初期化済みです。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "The object is already initialized."
     Call pValidateColumnRangeList(ColumnRangeList)
     If TreatFirstRowAsHeader Then
         pHeaderRowCount = 1
@@ -119,13 +119,13 @@ Public Sub Initialize( _
     Else
         pHeaderRowCount = 0
         If IsMissing(HeaderNames) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "HeaderNames が指定されていません。"
+            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "HeaderNames is not specified."
         End If
         pHeaders = pGetHeaderNamesArray(HeaderNames)
     End If
 
     If pHeaderCount() <> ColumnRangeList.Count Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "HeaderNames と ColumnRangeList の件数が一致しません。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.Initialize", "The number of HeaderNames and ColumnRangeList items does not match."
     End If
 
     pHeaderCompareMode = HeaderCompareMode
@@ -136,16 +136,16 @@ Public Sub Initialize( _
     pIsInitialized = True
 End Sub
 
-'* WorksheetRangeBounds から仮想表を初期化します。
+'* Initializes the virtual table from WorksheetRangeBounds.
 '*
-'* @param TableRange 仮想表の列に分割する WorksheetRangeBounds。
-'* @param HeaderNames [省略可] header 名の 1 次元文字列配列。
-'* @param TreatFirstRowAsHeader [省略可] True の場合は各 field 範囲の 1 行目を header として読み取ります。
-'* @param HeaderCompareMode [省略可] header 重複判定と行 ObjectDictionary の比較モード。
-'* @param HeaderJoinDelimiter [省略可] 複数列 field の header セルを連結するときの区切り文字。
+'* @param TableRange WorksheetRangeBounds to split into virtual table columns.
+'* @param HeaderNames [Optional] One-dimensional string array of header names.
+'* @param TreatFirstRowAsHeader [Optional] When True, reads the first row of each field range as the header.
+'* @param HeaderCompareMode [Optional] Comparison mode for header duplicate checks and row ObjectDictionary objects.
+'* @param HeaderJoinDelimiter [Optional] Delimiter used when joining header cells from multi-column fields.
 '*
 '* @details
-'* TableRange.GetColumns() で列単位の WorksheetRangeBounds 一覧を取得し、既存の Initialize に委譲します。
+'* Gets a list of column-wise WorksheetRangeBounds objects with TableRange.GetColumns() and delegates to the existing Initialize.
 Public Sub InitializeFromRangeBounds( _
         ByVal TableRange As WorksheetRangeBounds, _
         Optional ByVal HeaderNames As Variant, _
@@ -153,8 +153,8 @@ Public Sub InitializeFromRangeBounds( _
         Optional ByVal HeaderCompareMode As VbCompareMethod = vbBinaryCompare, _
         Optional ByVal HeaderJoinDelimiter As String = "")
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "すでに初期化済みです。"
-    If TableRange Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "TableRange が指定されていません。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "The object is already initialized."
+    If TableRange Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.InitializeFromRangeBounds", "TableRange is not specified."
 
     Call Initialize( _
             ColumnRangeList:=TableRange.GetColumns(), _
@@ -166,13 +166,13 @@ End Sub
 
 Private Sub pValidateColumnRangeList(ByVal ColumnRangeList As ObjectList)
     If ColumnRangeList Is Nothing Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList が指定されていません。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList is not specified."
     End If
     If Not ColumnRangeList.HasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList には WorksheetRangeBounds の型契約が必要です。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList requires a WorksheetRangeBounds type contract."
     End If
     If StrComp(ColumnRangeList.ElementTypeName, "WorksheetRangeBounds", vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "ColumnRangeList の要素型契約は WorksheetRangeBounds を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateColumnRangeList", "The ColumnRangeList element type contract must specify WorksheetRangeBounds."
     End If
 End Sub
 
@@ -183,7 +183,7 @@ Private Function pGetHeaderNamesArray(ByVal HeaderNames As Variant) As String()
     Dim ubound_arr() As Long
     Call GetArrayBounds(lbound_arr, ubound_arr, HeaderNames)
     If LBound(lbound_arr) <> UBound(lbound_arr) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pGetHeaderNamesArray", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pGetHeaderNamesArray", "HeaderNames must be a one-dimensional string array."
     End If
 
     If IsEmptyArray(HeaderNames) Then
@@ -230,7 +230,7 @@ Private Sub pValidateDuplicateHeaders()
     Dim header_idx As Long
     For header_idx = LBound(pHeaders) To UBound(pHeaders)
         If header_dict.Exists(pHeaders(header_idx)) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateDuplicateHeaders", "header が重複しています。(" & pHeaders(header_idx) & ")"
+            Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateDuplicateHeaders", "Header is duplicated. (" & pHeaders(header_idx) & ")"
         End If
         Call header_dict.Add(pHeaders(header_idx), True)
     Next header_idx
@@ -262,17 +262,17 @@ Private Function pHeaderCount() As Long
     End If
 End Function
 
-'* 指定された行 index の行を返します。
+'* Returns the row at the specified row index.
 '*
-'* @param RowIndex 行 index。正数は上からの 1 オリジン、負数は下からの 1 オリジン。0 は範囲外エラー。
-'* @return header を key、1 行分の `WorksheetRangeBounds` を値に持つ `ObjectDictionary`。
+'* @param RowIndex Row index. Positive numbers are 1-origin from the top; negative numbers are 1-origin from the bottom. 0 is an out-of-range error.
+'* @return `ObjectDictionary` with headers as keys and one-row `WorksheetRangeBounds` values.
 '*
 '* @details
-'* `WorksheetRangeBounds.GetRow` と同じ行 index 規則で行を取得します。
+'* Gets a row using the same row index rules as `WorksheetRangeBounds.GetRow`.
 Public Function GetRow(ByVal RowIndex As Long) As ObjectDictionary
     Call pCheckInit
     If RowIndex = 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.GetRow", "行 index が範囲外です。(0)"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.GetRow", "Row index is out of range. (0)"
     End If
 
     Dim item_idx As Long
@@ -285,13 +285,13 @@ Public Function GetRow(ByVal RowIndex As Long) As ObjectDictionary
     Set GetRow = Item(item_idx)
 End Function
 
-'* この仮想表の列挙子を返します。
+'* Returns the enumerator for this virtual table.
 '*
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @return 行 `ObjectDictionary` を返す列挙子。
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @return Enumerator that returns row `ObjectDictionary` objects.
 '*
 '* @details
-'* 返される列挙子は読み取り専用です。`IEnumerator.Index` は 0-based です。
+'* The returned enumerator is read-only. `IEnumerator.Index` is 0-based.
 Public Function GetEnumerator(Optional ByVal Descending As Boolean = False) As IEnumerator
     Call pCheckInit
 
@@ -304,13 +304,13 @@ End Function
 
 Private Sub pValidateHeaderNamesType(ByVal HeaderNames As Variant)
     If Not IsArray(HeaderNames) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames must be a one-dimensional string array."
     End If
 
     Dim header_var_type As Long
     header_var_type = VarType(HeaderNames)
     If (header_var_type And vbArray) = 0 Or header_var_type - vbArray <> vbString Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames には 1 次元の文字列配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pValidateHeaderNamesType", "HeaderNames must be a one-dimensional string array."
     End If
 End Sub
 
@@ -365,5 +365,5 @@ Private Function pCreateNewEnumSnapshot() As Collection
 End Function
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTable.pCheckInit", "The object is not initialized."
 End Sub

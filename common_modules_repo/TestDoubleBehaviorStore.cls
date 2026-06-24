@@ -12,11 +12,11 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! テストダブルのスタブ設定と呼び出し履歴を管理するクラスです。
+'! Class that manages test double stub settings and call history.
 '!
 '! @details
-'! RecordCall は、各 TestDouble で正常に成立した呼び出しだけを記録する用途です。strict stub の未登録エラーや RaiseIfError による明示エラーは呼び出し履歴に自動記録されません。
-'! 照合引数からキーを生成する操作は対象メソッドの ObjectKeyMode を固定します。HasReturn、HasOutput、RaiseIfError、GetCallCount、GetLatestCall などの読み取り操作でも固定されます。
+'! RecordCall is intended to record only calls that completed successfully in each TestDouble. Unregistered strict stub errors and explicit errors from RaiseIfError are not automatically recorded in call history.
+'! Operations that generate keys from matching arguments fix the target method ObjectKeyMode. Read operations such as HasReturn, HasOutput, RaiseIfError, GetCallCount, and GetLatestCall also fix it.
 '!
 ' #############################################################################
 
@@ -31,19 +31,19 @@ Private pDefaultObjectKeyMode As Long
 Private pObjectKeyModesByMethod As Dictionary
 Private pLockedMethods As Dictionary
 
-'* 記録済みの呼び出し件数。
+'* Number of recorded calls.
 Public Property Get Count() As Long
     Count = pCalls.Count
 End Property
 
-'* メソッド別の指定がない場合に使う既定のオブジェクト キー化モード。
+'* Default object keying mode used when there is no method-specific setting.
 Public Property Get DefaultObjectKeyMode() As Long
     DefaultObjectKeyMode = pDefaultObjectKeyMode
 End Property
 Public Property Let DefaultObjectKeyMode(ByVal NewValue As Long)
     Call pValidateObjectKeyMode(NewValue)
     If 0 < pLockedMethods.Count Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.DefaultObjectKeyMode", "キー生成に使用済みのため、既定 ObjectKeyMode は変更できません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.DefaultObjectKeyMode", "Default ObjectKeyMode cannot be changed because it has already been used for key generation."
     End If
 
     pDefaultObjectKeyMode = NewValue
@@ -65,7 +65,7 @@ Private Sub Class_Initialize()
     pDefaultObjectKeyMode = G_OBJECT_KEY_MODE_REFERENCE
 End Sub
 
-'* メソッド別のオブジェクト キー化モードを設定します。
+'* Sets the object keying mode for a method.
 Public Sub SetObjectKeyMode(ByVal MethodName As String, ByVal ObjectKeyMode As Long)
     Call pValidateMethodName(MethodName)
     Call pValidateObjectKeyMode(ObjectKeyMode)
@@ -74,7 +74,7 @@ Public Sub SetObjectKeyMode(ByVal MethodName As String, ByVal ObjectKeyMode As L
     normalized_method_name = pNormalizeMethodName(MethodName)
 
     If pLockedMethods.Exists(normalized_method_name) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.SetObjectKeyMode", "キー生成に使用済みのメソッドの ObjectKeyMode は変更できません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.SetObjectKeyMode", "ObjectKeyMode cannot be changed for a method that has already been used for key generation. (" & MethodName & ")"
     End If
 
     pObjectKeyModesByMethod.Item(normalized_method_name) = ObjectKeyMode
@@ -85,31 +85,31 @@ Private Sub pValidateObjectKeyMode(ByVal ObjectKeyMode As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateObjectKeyMode", "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
-'* 戻り値を設定します。
+'* Sets a return value.
 Public Sub SetReturn(ByVal MethodName As String, ByRef ReturnValue As Variant, ParamArray KeyArgs() As Variant)
     Call SetReturnFromArray(MethodName, ReturnValue, KeyArgs)
 End Sub
 
-'* ParamArray と同じ形式の配列から戻り値を設定します。
+'* Sets a return value from an array in the same format as ParamArray.
 Public Sub SetReturnFromArray(ByVal MethodName As String, ByRef ReturnValue As Variant, ByVal KeyArgs As Variant)
     Call pSetStoredValue(pReturns, pBuildMethodKey(MethodName, KeyArgs), ReturnValue)
 End Sub
 
-'* 戻り値が設定されているかを返します。
+'* Returns whether a return value is set.
 Public Function HasReturn(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As Boolean
     HasReturn = HasReturnFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から戻り値の設定有無を返します。
+'* Returns whether a return value is set from an array in the same format as ParamArray.
 Public Function HasReturnFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As Boolean
     HasReturnFromArray = pReturns.Exists(pBuildMethodKey(MethodName, KeyArgs))
 End Function
 
-'* 戻り値を返します。
+'* Returns the return value.
 Public Function GetReturn(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As Variant
     Dim key_args_arr As Variant
     key_args_arr = KeyArgs
@@ -121,19 +121,19 @@ Public Function GetReturn(ByVal MethodName As String, ParamArray KeyArgs() As Va
     End If
 End Function
 
-'* ParamArray と同じ形式の配列から戻り値を返します。
+'* Returns the return value from an array in the same format as ParamArray.
 Public Function GetReturnFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As Variant
     Dim store_key As String
     store_key = pBuildMethodKey(MethodName, KeyArgs)
 
-    If IsObject(pGetStoredItem(pReturns, store_key, "戻り値が設定されていません。(" & MethodName & ")")) Then
-        Set GetReturnFromArray = pGetStoredItem(pReturns, store_key, "戻り値が設定されていません。(" & MethodName & ")")
+    If IsObject(pGetStoredItem(pReturns, store_key, "No return value has been set. (" & MethodName & ")")) Then
+        Set GetReturnFromArray = pGetStoredItem(pReturns, store_key, "No return value has been set. (" & MethodName & ")")
     Else
-        GetReturnFromArray = pGetStoredItem(pReturns, store_key, "戻り値が設定されていません。(" & MethodName & ")")
+        GetReturnFromArray = pGetStoredItem(pReturns, store_key, "No return value has been set. (" & MethodName & ")")
     End If
 End Function
 
-'* 戻り値が未設定の場合は既定値を返します。既定値を返す場合でもキー生成を行うため、対象メソッドの ObjectKeyMode は固定されます。
+'* Returns the default value when the return value is unset. Key generation is performed even when returning the default value, so the target method ObjectKeyMode is fixed.
 Public Function GetReturnOrDefault(ByVal MethodName As String, ByVal DefaultValue As Variant, ParamArray KeyArgs() As Variant) As Variant
     Dim key_args_arr As Variant
     key_args_arr = KeyArgs
@@ -145,7 +145,7 @@ Public Function GetReturnOrDefault(ByVal MethodName As String, ByVal DefaultValu
     End If
 End Function
 
-'* ParamArray と同じ形式の配列から戻り値または既定値を返します。既定値を返す場合でもキー生成を行うため、対象メソッドの ObjectKeyMode は固定されます。
+'* Returns the return value or default value from an array in the same format as ParamArray. Key generation is performed even when returning the default value, so the target method ObjectKeyMode is fixed.
 Public Function GetReturnOrDefaultFromArray(ByVal MethodName As String, ByVal DefaultValue As Variant, ByVal KeyArgs As Variant) As Variant
     If HasReturnFromArray(MethodName, KeyArgs) Then
         If IsObject(GetReturnFromArray(MethodName, KeyArgs)) Then
@@ -162,29 +162,29 @@ Public Function GetReturnOrDefaultFromArray(ByVal MethodName As String, ByVal De
     End If
 End Function
 
-'* ByRef 出力値を設定します。
+'* Sets a ByRef output value.
 Public Sub SetOutput(ByVal MethodName As String, ByVal OutputName As String, ByRef OutputValue As Variant, ParamArray KeyArgs() As Variant)
     Call SetOutputFromArray(MethodName, OutputName, OutputValue, KeyArgs)
 End Sub
 
-'* ParamArray と同じ形式の配列から ByRef 出力値を設定します。
+'* Sets a ByRef output value from an array in the same format as ParamArray.
 Public Sub SetOutputFromArray(ByVal MethodName As String, ByVal OutputName As String, ByRef OutputValue As Variant, ByVal KeyArgs As Variant)
     Call pValidateOutputName(OutputName)
     Call pSetStoredValue(pOutputs, pBuildOutputKey(MethodName, OutputName, KeyArgs), OutputValue)
 End Sub
 
-'* ByRef 出力値が設定されているかを返します。
+'* Returns whether a ByRef output value is set.
 Public Function HasOutput(ByVal MethodName As String, ByVal OutputName As String, ParamArray KeyArgs() As Variant) As Boolean
     HasOutput = HasOutputFromArray(MethodName, OutputName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から ByRef 出力値の設定有無を返します。
+'* Returns whether a ByRef output value is set from an array in the same format as ParamArray.
 Public Function HasOutputFromArray(ByVal MethodName As String, ByVal OutputName As String, ByVal KeyArgs As Variant) As Boolean
     Call pValidateOutputName(OutputName)
     HasOutputFromArray = pOutputs.Exists(pBuildOutputKey(MethodName, OutputName, KeyArgs))
 End Function
 
-'* ByRef 出力値を返します。
+'* Returns a ByRef output value.
 Public Function GetOutput(ByVal MethodName As String, ByVal OutputName As String, ParamArray KeyArgs() As Variant) As Variant
     Dim key_args_arr As Variant
     key_args_arr = KeyArgs
@@ -196,21 +196,21 @@ Public Function GetOutput(ByVal MethodName As String, ByVal OutputName As String
     End If
 End Function
 
-'* ParamArray と同じ形式の配列から ByRef 出力値を返します。
+'* Returns a ByRef output value from an array in the same format as ParamArray.
 Public Function GetOutputFromArray(ByVal MethodName As String, ByVal OutputName As String, ByVal KeyArgs As Variant) As Variant
     Call pValidateOutputName(OutputName)
 
     Dim store_key As String
     store_key = pBuildOutputKey(MethodName, OutputName, KeyArgs)
 
-    If IsObject(pGetStoredItem(pOutputs, store_key, "出力値が設定されていません。(" & MethodName & "." & OutputName & ")")) Then
-        Set GetOutputFromArray = pGetStoredItem(pOutputs, store_key, "出力値が設定されていません。(" & MethodName & "." & OutputName & ")")
+    If IsObject(pGetStoredItem(pOutputs, store_key, "No output value has been set. (" & MethodName & "." & OutputName & ")")) Then
+        Set GetOutputFromArray = pGetStoredItem(pOutputs, store_key, "No output value has been set. (" & MethodName & "." & OutputName & ")")
     Else
-        GetOutputFromArray = pGetStoredItem(pOutputs, store_key, "出力値が設定されていません。(" & MethodName & "." & OutputName & ")")
+        GetOutputFromArray = pGetStoredItem(pOutputs, store_key, "No output value has been set. (" & MethodName & "." & OutputName & ")")
     End If
 End Function
 
-'* ByRef 出力値が未設定の場合は既定値を返します。
+'* Returns the default value when the ByRef output value is unset.
 Public Function GetOutputOrDefault(ByVal MethodName As String, ByVal OutputName As String, ByVal DefaultValue As Variant, ParamArray KeyArgs() As Variant) As Variant
     Dim key_args_arr As Variant
     key_args_arr = KeyArgs
@@ -222,7 +222,7 @@ Public Function GetOutputOrDefault(ByVal MethodName As String, ByVal OutputName 
     End If
 End Function
 
-'* ParamArray と同じ形式の配列から ByRef 出力値または既定値を返します。
+'* Returns the ByRef output value or default value from an array in the same format as ParamArray.
 Public Function GetOutputOrDefaultFromArray(ByVal MethodName As String, ByVal OutputName As String, ByVal DefaultValue As Variant, ByVal KeyArgs As Variant) As Variant
     If HasOutputFromArray(MethodName, OutputName, KeyArgs) Then
         If IsObject(GetOutputFromArray(MethodName, OutputName, KeyArgs)) Then
@@ -239,12 +239,12 @@ Public Function GetOutputOrDefaultFromArray(ByVal MethodName As String, ByVal Ou
     End If
 End Function
 
-'* 指定引数で呼ばれたときに送出するエラーを設定します。
+'* Sets an error to raise when called with the specified arguments.
 Public Sub SetError(ByVal MethodName As String, ByVal ErrorNumber As Long, ByVal ErrorSource As String, ByVal ErrorDescription As String, ParamArray KeyArgs() As Variant)
     Call SetErrorFromArray(MethodName, ErrorNumber, ErrorSource, ErrorDescription, KeyArgs)
 End Sub
 
-'* ParamArray と同じ形式の配列から送出するエラーを設定します。
+'* Sets an error to raise from an array in the same format as ParamArray.
 Public Sub SetErrorFromArray(ByVal MethodName As String, ByVal ErrorNumber As Long, ByVal ErrorSource As String, ByVal ErrorDescription As String, ByVal KeyArgs As Variant)
     Dim err_item As Dictionary
     Set err_item = New Dictionary
@@ -255,22 +255,22 @@ Public Sub SetErrorFromArray(ByVal MethodName As String, ByVal ErrorNumber As Lo
     Set pErrors.Item(pBuildMethodKey(MethodName, KeyArgs)) = err_item
 End Sub
 
-'* エラーが設定されているかを返します。
+'* Returns whether an error is set.
 Public Function HasError(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As Boolean
     HasError = HasErrorFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列からエラー設定有無を返します。
+'* Returns whether an error is set from an array in the same format as ParamArray.
 Public Function HasErrorFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As Boolean
     HasErrorFromArray = pErrors.Exists(pBuildMethodKey(MethodName, KeyArgs))
 End Function
 
-'* 設定済みのエラーがあれば送出します。エラーを送出しても呼び出し履歴には記録しません。
+'* Raises a configured error if one exists. Raising an error does not record it in call history.
 Public Sub RaiseIfError(ByVal MethodName As String, ParamArray KeyArgs() As Variant)
     Call RaiseIfErrorFromArray(MethodName, KeyArgs)
 End Sub
 
-'* ParamArray と同じ形式の配列から設定済みのエラーがあれば送出します。エラーを送出しても呼び出し履歴には記録しません。
+'* Raises a configured error from an array in the same format as ParamArray if one exists. Raising an error does not record it in call history.
 Public Sub RaiseIfErrorFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant)
     Dim store_key As String
     store_key = pBuildMethodKey(MethodName, KeyArgs)
@@ -282,26 +282,26 @@ Public Sub RaiseIfErrorFromArray(ByVal MethodName As String, ByVal KeyArgs As Va
     Err.Raise CLng(err_item.Item("Number")), CStr(err_item.Item("Source")), CStr(err_item.Item("Description"))
 End Sub
 
-'* 正常に成立した呼び出しを記録します。エラー呼び出しを記録する仕組みは持ちません。
+'* Records a successfully completed call. There is no mechanism for recording error calls.
 Public Sub RecordCall(ByVal MethodName As String, ParamArray Args() As Variant)
     Call RecordCallFromArray(MethodName, Args)
 End Sub
 
-'* ParamArray と同じ形式の配列から正常に成立した呼び出しを記録します。エラー呼び出しを記録する仕組みは持ちません。
+'* Records a successfully completed call from an array in the same format as ParamArray. There is no mechanism for recording error calls.
 Public Sub RecordCallFromArray(ByVal MethodName As String, ByVal Args As Variant)
     Call RecordCallWithKeyArgsFromArray(MethodName, Args, Args)
 End Sub
 
-'* 照合引数と呼び出し引数を分けて、正常に成立した呼び出しを記録します。
+'* Records a successfully completed call with matching arguments and call arguments separated.
 Public Sub RecordCallWithKeyArgs(ByVal MethodName As String, ByVal KeyArgs As Variant, ParamArray Args() As Variant)
     Call RecordCallWithKeyArgsFromArray(MethodName, KeyArgs, Args)
 End Sub
 
-'* 配列指定で照合引数と呼び出し引数を分けて、正常に成立した呼び出しを記録します。
+'* Records a successfully completed call with matching arguments and call arguments separated by array specification.
 Public Sub RecordCallWithKeyArgsFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant, ByVal Args As Variant)
     Call pValidateKeyArgsArray(KeyArgs)
     If Not IsArray(Args) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.RecordCallWithKeyArgsFromArray", "呼び出し引数は配列で指定してください。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.RecordCallWithKeyArgsFromArray", "Call arguments must be specified as an array."
     End If
 
     Dim object_key_mode As Long
@@ -334,16 +334,16 @@ End Sub
 
 Private Sub pValidateKeyArgsArray(ByVal KeyArgs As Variant)
     If Not IsArray(KeyArgs) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateKeyArgsArray", "照合引数は配列で指定してください。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateKeyArgsArray", "Match arguments must be specified as an array."
     End If
 End Sub
 
-'* 指定された照合引数で呼び出しが記録されているかを返します。
+'* Returns whether a call is recorded with the specified matching arguments.
 Public Function HasCall(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As Boolean
     HasCall = HasCallFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から呼び出し有無を返します。
+'* Returns whether a call exists from an array in the same format as ParamArray.
 Public Function HasCallFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As Boolean
     Dim object_key_mode As Long
     Dim key_args_part As String
@@ -352,17 +352,17 @@ Public Function HasCallFromArray(ByVal MethodName As String, ByVal KeyArgs As Va
     HasCallFromArray = pCallsByKey.Exists(pBuildStoreKey(MethodName, object_key_mode, key_args_part))
 End Function
 
-'* 指定メソッド名の呼び出しが記録されているかを返します。
+'* Returns whether a call with the specified method name is recorded.
 Public Function HasCallAll(ByVal MethodName As String) As Boolean
     HasCallAll = 0 < GetCallCountAll(MethodName)
 End Function
 
-'* 指定された照合引数で呼ばれた回数を返します。
+'* Returns the number of times called with the specified matching arguments.
 Public Function GetCallCount(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As Long
     GetCallCount = GetCallCountFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から呼び出し回数を返します。
+'* Returns the call count from an array in the same format as ParamArray.
 Public Function GetCallCountFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As Long
     Dim object_key_mode As Long
     Dim key_args_part As String
@@ -378,7 +378,7 @@ Public Function GetCallCountFromArray(ByVal MethodName As String, ByVal KeyArgs 
     End If
 End Function
 
-'* 指定メソッド名の呼び出し回数を返します。
+'* Returns the call count for the specified method name.
 Public Function GetCallCountAll(ByVal MethodName As String) As Long
     Call pValidateMethodName(MethodName)
 
@@ -400,21 +400,21 @@ Public Function GetCallCountAll(ByVal MethodName As String) As Long
     GetCallCountAll = result_count
 End Function
 
-'* 0 ベースの呼び出し番号から記録を返します。
+'* Returns a record from a 0-based call number.
 Public Function GetCall(ByVal CallIndex As Long) As TestDoubleCallRecord
     If CallIndex < 0 Or pCalls.Count <= CallIndex Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetCall", "呼び出し番号が範囲外です。(" & CallIndex & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetCall", "Call index is out of range. (" & CallIndex & ")"
     End If
 
     Set GetCall = pCalls.Item(CallIndex + 1)
 End Function
 
-'* 指定された照合引数で呼ばれた呼び出し履歴を呼び出し順で返します。
+'* Returns call history for calls made with the specified matching arguments, in call order.
 Public Function GetCalls(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As ObjectList
     Set GetCalls = GetCallsFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から、呼び出し履歴を呼び出し順で返します。
+'* Returns call history in call order from an array in the same format as ParamArray.
 Public Function GetCallsFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As ObjectList
     Dim object_key_mode As Long
     Dim key_args_part As String
@@ -440,7 +440,7 @@ Private Sub pAddCallsToObjectList(ByVal TargetList As ObjectList, ByVal SourceCa
     Next call_idx
 End Sub
 
-'* 指定メソッド名の呼び出し履歴を呼び出し順で返します。
+'* Returns call history for the specified method name, in call order.
 Public Function GetCallsAll(ByVal MethodName As String) As ObjectList
     Call pValidateMethodName(MethodName)
 
@@ -462,12 +462,12 @@ Public Function GetCallsAll(ByVal MethodName As String) As ObjectList
     Set GetCallsAll = result_list
 End Function
 
-'* 指定された照合引数で呼ばれた最新の呼び出し記録を返します。
+'* Returns the latest call record for calls made with the specified matching arguments.
 Public Function GetLatestCall(ByVal MethodName As String, ParamArray KeyArgs() As Variant) As TestDoubleCallRecord
     Set GetLatestCall = GetLatestCallFromArray(MethodName, KeyArgs)
 End Function
 
-'* ParamArray と同じ形式の配列から最新の呼び出し記録を返します。
+'* Returns the latest call record from an array in the same format as ParamArray.
 Public Function GetLatestCallFromArray(ByVal MethodName As String, ByVal KeyArgs As Variant) As TestDoubleCallRecord
     Dim object_key_mode As Long
     Dim key_args_part As String
@@ -477,13 +477,13 @@ Public Function GetLatestCallFromArray(ByVal MethodName As String, ByVal KeyArgs
     store_key = pBuildStoreKey(MethodName, object_key_mode, key_args_part)
 
     If Not pLatestByKey.Exists(store_key) Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallFromArray", "指定された呼び出しが記録されていません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallFromArray", "The specified call has not been recorded. (" & MethodName & ")"
     End If
 
     Set GetLatestCallFromArray = pLatestByKey.Item(store_key)
 End Function
 
-'* 指定メソッド名の最新の呼び出し記録を返します。
+'* Returns the latest call record for the specified method name.
 Public Function GetLatestCallAll(ByVal MethodName As String) As TestDoubleCallRecord
     Call pValidateMethodName(MethodName)
 
@@ -500,7 +500,7 @@ Public Function GetLatestCallAll(ByVal MethodName As String) As TestDoubleCallRe
         End If
     Next call_idx
 
-    Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallAll", "指定された呼び出しが記録されていません。(" & MethodName & ")"
+    Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.GetLatestCallAll", "The specified call has not been recorded. (" & MethodName & ")"
 End Function
 
 Private Function pBuildMethodKey(ByVal MethodName As String, ByVal KeyArgs As Variant) As String
@@ -563,19 +563,19 @@ End Function
 
 Private Sub pValidateMethodName(ByVal MethodName As String)
     If MethodName = "" Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "メソッド名は空文字列にできません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "Method name cannot be an empty string."
     End If
     If InStr(1, MethodName, vbTab, vbBinaryCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "メソッド名にタブ文字は使用できません。(" & MethodName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateMethodName", "Method name cannot contain tab characters. (" & MethodName & ")"
     End If
 End Sub
 
 Private Sub pValidateOutputName(ByVal OutputName As String)
     If OutputName = "" Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "出力名は空文字列にできません。"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "Output name cannot be an empty string."
     End If
     If InStr(1, OutputName, vbTab, vbBinaryCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "出力名にタブ文字は使用できません。(" & OutputName & ")"
+        Err.Raise vbObjectError + 1, "Class TestDoubleBehaviorStore.pValidateOutputName", "Output name cannot contain tab characters. (" & OutputName & ")"
     End If
 End Sub
 

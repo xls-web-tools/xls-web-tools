@@ -6,17 +6,17 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! UserInputSheet のファクトリを提供するモジュールです。
+'! Module that provides a factory for UserInputSheet.
 '!
 ' #############################################################################
 
-'* UserInputSheet インスタンスを新規作成します。
+'* Creates a new UserInputSheet instance.
 '*
-'* @param InputArea 入力シート内で項目名と値を読み取る対象範囲。
-'* @return 新しい UserInputSheet インスタンス
+'* @param InputArea Target range from which item names and values are read in the input sheet.
+'* @return New UserInputSheet instance.
 '*
 '* @details
-'* UserInputSheet インスタンスを新規作成します。
+'* Creates a new UserInputSheet instance.
 Public Function New_InputSheet(ByVal InputArea As WorksheetRangeBounds) As UserInputSheet
     Dim result_value As UserInputSheet
     Set result_value = New UserInputSheet

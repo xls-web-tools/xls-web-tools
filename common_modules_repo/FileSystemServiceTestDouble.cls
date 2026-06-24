@@ -14,21 +14,21 @@ Implements IFileSystemService
 ' #############################################################################
 '!
 '! @brief
-'! ファイル システムへのアクセスを管理するサービスのテストダブルです。
+'! Test double for the service that manages file system access.
 '!
 ' #############################################################################
 
-'* スタブ設定と正常に成立した呼び出し履歴。
-'* 戻り値が必要で外部状態や親リソースに依存するものは strict stub、存在確認など保守的な既定値が自然なものは safe default とします。
-'* 戻り値なしの操作は spy only とし、strict stub の未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
-'* spy only は、元メソッド定義の順序で呼び出し引数を記録します。
+'* Stub settings and history of successfully completed calls.
+'* Members that need return values and depend on external state or parent resources are strict stubs; members where a conservative default is natural, such as existence checks, use safe defaults.
+'* Operations without return values are spy only, and unregistered strict stub errors and explicit errors from SetError are not recorded in call history.
+'* spy only records call arguments in the order of the original method definition.
 Public Store As TestDoubleBehaviorStore
 
 Private Sub Class_Initialize()
     Set Store = New TestDoubleBehaviorStore
 End Sub
 
-'* GetAbsolutePath の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetAbsolutePath. Register the return value explicitly in Store.
 Public Function GetAbsolutePath(ByVal PathLikeString As String) As String
     Call Store.RaiseIfError("GetAbsolutePath", PathLikeString)
 
@@ -42,7 +42,7 @@ Private Function IFileSystemService_GetAbsolutePath(ByVal PathLikeString As Stri
     IFileSystemService_GetAbsolutePath = GetAbsolutePath(PathLikeString)
 End Function
 
-'* GetTemporaryDirectoryPath の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetTemporaryDirectoryPath. Register the return value explicitly in Store.
 Public Function GetTemporaryDirectoryPath() As String
     Call Store.RaiseIfError("GetTemporaryDirectoryPath")
 
@@ -56,7 +56,7 @@ Private Function IFileSystemService_GetTemporaryDirectoryPath() As String
     IFileSystemService_GetTemporaryDirectoryPath = GetTemporaryDirectoryPath()
 End Function
 
-'* CreateTemporaryDirectory の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for CreateTemporaryDirectory. Register the return value explicitly in Store.
 Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
     Call Store.RaiseIfError("CreateTemporaryDirectory", NamePrefix)
 
@@ -70,7 +70,7 @@ Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal Name
     IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
 End Function
 
-'* GetFileList の strict stub です。親ディレクトリの存在前提を持たないため、空配列も Store に明示登録してください。
+'* Strict stub for GetFileList. Because it does not assume the parent directory exists, explicitly register even an empty array in Store.
 Public Function GetFileList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Call Store.RaiseIfError("GetFileList", DirectoryPath, CatchRegExp, IgnoreRegExp, IgnoreCase)
 
@@ -84,7 +84,7 @@ Private Function IFileSystemService_GetFileList(ByVal DirectoryPath As String, O
     IFileSystemService_GetFileList = GetFileList(DirectoryPath, CatchRegExp:=CatchRegExp, IgnoreRegExp:=IgnoreRegExp, IgnoreCase:=IgnoreCase)
 End Function
 
-'* GetDirectoryList の strict stub です。親ディレクトリの存在前提を持たないため、空配列も Store に明示登録してください。
+'* Strict stub for GetDirectoryList. Because it does not assume the parent directory exists, explicitly register even an empty array in Store.
 Public Function GetDirectoryList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Call Store.RaiseIfError("GetDirectoryList", DirectoryPath, CatchRegExp, IgnoreRegExp, IgnoreCase)
 
@@ -98,7 +98,7 @@ Private Function IFileSystemService_GetDirectoryList(ByVal DirectoryPath As Stri
     IFileSystemService_GetDirectoryList = GetDirectoryList(DirectoryPath, CatchRegExp:=CatchRegExp, IgnoreRegExp:=IgnoreRegExp, IgnoreCase:=IgnoreCase)
 End Function
 
-'* PathExists の safe default です。未登録時は False を返します。
+'* Safe default for PathExists. Returns False when no value is registered.
 Public Function PathExists(ByVal PathLikeString As String) As Boolean
     Call Store.RaiseIfError("PathExists", PathLikeString)
 
@@ -112,7 +112,7 @@ Private Function IFileSystemService_PathExists(ByVal PathLikeString As String) A
     IFileSystemService_PathExists = PathExists(PathLikeString)
 End Function
 
-'* IsFile の safe default です。未登録時は False を返します。
+'* Safe default for IsFile. Returns False when no value is registered.
 Public Function IsFile(ByVal FilePath As String) As Boolean
     Call Store.RaiseIfError("IsFile", FilePath)
 
@@ -126,7 +126,7 @@ Private Function IFileSystemService_IsFile(ByVal FilePath As String) As Boolean
     IFileSystemService_IsFile = IsFile(FilePath)
 End Function
 
-'* IsDirectory の safe default です。未登録時は False を返します。
+'* Safe default for IsDirectory. Returns False when no value is registered.
 Public Function IsDirectory(ByVal DirectoryPath As String) As Boolean
     Call Store.RaiseIfError("IsDirectory", DirectoryPath)
 
@@ -140,7 +140,7 @@ Private Function IFileSystemService_IsDirectory(ByVal DirectoryPath As String) A
     IFileSystemService_IsDirectory = IsDirectory(DirectoryPath)
 End Function
 
-'* GetLastModified の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetLastModified. Register the return value explicitly in Store.
 Public Function GetLastModified(ByVal PathLikeString As String) As Date
     Call Store.RaiseIfError("GetLastModified", PathLikeString)
 
@@ -154,7 +154,7 @@ Private Function IFileSystemService_GetLastModified(ByVal PathLikeString As Stri
     IFileSystemService_GetLastModified = GetLastModified(PathLikeString)
 End Function
 
-'* GetFileSize の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetFileSize. Register the return value explicitly in Store.
 Public Function GetFileSize(ByVal FilePath As String) As Double
     Call Store.RaiseIfError("GetFileSize", FilePath)
 
@@ -168,7 +168,7 @@ Private Function IFileSystemService_GetFileSize(ByVal FilePath As String) As Dou
     IFileSystemService_GetFileSize = GetFileSize(FilePath)
 End Function
 
-'* CreateDirectory の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for CreateDirectory. Register the return value explicitly in Store.
 Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False, Optional ByVal Recursive As Boolean = False) As Boolean
     Call Store.RaiseIfError("CreateDirectory", DirectoryPath, Force, Recursive)
 
@@ -182,7 +182,7 @@ Private Function IFileSystemService_CreateDirectory(ByVal DirectoryPath As Strin
     IFileSystemService_CreateDirectory = CreateDirectory(DirectoryPath, Force:=Force, Recursive:=Recursive)
 End Function
 
-'* MoveDirectory の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for MoveDirectory. Records the call; inject failures with Store.SetError.
 Public Sub MoveDirectory(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Call Store.RaiseIfError("MoveDirectory", SourcePath, DestinationPath, Force)
     Call Store.RecordCall("MoveDirectory", SourcePath, DestinationPath, Force)
@@ -191,7 +191,7 @@ Private Sub IFileSystemService_MoveDirectory(ByVal SourcePath As String, ByVal D
     Call MoveDirectory(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-'* CopyDirectory の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for CopyDirectory. Records the call; inject failures with Store.SetError.
 Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Call Store.RaiseIfError("CopyDirectory", SourcePath, DestinationPath, Force)
     Call Store.RecordCall("CopyDirectory", SourcePath, DestinationPath, Force)
@@ -200,7 +200,7 @@ Private Sub IFileSystemService_CopyDirectory(ByVal SourcePath As String, ByVal D
     Call CopyDirectory(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-'* RemoveDirectory の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for RemoveDirectory. Register the return value explicitly in Store.
 Public Function RemoveDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False) As Boolean
     Call Store.RaiseIfError("RemoveDirectory", DirectoryPath, Force)
 
@@ -214,7 +214,7 @@ Private Function IFileSystemService_RemoveDirectory(ByVal DirectoryPath As Strin
     IFileSystemService_RemoveDirectory = RemoveDirectory(DirectoryPath, Force:=Force)
 End Function
 
-'* MoveFile の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for MoveFile. Records the call; inject failures with Store.SetError.
 Public Sub MoveFile(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Call Store.RaiseIfError("MoveFile", SourcePath, DestinationPath, Force)
     Call Store.RecordCall("MoveFile", SourcePath, DestinationPath, Force)
@@ -223,7 +223,7 @@ Private Sub IFileSystemService_MoveFile(ByVal SourcePath As String, ByVal Destin
     Call MoveFile(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-'* CopyFile の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for CopyFile. Records the call; inject failures with Store.SetError.
 Public Sub CopyFile(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Call Store.RaiseIfError("CopyFile", SourcePath, DestinationPath, Force)
     Call Store.RecordCall("CopyFile", SourcePath, DestinationPath, Force)
@@ -232,7 +232,7 @@ Private Sub IFileSystemService_CopyFile(ByVal SourcePath As String, ByVal Destin
     Call CopyFile(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-'* RemoveFile の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for RemoveFile. Register the return value explicitly in Store.
 Public Function RemoveFile(ByVal FilePath As String, Optional ByVal Force As Boolean = False) As Boolean
     Call Store.RaiseIfError("RemoveFile", FilePath, Force)
 
@@ -246,7 +246,7 @@ Private Function IFileSystemService_RemoveFile(ByVal FilePath As String, Optiona
     IFileSystemService_RemoveFile = RemoveFile(FilePath, Force:=Force)
 End Function
 
-'* GetNewestFile の strict stub です。親ディレクトリの存在前提を持たないため、該当なしの空文字列も Store に明示登録してください。
+'* Strict stub for GetNewestFile. Because it does not assume the parent directory exists, explicitly register an empty string as well when there is no match.
 Public Function GetNewestFile(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String
     Call Store.RaiseIfError("GetNewestFile", DirectoryPath, CatchRegExp, IgnoreRegExp, IgnoreCase)
 
@@ -260,7 +260,7 @@ Private Function IFileSystemService_GetNewestFile(ByVal DirectoryPath As String,
     IFileSystemService_GetNewestFile = GetNewestFile(DirectoryPath, CatchRegExp:=CatchRegExp, IgnoreRegExp:=IgnoreRegExp, IgnoreCase:=IgnoreCase)
 End Function
 
-'* CreateBackupFile の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for CreateBackupFile. Register the return value explicitly in Store.
 Public Function CreateBackupFile( _
         Optional ByVal SourceFilePath As String = "", _
         Optional ByVal DestinationDirectoryPath As String = "", _

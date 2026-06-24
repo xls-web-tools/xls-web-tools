@@ -14,158 +14,158 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! Excel ファイルのオープン、クローズ、書き込みなどを管理するサービスのインターフェイスです。
+'! Interface for a service that manages opening, closing, and writing Excel files.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IWorkbookService", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IWorkbookService", Description:="This class is intended for interfaces."
 End Sub
 
-'* ThisWorkbook のブック名を得ます。
+'* Gets the workbook name of ThisWorkbook.
 '*
-'* @return ThisWorkbook のブック名。
+'* @return Workbook name of ThisWorkbook.
 '*
 '* @details
-'* 呼び出し元が ThisWorkbook を直接参照せずに、自ブック名を取得するために使用します。
+'* Used by callers to get their own workbook name without directly referencing ThisWorkbook.
 Public Function GetThisWorkbookName() As String
 End Function
 
-'* ThisWorkbook を基準にしたディレクトリ パスを得ます。
+'* Gets the directory path based on ThisWorkbook.
 '*
-'* @return 絶対パスのディレクトリ パス。
+'* @return Absolute directory path.
 '*
 '* @details
-'* ThisWorkbook が保存済みの場合は、その保存先ディレクトリを返します。
-'* ThisWorkbook が未保存の場合は、CurDir の結果を絶対パスにして返します。
+'* If ThisWorkbook has been saved, returns its saved destination directory.
+'* If ThisWorkbook has not been saved, returns the result of CurDir converted to an absolute path.
 Public Function GetThisWorkbookDirectoryPath() As String
 End Function
 
-'* ワークブックが存在するかを確認します。
+'* Checks whether a workbook exists.
 '*
-'* @param Book ワークブック名。
-'* @return ワークブックが存在するか。
+'* @param Book Workbook name.
+'* @return Whether the workbook exists.
 '*
 '* @details
-'* ワークブック名が存在するかを確認します。
+'* Checks whether the workbook name exists.
 Public Function WorkbookExists(ByVal Book As String) As Boolean
 End Function
 
-'* 開いているすべてのワークブックの一覧を得ます。
+'* Gets a list of all open workbooks.
 '*
-'* @return ワークブックの一覧。
+'* @return Workbook list.
 '*
 '* @details
-'* ThisWorkbook を含む、開いているすべてのワークブック名の一覧を、文字列の配列で得ます。
+'* Gets an array of names for all open workbooks, including ThisWorkbook.
 Public Function GetAllWorkbooks() As String()
 End Function
 
-'* ThisWorkbook 以外のワークブックの一覧を得ます。
+'* Gets a list of workbooks other than ThisWorkbook.
 '*
-'* @return ワークブックの一覧。
+'* @return Workbook list.
 '*
 '* @details
-'* ThisWorkbook を除くワークブック名の一覧を、文字列の配列で得ます。
+'* Gets an array of workbook names excluding ThisWorkbook.
 Public Function GetOtherWorkbooks() As String()
 End Function
 
-'* ワークシートが存在するかを確認します。
+'* Checks whether a worksheet exists.
 '*
-'* @param Sheet ワークシート名。
-'* @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-'* @return ワークシートが存在するか。
+'* @param Sheet Worksheet name.
+'* @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+'* @return Whether the worksheet exists.
 '*
 '* @details
-'* ワークブック内にワークシートが存在するかを確認します。
-'* 指定された名前のワークブックがない場合もエラーにはならず False が返ります。
+'* Checks whether a worksheet exists in a workbook.
+'* If no workbook with the specified name exists, no error is raised and False is returned.
 Public Function WorksheetExists(ByVal Sheet As String, Optional ByVal Book As String = "") As Boolean
 End Function
 
-'* ワークシートの一覧を得ます。
+'* Gets a list of worksheets.
 '*
-'* @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-'* @return ワークシートの一覧。
+'* @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+'* @return Worksheet list.
 '*
 '* @details
-'* 対象ブックの ActiveSheet を含む、ワークブック内のすべてのワークシート名の一覧を、文字列の配列で得ます。
+'* Gets an array of all worksheet names in the target workbook, including the target workbook ActiveSheet.
 Public Function GetAllWorksheets(Optional ByVal Book As String = "") As String()
 End Function
 
-'* 対象ブックの ActiveSheet 以外のワークシートの一覧を得ます。
+'* Gets a list of worksheets other than the target workbook ActiveSheet.
 '*
-'* @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-'* @return ワークシートの一覧。
+'* @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+'* @return Worksheet list.
 '*
 '* @details
-'* 対象ブックの ActiveSheet を除くワークシート名の一覧を、文字列の配列で得ます。
+'* Gets an array of worksheet names excluding the target workbook ActiveSheet.
 Public Function GetOtherWorksheets(Optional ByVal Book As String = "") As String()
 End Function
 
-'* ワークブックを開きます。
+'* Opens a workbook.
 '*
-'* @param FilePath [省略可] ファイルパス。
-'* @return ブック名。
+'* @param FilePath [Optional] File path.
+'* @return Workbook name.
 '*
 '* @details
-'* ワークブックを開きます。ファイルパスを省略すると新規作成となります。
-'* 元ファイルはロックしません。
+'* Opens a workbook. If the file path is omitted, creates a new workbook.
+'* The source file is not locked.
 Public Function OpenWorkbook(Optional ByVal FilePath As String = "") As String
 End Function
 
-'* ワークブックを保存します。
+'* Saves a workbook.
 '*
-'* @param Book 対象のブック名。
-'* @param FilePath 保存先ファイル パス。
-'* @param Force [省略可] 強制的に保存するか否か。
-'* @return 保存後のブック名。
+'* @param Book Target workbook name.
+'* @param FilePath Destination file path.
+'* @param Force [Optional] Whether to save forcibly.
+'* @return Workbook name after saving.
 '*
 '* @details
-'* ワークブックを保存します。Force が False のときに、すでにファイルが存在している場合、確認メッセージが表示されます。
+'* Saves a workbook. When Force is False and the file already exists, a confirmation message is displayed.
 Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Optional ByVal Force As Boolean = True) As String
 End Function
 
-'* ワークブックが最終保存後に変更されていないか確認します。
+'* Checks whether the workbook has not changed since its last save.
 '*
-'* @param Book 対象のブック名。
-'* @return 最終保存後に変更されていないか否か。
+'* @param Book Target workbook name.
+'* @return Whether the workbook has not changed since its last save.
 '*
 '* @details
-'* Excel の Workbook.Saved と同じ意味で、保存先パスの有無は判定しません。
+'* Has the same meaning as Excel Workbook.Saved and does not check whether a save destination path exists.
 Public Function IsSaved(ByVal Book As String) As Boolean
 End Function
 
-'* ワークブックが保存先パスを持つか確認します。
+'* Checks whether the workbook has a save destination path.
 '*
-'* @param Book 対象のブック名。
-'* @return 保存先パスを持つか否か。
+'* @param Book Target workbook name.
+'* @return Whether the workbook has a save destination path.
 '*
 '* @details
-'* 新規未保存ブックのように保存先パスを持たない場合は False を返します。変更有無は判定しません。
+'* Returns False when the workbook has no save destination path, such as a new unsaved workbook. Does not check whether it has changes.
 Public Function HasPath(ByVal Book As String) As Boolean
 End Function
 
-'* ワークブックを閉じます。
+'* Closes a workbook.
 '*
-'* @param Book 対象のブック名。
-'* @param Force [省略可] 強制的に閉じるか否か。True の場合は確認なしで変更を破棄して閉じます。
+'* @param Book Target workbook name.
+'* @param Force [Optional] Whether to close forcibly. When True, discards changes and closes without confirmation.
 '*
 '* @details
-'* ワークブックを閉じます。Force が False のときには、確認メッセージが表示されます。
+'* Closes a workbook. When Force is False, a confirmation message is displayed.
 Public Sub CloseWorkbook(ByVal Book As String, Optional ByVal Force As Boolean = True)
 End Sub
 
-'* ワークブック全体を検索します
+'* Searches the entire workbook.
 '*
-'* @param What 検索する文字列。
-'* @param Book [省略可] 検索対象のワークブック。省略された場合は、ThisWorkbook.Name が指定されたものとします。
-'* @param LookInValues [省略可] 値を検索対象とするか。デフォルトは True であり、値を検索対象とします。False にしたときは数式を検索対象とします。
-'* @param LookAtWhole [省略可] セル内容が完全に同一であるものを検索するか。デフォルトは True であり、完全一致で検索します。False としたときは部分一致で検索します。
-'* @param MatchCase [省略可] 大文字と小文字を区別するか。デフォルトは True です。True にした場合は区別して検索します。False としたときは区別せずに検索します。
-'* @param MatchByte [省略可] 全角と半角を区別するか。デフォルトは True です。True にした場合は区別して検索します。False としたときは区別せずに検索します。
-'* @return 見つかったセルの WorksheetRangeBounds を格納した ObjectList。検索結果がない場合は Count = 0 です。
+'* @param What String to search for.
+'* @param Book [Optional] Workbook to search. If omitted, ThisWorkbook.Name is used.
+'* @param LookInValues [Optional] Whether to search values. The default is True, which searches values. When False, searches formulas.
+'* @param LookAtWhole [Optional] Whether to search for cells whose contents match exactly. The default is True, which searches exact matches. When False, searches partial matches.
+'* @param MatchCase [Optional] Whether to distinguish uppercase and lowercase. The default is True. When True, searches case-sensitively. When False, searches case-insensitively.
+'* @param MatchByte [Optional] Whether to distinguish full-width and half-width characters. The default is True. When True, distinguishes them. When False, does not distinguish them.
+'* @return ObjectList containing WorksheetRangeBounds for found cells. Count = 0 when there are no search results.
 '*
 '* @details
-'* ワークブック全体を検索します
+'* Searches the entire workbook.
 Public Function Find( _
         ByVal What As String, _
         Optional ByVal Book As String = "", _
@@ -175,16 +175,16 @@ Public Function Find( _
         Optional ByVal MatchByte As Boolean = True) As ObjectList
 End Function
 
-'* ワークシートを追加します。
+'* Adds a worksheet.
 '*
-'* @param Sheet [省略可] 追加するワークシート名。省略したときは自動で命名されます。
-'* @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-'* @param SheetIndex [省略可] ワークシート番号。省略したときはアクティブなシートが指定されたものとします。
-'* @param Before [省略可] 前に追加するか。省略したときは指定されたワークシート番号の後ろに追加されます。
-'* @return 追加されたワークシートの名前。
+'* @param Sheet [Optional] Worksheet name to add. When omitted, it is named automatically.
+'* @param Book [Optional] Workbook name. When omitted, the workbook name of ThisWorkbook is used.
+'* @param SheetIndex [Optional] Worksheet index. When omitted, the active sheet is used.
+'* @param Before [Optional] Whether to add before the target. When omitted, adds after the specified worksheet index.
+'* @return Name of the added worksheet.
 '*
 '* @details
-'* ワークシートを追加します。処理後は呼び出し前のアクティブブックと対象ブックのアクティブシートを復元します。
+'* Adds a worksheet. After processing, restores the active workbook before the call and the active sheet of the target workbook.
 Public Function AddWorksheet( _
         Optional ByVal Sheet As String = "", _
         Optional ByVal Book As String = "", _
@@ -192,28 +192,28 @@ Public Function AddWorksheet( _
         Optional ByVal Before As Boolean = False) As String
 End Function
 
-'* ワークシートを削除します。
+'* Deletes a worksheet.
 '*
-'* @param Sheet [省略可] 削除するワークシート名。省略したときはアクティブなシートが指定されたものとします。
-'* @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
+'* @param Sheet [Optional] Worksheet name to delete. When omitted, the active sheet is used.
+'* @param Book [Optional] Workbook name. When omitted, the workbook name of ThisWorkbook is used.
 '*
 '* @details
-'* ワークシートを削除します。処理後は呼び出し前のアクティブブックと対象ブックのアクティブシートを可能な範囲で復元します。
+'* Deletes a worksheet. After processing, restores the active workbook before the call and the active sheet of the target workbook as far as possible.
 Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal Book As String = "")
 End Sub
 
-'* ワークシートを複製します。
+'* Duplicates a worksheet.
 '*
-'* @param SourceWorksheetName [省略可] 複製するワークシート名。省略したときはアクティブなシートが指定されたものとします。
-'* @param SourceWorkbookName [省略可] 複製するワークシートがあるワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-'* @param DestinationWorksheetName [省略可] 複製されたワークシートにつける名前。省略したときは自動で命名されます。
-'* @param DestinationWorkbookName [省略可] 複製先のワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-'* @param SheetIndex [省略可] ワークシート番号。省略したときは複製先のワークブックのアクティブなシートが指定されたものとします。
-'* @param Before [省略可] 複製したシートを対象の前に追加するか。省略したときは指定されたワークシート番号の後ろに追加されます。
-'* @return 追加されたワークシートの名前。
+'* @param SourceWorksheetName [Optional] Worksheet name to duplicate. When omitted, the active sheet is used.
+'* @param SourceWorkbookName [Optional] Name of the workbook containing the worksheet to duplicate. When omitted, the workbook name of ThisWorkbook is used.
+'* @param DestinationWorksheetName [Optional] Name to give to the duplicated worksheet. When omitted, it is named automatically.
+'* @param DestinationWorkbookName [Optional] Destination workbook name. When omitted, the workbook name of ThisWorkbook is used.
+'* @param SheetIndex [Optional] Worksheet index. When omitted, the active sheet in the destination workbook is used.
+'* @param Before [Optional] Whether to add the duplicated sheet before the target. When omitted, adds after the specified worksheet index.
+'* @return Name of the added worksheet.
 '*
 '* @details
-'* ワークシートを複製します。
+'* Duplicates a worksheet.
 Public Function CopyWorksheet( _
         Optional ByVal SourceWorksheetName As String = "", _
         Optional ByVal SourceWorkbookName As String = "", _
@@ -223,23 +223,23 @@ Public Function CopyWorksheet( _
         Optional ByVal Before As Boolean = False) As String
 End Function
 
-'* ワークシートをアクティブにします。
+'* Activates a worksheet.
 '*
-'* @param Sheet [省略可] アクティブにするワークシート名。
-'* @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
+'* @param Sheet [Optional] Worksheet name to activate.
+'* @param Book [Optional] Workbook name. When omitted, the workbook name of ThisWorkbook is used.
 '*
 '* @details
-'* 指定したブックとワークシートをアクティブにします。
+'* Activates the specified workbook and worksheet.
 Public Sub ActivateWorksheet(ByVal Sheet As String, Optional ByVal Book As String = "")
 End Sub
 
-'* VBA コンポーネントを削除します。
+'* Removes VBA components.
 '*
-'* @param ComponentNames 削除対象のコンポーネント名、またはその配列。
-'* @param ComponentType [省略可] 削除対象の VBIDE コンポーネント種別。0 の場合は種類を限定しません。
-'* @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
+'* @param ComponentNames Component name or array of component names to remove.
+'* @param ComponentType [Optional] VBIDE component type to remove. When 0, the type is not limited.
+'* @param Book [Optional] Workbook name. When omitted, the workbook name of ThisWorkbook is used.
 '*
 '* @details
-'* 対象ブックの VBProject から、指定された名前の VBA コンポーネントを削除します。
+'* Removes VBA components with the specified names from the target workbook VBProject.
 Public Sub RemoveVBComponents(ByVal ComponentNames As Variant, Optional ByVal ComponentType As Long = 0, Optional ByVal Book As String = "")
 End Sub

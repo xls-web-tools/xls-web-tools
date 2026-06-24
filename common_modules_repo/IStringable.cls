@@ -15,17 +15,17 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! オブジェクトが文字列表現で表現できることを示すインターフェイスです。
+'! Interface indicating that an object can be represented as a string.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IStringable", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IStringable", Description:="This class is intended for interfaces."
 End Sub
 
-'* このオブジェクトの文字列表現を返します。
+'* Returns the string representation of this object.
 '*
 '* @details
-'* このオブジェクトの文字列表現を返します。
+'* Returns the string representation of this object.
 Public Function ToString() As String
 End Function

@@ -5,20 +5,20 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! CommonModules が Excel ワークシート関数として公開する UDF をまとめた標準モジュールです。
+'! Standard module that groups UDFs exposed by CommonModules as Excel worksheet functions.
 '!
 ' #############################################################################
 
-'* 文字列同士を比較し、差分の文字列を取得します。
+'* Compares two strings and gets the difference string.
 '*
-'* @param Expression1 元の文字列。
-'* @param Expression2 変更後の文字列。
-'* @param ExtractType 抽出タイプ。0 を指定すると、元の文字列から削除された文字列を取得します。1 を指定すると、元の文字列に追加された文字列を取得します。
-'* @return 差分の文字列。
+'* @param Expression1 Original string.
+'* @param Expression2 Modified string.
+'* @param ExtractType Extraction type. Specify 0 to get the string deleted from the original string. Specify 1 to get the string added to the original string.
+'* @return Difference string.
 '*
 '* @details
-'* 文字列同士を比較し、差分の文字を前から順に結合した文字列を取得します。
-'* たとえば、Expression1 が「aaa [bbb ccc] ddd」、Expression2 が「aaa bbb ddd eee」で、ExtractType が 0 の場合は、「[ccc] 」が返ります。
+'* Compares two strings and returns a string made by joining the differing characters in order from the front.
+'* For example, if Expression1 is "aaa [bbb ccc] ddd", Expression2 is "aaa bbb ddd eee", and ExtractType is 0, this returns "[ccc] ".
 Public Function DIFFSTR( _
     ByVal Expression1 As String, _
     ByVal Expression2 As String, _
@@ -26,7 +26,7 @@ Public Function DIFFSTR( _
 
     Call InitializeUdfCommonService
 
-    '=== 1) 空文字列が混在するケースの簡易処理 ==================
+    '=== 1) Simple handling for cases that include empty strings ==================
     If Expression1 = "" Or Expression2 = "" Then
         If Expression1 = "" Then
             If ExtractType = 0 Then
@@ -35,7 +35,7 @@ Public Function DIFFSTR( _
                 DIFFSTR = Expression2
             End If
         Else
-            ' Expression2 が空文字列
+            ' Expression2 is an empty string
             If ExtractType = 0 Then
                 DIFFSTR = Expression1
             Else
@@ -45,17 +45,17 @@ Public Function DIFFSTR( _
         Exit Function
     End If
 
-    '=== 2) 文字列を文字配列に変換 ==============================
+    '=== 2) Convert strings to character arrays ==============================
     Dim expr_1_arr() As String
     Dim expr_2_arr() As String
     expr_1_arr = ConvertStringToCharArray(Expression1)
     expr_2_arr = ConvertStringToCharArray(Expression2)
 
-    '=== 3) DiffStringArray を使用して差分を算出 ===============
+    '=== 3) Use DiffStringArray to calculate the differences ===============
     Dim diff_type_arr() As String
     Call DiffStringArray(expr_1_arr, expr_2_arr, diff_type_arr, EnableReplaceType:=False)
 
-    '=== 4) 抽出タイプに応じて、差分文字列を再構築 ==============
+    '=== 4) Rebuild the difference string according to the extraction type ==============
     Dim result_str As String
     result_str = ""
 
@@ -69,12 +69,12 @@ Public Function DIFFSTR( _
 
         Select Case ExtractType
             Case 0
-                ' 削除で旧文字列側が取り除かれた文字を集める
+                ' Collect characters removed from the old string by deletions
                 If (diff_tag = "DEL") Then
                     result_str = result_str & expr_1_arr(i_idx)
                 End If
             Case 1
-                ' 追加で新文字列側に増えた文字を集める
+                ' Collect characters added to the new string by additions
                 If (diff_tag = "ADD") Then
                     result_str = result_str & expr_2_arr(i_idx)
                 End If
@@ -84,18 +84,18 @@ Public Function DIFFSTR( _
     DIFFSTR = result_str
 End Function
 
-''* 新しい Excel で存在するワークシート関数 TEXTSPLIT の独自実装。
+''* Custom implementation of the TEXTSPLIT worksheet function available in newer Excel versions.
 ''*
-''* @param Expression 分割するテキスト。
-''* @param ColumnDelimiter 列の区切り文字。(一般的な CSV では 「,」)
-''* @param RowDelimiter 行の区切り文字。(一般的な CSV では 改行記号) (省略可能)
-''* @param IgnoreEmpty 連続する区切り記号を無視かどうか。無視するには True を指定します。 既定値は False で、PadWith で埋められます。
-''* @param MatchMode (未実装の機能)
-''* @param PadWith 連続する区切り記号の場合の値。既定値は #N/A。
-''* @return 分割した結果の配列。
+''* @param Expression Text to split.
+''* @param ColumnDelimiter Column delimiter. (In a typical CSV, this is a comma.)
+''* @param RowDelimiter Row delimiter. (In a typical CSV, this is a line break.) (Optional)
+''* @param IgnoreEmpty Whether to ignore consecutive delimiters. Specify True to ignore them. The default is False, and values are filled with PadWith.
+''* @param MatchMode (Unimplemented feature.)
+''* @param PadWith Value to use for consecutive delimiters. The default is #N/A.
+''* @return Array containing the split result.
 ''*
 ''* @details
-''* TEXTSPLIT がないバージョンの Excel のための実装です。詳細については Microsoft の TEXTSPLIT の説明を参照してください。
+''* Implementation for Excel versions that do not have TEXTSPLIT. For details, see Microsoft's TEXTSPLIT documentation.
 ''*
 ''* @see https://support.microsoft.com/ja-jp/office/textsplit-%E9%96%A2%E6%95%B0-b1ca414e-4c21-4ca0-b1b7-bdecace8a6e7
 'Function TEXTSPLIT( _
@@ -103,7 +103,7 @@ End Function
 '        Optional ByVal IgnoreEmpty As Boolean = False, Optional ByVal MatchMode As Integer = 0, Optional ByVal PadWith As Variant = Nothing) As Variant()
 '
 '    If MatchMode <> 0 Then
-'        ' MatchMode 1 (IgnoreCase) は未実装
+'        ' MatchMode 1 (IgnoreCase) is not implemented
 '        TEXTSPLIT = CVErr(xlErrValue)
 '        Exit Function
 '    End If
@@ -162,17 +162,17 @@ End Function
 '    TEXTSPLIT = result_value
 'End Function
 
-''* 新しい Excel で存在するワークシート関数 TEXTJOIN の独自実装。
+''* Custom implementation of the TEXTJOIN worksheet function available in newer Excel versions.
 ''*
-''* @param Delimiter 区切り文字。
-''* @param IgnoreEmpty 空文字列を無視かどうか。True の場合、空文字列は無視されます。False の場合、無視されず区切り文字が連続します。
-''* @param Expression1 1 番目の文字列
-''* @param Expressions 2 番目以降の文字列。(可変長引数)
+''* @param Delimiter Delimiter.
+''* @param IgnoreEmpty Whether to ignore empty strings. When True, empty strings are ignored. When False, they are not ignored and delimiters are consecutive.
+''* @param Expression1 First string.
+''* @param Expressions Second and later strings. (Variable-length argument.)
 ''*
-''* @return 結合した文字列。
+''* @return Joined string.
 ''*
 ''* @details
-''* TEXTJOIN がないバージョンの Excel のための実装です。詳細については Microsoft の TEXTJOIN の説明を参照してください。
+''* Implementation for Excel versions that do not have TEXTJOIN. For details, see Microsoft's TEXTJOIN documentation.
 ''*
 ''* @see https://support.microsoft.com/ja-jp/office/textjoin-%E9%96%A2%E6%95%B0-357b449a-ec91-49d0-80c3-0e8fc845691c
 'Function TEXTJOIN(ByVal Delimiter As String, ByVal IgnoreEmpty As Boolean, ByVal Expression1 As Variant, ParamArray Expressions() As Variant) As Variant
@@ -202,13 +202,13 @@ End Function
 
 'Sub pTextJoinCore(ByRef ResultString As String, ByRef IsFirst As Boolean, Delimiter As String, Expression As Variant, IgnoreEmpty As Boolean)
 '    If TypeOf Expression Is Range Or IsArray(Expression) Then
-'        ' Expression が Range か配列の場合
+'        ' When Expression is a Range or array
 '        Dim cell_item As Range
 '        For Each cell_item In Expression
 '            Call pTextJoinItemCore(ResultString, IsFirst, Delimiter, cell_item.Value, IgnoreEmpty)
 '        Next cell_item
 ''    ElseIf IsArray(Expression) Then
-''        ' Expression が配列の場合
+''        ' When Expression is an array
 ''        If LBound(Expression) <= UBound(Expression) Then
 ''            Dim item_idx As Long
 ''            For item_idx = LBound(Expression) To UBound(Expression)
@@ -218,13 +218,13 @@ End Function
 ''            ResultString = ResultString & Delimiter
 ''        End If
 '    Else
-'        ' Range や配列でない場合
+'        ' When Expression is neither a Range nor an array
 '        Call pTextJoinItemCore(ResultString, IsFirst, Delimiter, Expression, IgnoreEmpty)
 '    End If
 'End Sub
 
 'Private Sub pTextJoinItemCore(ByRef ResultString As String, ByRef IsFirst As Boolean, Delimiter As String, Expression As Variant, IgnoreEmpty As Boolean)
-'    If IsError(Expression) Then Err.Raise xlErrNA, "TEXTJOIN", "結合対象にエラー値が含まれます"
+'    If IsError(Expression) Then Err.Raise xlErrNA, "TEXTJOIN", "The values to join include an error value."
 '    If Expression <> "" Or Not IgnoreEmpty Then
 '        If IsFirst Then
 '            ResultString = Expression

@@ -14,21 +14,21 @@ Implements IWorkbookService
 ' #############################################################################
 '!
 '! @brief
-'! Excel ファイルのオープン、クローズ、書き込みなどを管理するサービスのテストダブルです。
+'! Test double for the service that manages opening, closing, and writing Excel files.
 '!
 ' #############################################################################
 
-'* スタブ設定と正常に成立した呼び出し履歴。
-'* 戻り値が必要で外部状態や親リソースに依存するものは strict stub、存在確認など保守的な既定値が自然なものは safe default とします。
-'* 戻り値なしの操作は spy only とし、strict stub の未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
-'* spy only は、元メソッド定義の順序で呼び出し引数を記録します。
+'* Stub settings and history of successfully completed calls.
+'* Members that need return values and depend on external state or parent resources are strict stubs; members where a conservative default is natural, such as existence checks, use safe defaults.
+'* Operations without return values are spy only, and unregistered strict stub errors and explicit errors from SetError are not recorded in call history.
+'* spy only records call arguments in the order of the original method definition.
 Public Store As TestDoubleBehaviorStore
 
 Private Sub Class_Initialize()
     Set Store = New TestDoubleBehaviorStore
 End Sub
 
-'* GetThisWorkbookName の safe default です。未登録時は "ThisWorkbook.xlsm" を返します。
+'* Safe default for GetThisWorkbookName. Returns "ThisWorkbook.xlsm" when unregistered.
 Public Function GetThisWorkbookName() As String
     Call Store.RaiseIfError("GetThisWorkbookName")
 
@@ -42,7 +42,7 @@ Private Function IWorkbookService_GetThisWorkbookName() As String
     IWorkbookService_GetThisWorkbookName = GetThisWorkbookName()
 End Function
 
-'* GetThisWorkbookDirectoryPath の safe default です。未登録時は未保存 ThisWorkbook 相当として空文字列を返します。
+'* Safe default for GetThisWorkbookDirectoryPath. Returns an empty string as unsaved ThisWorkbook equivalent when unregistered.
 Public Function GetThisWorkbookDirectoryPath() As String
     Call Store.RaiseIfError("GetThisWorkbookDirectoryPath")
 
@@ -56,7 +56,7 @@ Private Function IWorkbookService_GetThisWorkbookDirectoryPath() As String
     IWorkbookService_GetThisWorkbookDirectoryPath = GetThisWorkbookDirectoryPath()
 End Function
 
-'* WorkbookExists の safe default です。未登録時は False を返します。
+'* Safe default for WorkbookExists. Returns False when unregistered.
 Public Function WorkbookExists(ByVal Book As String) As Boolean
     Call Store.RaiseIfError("WorkbookExists", Book)
 
@@ -70,7 +70,7 @@ Private Function IWorkbookService_WorkbookExists(ByVal Book As String) As Boolea
     IWorkbookService_WorkbookExists = WorkbookExists(Book)
 End Function
 
-'* GetAllWorkbooks の safe default です。未登録時は GetThisWorkbookName と連動した 1 件配列を返します。
+'* Safe default for GetAllWorkbooks. Returns a one-item array linked to GetThisWorkbookName when unregistered.
 Public Function GetAllWorkbooks() As String()
     Call Store.RaiseIfError("GetAllWorkbooks")
 
@@ -94,7 +94,7 @@ Private Function pGetThisWorkbookNameForDefault() As String
     pGetThisWorkbookNameForDefault = Store.GetReturnOrDefault("GetThisWorkbookName", "ThisWorkbook.xlsm")
 End Function
 
-'* GetOtherWorkbooks の safe default です。未登録時は他ブックなしを表す空配列を返します。
+'* Safe default for GetOtherWorkbooks. Returns an empty array representing no other workbooks when unregistered.
 Public Function GetOtherWorkbooks() As String()
     Call Store.RaiseIfError("GetOtherWorkbooks")
 
@@ -112,7 +112,7 @@ Private Function IWorkbookService_GetOtherWorkbooks() As String()
     IWorkbookService_GetOtherWorkbooks = GetOtherWorkbooks()
 End Function
 
-'* WorksheetExists の safe default です。未登録時は False を返します。
+'* Safe default for WorksheetExists. Returns False when unregistered.
 Public Function WorksheetExists(ByVal Sheet As String, Optional ByVal Book As String = "") As Boolean
     Call Store.RaiseIfError("WorksheetExists", Sheet, Book)
 
@@ -126,7 +126,7 @@ Private Function IWorkbookService_WorksheetExists(ByVal Sheet As String, Optiona
     IWorkbookService_WorksheetExists = WorksheetExists(Sheet, Book:=Book)
 End Function
 
-'* GetAllWorksheets の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetAllWorksheets. Register the return value explicitly in Store.
 Public Function GetAllWorksheets(Optional ByVal Book As String = "") As String()
     Call Store.RaiseIfError("GetAllWorksheets", Book)
 
@@ -140,7 +140,7 @@ Private Function IWorkbookService_GetAllWorksheets(Optional ByVal Book As String
     IWorkbookService_GetAllWorksheets = GetAllWorksheets(Book:=Book)
 End Function
 
-'* GetOtherWorksheets の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetOtherWorksheets. Register the return value explicitly in Store.
 Public Function GetOtherWorksheets(Optional ByVal Book As String = "") As String()
     Call Store.RaiseIfError("GetOtherWorksheets", Book)
 
@@ -154,7 +154,7 @@ Private Function IWorkbookService_GetOtherWorksheets(Optional ByVal Book As Stri
     IWorkbookService_GetOtherWorksheets = GetOtherWorksheets(Book:=Book)
 End Function
 
-'* OpenWorkbook の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for OpenWorkbook. Register the return value explicitly in Store.
 Public Function OpenWorkbook(Optional ByVal FilePath As String = "") As String
     Call Store.RaiseIfError("OpenWorkbook", FilePath)
 
@@ -168,7 +168,7 @@ Private Function IWorkbookService_OpenWorkbook(Optional ByVal FilePath As String
     IWorkbookService_OpenWorkbook = OpenWorkbook(FilePath:=FilePath)
 End Function
 
-'* SaveWorkbook の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for SaveWorkbook. Register the return value explicitly in Store.
 Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Optional ByVal Force As Boolean = True) As String
     Call Store.RaiseIfError("SaveWorkbook", Book, FilePath, Force)
 
@@ -182,7 +182,7 @@ Private Function IWorkbookService_SaveWorkbook(ByVal Book As String, ByVal FileP
     IWorkbookService_SaveWorkbook = SaveWorkbook(Book, FilePath, Force:=Force)
 End Function
 
-'* IsSaved の safe default です。未登録時は False を返します。
+'* Safe default for IsSaved. Returns False when unregistered.
 Public Function IsSaved(ByVal Book As String) As Boolean
     Call Store.RaiseIfError("IsSaved", Book)
 
@@ -196,7 +196,7 @@ Private Function IWorkbookService_IsSaved(ByVal Book As String) As Boolean
     IWorkbookService_IsSaved = IsSaved(Book)
 End Function
 
-'* HasPath の safe default です。未登録時は False を返します。
+'* Safe default for HasPath. Returns False when unregistered.
 Public Function HasPath(ByVal Book As String) As Boolean
     Call Store.RaiseIfError("HasPath", Book)
 
@@ -210,7 +210,7 @@ Private Function IWorkbookService_HasPath(ByVal Book As String) As Boolean
     IWorkbookService_HasPath = HasPath(Book)
 End Function
 
-'* CloseWorkbook の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for CloseWorkbook. Records the call; inject failures with Store.SetError.
 Public Sub CloseWorkbook(ByVal Book As String, Optional ByVal Force As Boolean = True)
     Call Store.RaiseIfError("CloseWorkbook", Book, Force)
     Call Store.RecordCall("CloseWorkbook", Book, Force)
@@ -219,7 +219,7 @@ Private Sub IWorkbookService_CloseWorkbook(ByVal Book As String, Optional ByVal 
     Call CloseWorkbook(Book, Force:=Force)
 End Sub
 
-'* Find の strict stub です。検索結果なしを表す空 ObjectList も明示登録してください。
+'* Strict stub for Find. Explicitly register an empty ObjectList as well to represent no search results.
 Public Function Find( _
         ByVal What As String, _
         Optional ByVal Book As String = "", _
@@ -252,7 +252,7 @@ Private Function IWorkbookService_Find( _
             MatchByte:=MatchByte)
 End Function
 
-'* AddWorksheet の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for AddWorksheet. Register the return value explicitly in Store.
 Public Function AddWorksheet( _
         Optional ByVal Sheet As String = "", _
         Optional ByVal Book As String = "", _
@@ -278,7 +278,7 @@ Private Function IWorkbookService_AddWorksheet( _
             SheetIndex:=SheetIndex, Before:=Before)
 End Function
 
-'* RemoveWorksheet の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for RemoveWorksheet. Records the call; inject failures with Store.SetError.
 Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal Book As String = "")
     Call Store.RaiseIfError("RemoveWorksheet", Sheet, Book)
     Call Store.RecordCall("RemoveWorksheet", Sheet, Book)
@@ -287,7 +287,7 @@ Private Sub IWorkbookService_RemoveWorksheet(Optional ByVal Sheet As String = ""
     Call RemoveWorksheet(Sheet:=Sheet, Book:=Book)
 End Sub
 
-'* CopyWorksheet の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for CopyWorksheet. Register the return value explicitly in Store.
 Public Function CopyWorksheet( _
         Optional ByVal SourceWorksheetName As String = "", _
         Optional ByVal SourceWorkbookName As String = "", _
@@ -321,7 +321,7 @@ Private Function IWorkbookService_CopyWorksheet( _
             Before:=Before)
 End Function
 
-'* ActivateWorksheet の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for ActivateWorksheet. Records the call; inject failures with Store.SetError.
 Public Sub ActivateWorksheet(ByVal Sheet As String, Optional ByVal Book As String = "")
     Call Store.RaiseIfError("ActivateWorksheet", Sheet, Book)
     Call Store.RecordCall("ActivateWorksheet", Sheet, Book)
@@ -330,7 +330,7 @@ Private Sub IWorkbookService_ActivateWorksheet(ByVal Sheet As String, Optional B
     Call ActivateWorksheet(Sheet, Book:=Book)
 End Sub
 
-'* RemoveVBComponents の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for RemoveVBComponents. Records the call; inject failures with Store.SetError.
 Public Sub RemoveVBComponents(ByVal ComponentNames As Variant, Optional ByVal ComponentType As Long = 0, Optional ByVal Book As String = "")
     Call Store.RaiseIfError("RemoveVBComponents", ComponentNames, ComponentType, Book)
     Call Store.RecordCall("RemoveVBComponents", ComponentNames, ComponentType, Book)

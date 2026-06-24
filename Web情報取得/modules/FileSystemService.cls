@@ -14,7 +14,7 @@ Implements IFileSystemService
 ' #############################################################################
 '!
 '! @brief
-'! ファイル システムへのアクセスを管理するサービスの実装です。
+'! Implementation of the service that manages file system access.
 '!
 ' #############################################################################
 
@@ -29,15 +29,15 @@ Private Sub Class_Initialize()
     'Set pFSO = New Scripting.FileSystemObject
 End Sub
 
-'* 指定されたパスを絶対パスにします。
+'* Converts the specified path to an absolute path.
 '*
-'* @param PathLikeString パス文字列。
-'* @return 絶対パス。
+'* @param PathLikeString Path string.
+'* @return Absolute path.
 '*
 '* @details
-'* 指定されたパスを絶対パスにします。もともと絶対パスの場合も正規化した絶対パスを返します。
-'* URL ではないローカルパスの場合、OS 挙動で環境変数を展開してから絶対パス化します。
-'* 相対パスの場合は、WorkbookService.GetThisWorkbookDirectoryPath の結果を基準にします。
+'* Converts the specified path to an absolute path. If the path is already absolute, returns a normalized absolute path.
+'* For local paths that are not URLs, environment variables are expanded using OS behavior before conversion to an absolute path.
+'* Relative paths are resolved against the result of WorkbookService.GetThisWorkbookDirectoryPath.
 Public Function GetAbsolutePath(ByVal PathLikeString As String) As String
     Dim target_path As String
     target_path = PathLikeString
@@ -63,16 +63,16 @@ End Function
 
 Private Sub pRequireWorkbookService(ByVal MethodName As String)
     If WbSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService" & "." & MethodName, Description:="InitializeCommonService has not been called."
     End If
 End Sub
 
-'* OS ユーザー一時フォルダーのパスを取得します。
+'* Gets the path of the OS user temporary folder.
 '*
-'* @return OS ユーザー一時フォルダーの絶対パス。
+'* @return Absolute path of the OS user temporary folder.
 '*
 '* @details
-'* OS が示すユーザー一時フォルダーの絶対 Windows パスを返します。末尾のパス区切り文字は付けません。
+'* Returns the absolute Windows path of the user temporary folder reported by the OS. A trailing path separator is not appended.
 Public Function GetTemporaryDirectoryPath() As String
     Dim result_value As String
     result_value = pFSO.GetSpecialFolder(TemporaryFolder).Path
@@ -87,14 +87,14 @@ Private Function IFileSystemService_GetTemporaryDirectoryPath() As String
     IFileSystemService_GetTemporaryDirectoryPath = GetTemporaryDirectoryPath()
 End Function
 
-'* OS ユーザー一時フォルダー直下に一時ディレクトリを作成します。
+'* Creates a temporary directory directly under the OS user temporary folder.
 '*
-'* @param NamePrefix [省略可] 一時ディレクトリ名の前に付ける文字列。
-'* @return 作成した一時ディレクトリの絶対パス。
+'* @param NamePrefix [Optional] String to prepend to the temporary directory name.
+'* @return Absolute path of the created temporary directory.
 '*
 '* @details
-'* OS ユーザー一時フォルダー直下に衝突しにくい名前のディレクトリを作成し、作成した絶対 Windows パスを返します。
-'* NamePrefix は変換しません。無効なフォルダー名になる場合は作成エラーを送出します。
+'* Creates a directory with a low-collision name directly under the OS user temporary folder and returns the created absolute Windows path.
+'* NamePrefix is not transformed. If it produces an invalid folder name, a creation error is raised.
 Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
     Const C_MAX_ATTEMPT As Long = 100
 
@@ -134,24 +134,24 @@ Public Function CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "
         End If
     Next attempt_idx
 
-    Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateTemporaryDirectory", Description:="一時ディレクトリを作成できませんでした。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateTemporaryDirectory", Description:="Could not create the temporary directory."
 End Function
 Private Function IFileSystemService_CreateTemporaryDirectory(Optional ByVal NamePrefix As String = "") As String
     IFileSystemService_CreateTemporaryDirectory = CreateTemporaryDirectory(NamePrefix:=NamePrefix)
 End Function
 
-' 指定されたディレクトリにあるファイルの絶対パス一覧を得ます。
+' Gets a list of absolute file paths in the specified directory.
 '
-' @param DirectoryPath ディレクトリのパス。
-' @param CatchRegExp [省略可] リストに含めるファイル名の正規表現。
-' @param IgnoreRegExp [省略可] リストに含めないファイル名の正規表現。
-' @param IgnoreCase [省略可] 正規表現の大小文字を無視するか。
-' @return 絶対パスの配列。
+' @param DirectoryPath Directory path.
+' @param CatchRegExp [Optional] Regular expression for file names to include in the list.
+' @param IgnoreRegExp [Optional] Regular expression for file names to exclude from the list.
+' @param IgnoreCase [Optional] Whether to ignore case in the regular expressions.
+' @return Array of absolute paths.
 '
 ' @details
-' 指定されたディレクトリにあるファイルの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
-' 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
-' 列挙中に個別のファイルが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
+' Gets a list of absolute file paths in the specified directory as an array. Returns a zero-based empty array when there are no matches.
+' The return order follows the FileSystemObject / OS enumeration order and is not sorted.
+' If an individual file is deleted or renamed during enumeration and getting its name or path raises a file or path not found error, that item is excluded and enumeration continues.
 Public Function GetFileList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
@@ -166,18 +166,18 @@ Private Function IFileSystemService_GetFileList(ByVal DirectoryPath As String, O
     IFileSystemService_GetFileList = GetFileList(DirectoryPath, CatchRegExp:=CatchRegExp, IgnoreRegExp:=IgnoreRegExp, IgnoreCase:=IgnoreCase)
 End Function
 
-' 指定されたディレクトリにあるサブ ディレクトリの絶対パス一覧を得ます。
+' Gets a list of absolute subdirectory paths in the specified directory.
 '
-' @param DirectoryPath ディレクトリのパス。
-' @param CatchRegExp [省略可] リストに含めるサブ ディレクトリ名の正規表現。
-' @param IgnoreRegExp [省略可] リストに含めないサブ ディレクトリ名の正規表現。
-' @param IgnoreCase [省略可] 正規表現の大小文字を無視するか。
-' @return 絶対パスの配列。
+' @param DirectoryPath Directory path.
+' @param CatchRegExp [Optional] Regular expression for subdirectory names to include in the list.
+' @param IgnoreRegExp [Optional] Regular expression for subdirectory names to exclude from the list.
+' @param IgnoreCase [Optional] Whether to ignore case in the regular expressions.
+' @return Array of absolute paths.
 '
 ' @details
-' 指定されたディレクトリにあるサブ ディレクトリの絶対パス一覧を配列で得ます。該当なしの場合は 0 ベースの空配列を返します。
-' 戻り順は FileSystemObject / OS の列挙順のままで、ソートしません。
-' 列挙中に個別のサブ ディレクトリが削除またはリネームされ、名前またはパスの取得時にファイルまたはパスが見つからないエラーとなった場合は、その項目を除外して続行します。
+' Gets a list of absolute subdirectory paths in the specified directory as an array. Returns a zero-based empty array when there are no matches.
+' The return order follows the FileSystemObject / OS enumeration order and is not sorted.
+' If an individual subdirectory is deleted or renamed during enumeration and getting its name or path raises a file or path not found error, that item is excluded and enumeration continues.
 Public Function GetDirectoryList(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String()
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
@@ -339,13 +339,13 @@ End Sub
 '    pFilterFolders = result_arr
 'End Function
 
-' 指定されたパスに実体が存在するかを確認します。
+' Checks whether an entity exists at the specified path.
 '
-' @param PathLikeString パス文字列。
-' @return 実体が存在するか。
+' @param PathLikeString Path string.
+' @return Whether an entity exists.
 '
 ' @details
-' 指定されたパスに実体が存在するかを確認します。ファイルかディレクトリがある場合に True となります。
+' Checks whether an entity exists at the specified path. Returns True when a file or directory exists.
 Public Function PathExists(ByVal PathLikeString As String) As Boolean
     Dim fs_path As String
     fs_path = GetAbsolutePath(PathLikeString)
@@ -360,13 +360,13 @@ Private Function IFileSystemService_PathExists(ByVal PathLikeString As String) A
     IFileSystemService_PathExists = PathExists(PathLikeString)
 End Function
 
-' 指定されたパスにファイルが存在するかを確認します。
+' Checks whether a file exists at the specified path.
 '
-' @param FilePath ファイルのパス。
-' @return 実体が存在するか。
+' @param FilePath File path.
+' @return Whether an entity exists.
 '
 ' @details
-' 指定されたパスにファイルが存在するかを確認します。
+' Checks whether a file exists at the specified path.
 Public Function IsFile(ByVal FilePath As String) As Boolean
     Dim file_path As String
     file_path = GetAbsolutePath(FilePath)
@@ -381,13 +381,13 @@ Private Function IFileSystemService_IsFile(ByVal FilePath As String) As Boolean
     IFileSystemService_IsFile = IsFile(FilePath)
 End Function
 
-' 指定されたパスにディレクトリが存在するかを確認します。
+' Checks whether a directory exists at the specified path.
 '
-' @param DirectoryPath ディレクトリのパス。
-' @return 実体が存在するか。
+' @param DirectoryPath Directory path.
+' @return Whether an entity exists.
 '
 ' @details
-' 指定されたパスにディレクトリが存在するかを確認します。
+' Checks whether a directory exists at the specified path.
 Public Function IsDirectory(ByVal DirectoryPath As String) As Boolean
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
@@ -402,13 +402,13 @@ Private Function IFileSystemService_IsDirectory(ByVal DirectoryPath As String) A
     IFileSystemService_IsDirectory = IsDirectory(DirectoryPath)
 End Function
 
-' 最終更新日時を得ます
+' Gets the last modified date and time.
 '
-' @param PathLikeString パス文字列。
-' @return 最終更新日時。
+' @param PathLikeString Path string.
+' @return Last modified date and time.
 '
 ' @details
-' 最終更新日時を得ます。
+' Gets the last modified date and time.
 Public Function GetLastModified(ByVal PathLikeString As String) As Date
     Dim path_str As String
     path_str = GetAbsolutePath(PathLikeString)
@@ -418,7 +418,7 @@ Public Function GetLastModified(ByVal PathLikeString As String) As Date
     ElseIf IsDirectory(path_str) Then
         Set path_obj = pFSO.GetFolder(path_str)
     Else
-        Err.Raise vbObjectError + 1, "Class FileSystemService.GetLastModified", "更新日時取得対象のファイルまたはディレクトリがありません。(" & path_str & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetLastModified", "The file or directory to get the modified date from does not exist. (" & path_str & ")"
     End If
     GetLastModified = path_obj.DateLastModified
 End Function
@@ -426,13 +426,13 @@ Private Function IFileSystemService_GetLastModified(ByVal PathLikeString As Stri
     IFileSystemService_GetLastModified = GetLastModified(PathLikeString)
 End Function
 
-' ファイルサイズをバイト単位で得ます。
+' Gets the file size in bytes.
 '
-' @param FilePath ファイルのパス。
-' @return ファイルサイズ。単位はバイトです。
+' @param FilePath File path.
+' @return File size, in bytes.
 '
 ' @details
-' 指定されたファイルのサイズをバイト単位で得ます。
+' Gets the size of the specified file in bytes.
 Public Function GetFileSize(ByVal FilePath As String) As Double
     Dim file_path As String
     file_path = GetAbsolutePath(FilePath)
@@ -440,31 +440,31 @@ Public Function GetFileSize(ByVal FilePath As String) As Double
     If pFSO.FileExists(file_path) Then
         GetFileSize = pFSO.GetFile(file_path).Size
     ElseIf pFSO.FolderExists(file_path) Then
-        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "ファイルサイズ取得対象がファイルではありません。(" & file_path & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "The target for getting the file size is not a file. (" & file_path & ")"
     Else
-        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "ファイルサイズ取得対象のファイルがありません。(" & file_path & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.GetFileSize", "The file to get the file size from does not exist. (" & file_path & ")"
     End If
 End Function
 Private Function IFileSystemService_GetFileSize(ByVal FilePath As String) As Double
     IFileSystemService_GetFileSize = GetFileSize(FilePath)
 End Function
 
-' ディレクトリを作成します。
+' Creates a directory.
 '
-' @param DirectoryPath ディレクトリのパス。
-' @param Force [省略可] 作成先のパスにすでになにかが存在する場合に、上書き (削除) するか。
-' @param Recursive [省略可] 親ディレクトリが存在しない場合に、再帰的に作成するか。
-' @return 実際に作成したか。
+' @param DirectoryPath Directory path.
+' @param Force [Optional] Whether to overwrite (delete) anything that already exists at the destination path.
+' @param Recursive [Optional] Whether to create parent directories recursively when they do not exist.
+' @return Whether a directory was actually created.
 '
 ' @details
-' 指定されたパスにディレクトリを作成します。すでにディレクトリが存在していた場合は何もせず、戻り値が False になります。
-' 実際にディレクトリを作成した場合は、戻り値が True になります。
+' Creates a directory at the specified path. If the directory already exists, does nothing and returns False.
+' Returns True when a directory was actually created.
 Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False, Optional ByVal Recursive As Boolean = False) As Boolean
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
 
     If IsDirectory(dir_path) Then
-        Debug.Print dir_path & " を作成しようとしましたが、すでに存在します。"
+        Debug.Print dir_path & " was requested for creation, but it already exists."
         CreateDirectory = False
         Exit Function
     End If
@@ -473,18 +473,18 @@ Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Fo
     parent_dir = GetParentPath(dir_path, IgnoreEndSep:=True)
 
     If IsDirectory(parent_dir) Then
-        ' Force なら既存ファイルを消す
+        ' If Force is True, delete the existing file.
         If Force And IsFile(dir_path) Then Call RemoveFile(dir_path, Force:=True)
-        ' 親ディレクトリが存在するので、普通に作成
+        ' The parent directory exists, so create the directory normally.
         Call pFSO.CreateFolder(dir_path)
         CreateDirectory = True
     Else
-        ' 親ディレクトリが存在しない場合
-        If Not Recursive Then Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "親ディレクトリがありません。(" & parent_dir & ")"
+        ' When the parent directory does not exist.
+        If Not Recursive Then Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "The parent directory does not exist. (" & parent_dir & ")"
 
         Dim dir_arr() As String
 
-        ' ディレクトリ名を配列に格納しながら、親をたどっていく
+        ' Walk up the parent directories while storing directory names in an array.
         Do
             Call pAddItemToStringArray(dir_arr, GetLeafFromPath(dir_path, IgnoreEndSep:=True))
             dir_path = parent_dir
@@ -492,12 +492,12 @@ Public Function CreateDirectory(ByVal DirectoryPath As String, Optional ByVal Fo
         Loop While dir_path <> "" And Not IsDirectory(parent_dir)
 
         If dir_path = "" Then
-            ' ルートが見つからなかった場合？
-            Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "ディレクトリを作成できませんでした。(" & dir_path & ")"
+            ' What if no root is found?
+            Err.Raise vbObjectError + 1, "Class FileSystemService.CreateDirectory", "Could not create the directory. (" & dir_path & ")"
         Else
-            ' Force なら既存ファイルを消す
+            ' If Force is True, delete the existing file.
             If Force And IsFile(dir_path) Then Call RemoveFile(dir_path, Force:=True)
-            ' ディレクトリを順に作成していく
+            ' Create the directories in order.
             Dim item_idx As Long
             For item_idx = UBound(dir_arr) To LBound(dir_arr) Step -1
                 Call pFSO.CreateFolder(dir_path)
@@ -512,21 +512,21 @@ Private Function IFileSystemService_CreateDirectory(ByVal DirectoryPath As Strin
     IFileSystemService_CreateDirectory = CreateDirectory(DirectoryPath, Force:=Force, Recursive:=Recursive)
 End Function
 
-' ディレクトリを移動します。
+' Moves a directory.
 '
-' @param SourcePath 移動元ディレクトリのパス。
-' @param DestinationPath 移動先ディレクトリのパス。
-' @param Force [省略可] 移動先のパスにすでになにかが存在する場合に、上書きするか。
+' @param SourcePath Source directory path.
+' @param DestinationPath Destination directory path.
+' @param Force [Optional] Whether to overwrite anything that already exists at the destination path.
 '
 ' @details
-' 指定されたパスにディレクトリを作成します。DestinationPath がパス区切り文字で終わる場合、そのディレクトリのサブ ディレクトリとして、現在のディレクトリ名のまま移動します。
-' Force:=True の場合は、CopyDirectory と同じ上書き規則で移動先へコピーしてから、移動元を削除します。既存の移動先ディレクトリ配下にある余剰ファイルは削除しません。
+' Moves the directory at the specified path. If DestinationPath ends with a path separator, moves it under that directory with the current directory name.
+' When Force:=True, copies to the destination using the same overwrite rules as CopyDirectory, then deletes the source. Extra files under the existing destination directory are not deleted.
 Public Sub MoveDirectory(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Dim src_path As String, dst_path As String
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveDirectory", "移動対象のディレクトリがありません。(" & src_path & ")"
+    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveDirectory", "The directory to move does not exist. (" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -546,21 +546,21 @@ Private Sub IFileSystemService_MoveDirectory(ByVal SourcePath As String, ByVal D
     Call MoveDirectory(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-' ディレクトリをコピーします。
+' Copies a directory.
 '
-' @param SourcePath コピー元ディレクトリのパス。
-' @param DestinationPath コピー先ディレクトリのパス。
-' @param Force [省略可] コピー先のパスにすでになにかが存在する場合に、上書きするか。
+' @param SourcePath Source directory path.
+' @param DestinationPath Destination directory path.
+' @param Force [Optional] Whether to overwrite anything that already exists at the destination path.
 '
 ' @details
-' 指定されたパスにディレクトリを作成します。DestinationPath がパス区切り文字で終わる場合、そのディレクトリのサブ ディレクトリとして、現在のディレクトリ名のままコピーします。
-' Force:=True の場合は、既存ファイルを上書きします。既存のコピー先ディレクトリ配下にある余剰ファイルは削除しません。
+' Copies the directory at the specified path. If DestinationPath ends with a path separator, copies it under that directory with the current directory name.
+' When Force:=True, overwrites existing files. Extra files under the existing destination directory are not deleted.
 Public Sub CopyDirectory(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Dim src_path As String, dst_path As String
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyDirectory", "コピー対象のディレクトリがありません。(" & src_path & ")"
+    If Not IsDirectory(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyDirectory", "The directory to copy does not exist. (" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -575,47 +575,47 @@ Private Sub IFileSystemService_CopyDirectory(ByVal SourcePath As String, ByVal D
     Call CopyDirectory(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-' ディレクトリを削除します。
+' Deletes a directory.
 '
-' @param DirectoryPath ディレクトリのパス。
-' @param Force [省略可] 読み取り専用属性でも削除するか。
-' @return 実際に削除したか。
+' @param DirectoryPath Directory path.
+' @param Force [Optional] Whether to delete even when the read-only attribute is set.
+' @return Whether a directory was actually deleted.
 '
 ' @details
-' 指定されたパスにあるディレクトリを削除します。すでにディレクトリが存在していなかった場合は何もせず、戻り値が False になります。
-' 実際にディレクトリを削除した場合は、戻り値が True になります。
+' Deletes the directory at the specified path. If the directory does not already exist, does nothing and returns False.
+' Returns True when a directory was actually deleted.
 Public Function RemoveDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False) As Boolean
     Dim dir_path As String
     dir_path = GetAbsolutePath(DirectoryPath)
 
     If Not IsDirectory(dir_path) Then
-        Debug.Print dir_path & "を消そうとしましたが､存在しませんでした｡"
+        Debug.Print dir_path & " was requested for deletion, but it did not exist."
         RemoveDirectory = False
         Exit Function
     End If
 
-    Call pFSO.DeleteFolder(dir_path, Force:=Force) 'Force でなくとも空でないディレクトリも削除。これは、読み取り専用属性を無視するか否か
+    Call pFSO.DeleteFolder(dir_path, Force:=Force) ' Deletes non-empty directories even when Force is False; this controls whether read-only attributes are ignored.
     RemoveDirectory = True
 End Function
 Private Function IFileSystemService_RemoveDirectory(ByVal DirectoryPath As String, Optional ByVal Force As Boolean = False) As Boolean
     IFileSystemService_RemoveDirectory = RemoveDirectory(DirectoryPath, Force:=Force)
 End Function
 
-' ファイルを移動します。
+' Moves a file.
 '
-' @param SourcePath 移動元ファイルのパス。
-' @param DestinationPath 移動先ファイルのパス。
-' @param Force [省略可] 移動先のパスにすでになにかが存在する場合に、上書きするか。
+' @param SourcePath Source file path.
+' @param DestinationPath Destination file path.
+' @param Force [Optional] Whether to overwrite anything that already exists at the destination path.
 '
 ' @details
-' 指定されたパスにファイルを作成します。DestinationPath がパス区切り文字で終わる場合、そのディレクトリ配下のファイルとして、現在のファイル名のまま移動します。
-' Force:=True の場合は、CopyFile と同じ上書き規則で移動先へコピーしてから、移動元を削除します。
+' Moves the file at the specified path. If DestinationPath ends with a path separator, moves it under that directory with the current file name.
+' When Force:=True, copies to the destination using the same overwrite rules as CopyFile, then deletes the source.
 Public Sub MoveFile(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Dim src_path As String, dst_path As String
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveFile", "移動対象のファイルがありません。(" & src_path & ")"
+    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.MoveFile", "The file to move does not exist. (" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -635,21 +635,21 @@ Private Sub IFileSystemService_MoveFile(ByVal SourcePath As String, ByVal Destin
     Call MoveFile(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-' ファイルをコピーします。
+' Copies a file.
 '
-' @param SourcePath コピー元ファイルのパス。
-' @param DestinationPath コピー先ファイルのパス。
-' @param Force [省略可] コピー先のパスにすでになにかが存在する場合に、上書きするか。
+' @param SourcePath Source file path.
+' @param DestinationPath Destination file path.
+' @param Force [Optional] Whether to overwrite anything that already exists at the destination path.
 '
 ' @details
-' 指定されたパスにファイルを作成します。DestinationPath がパス区切り文字で終わる場合、そのディレクトリ配下のファイルとして、現在のファイル名のままコピーします。
-' Force:=True の場合は、既存ファイルを上書きします。
+' Copies the file at the specified path. If DestinationPath ends with a path separator, copies it under that directory with the current file name.
+' When Force:=True, overwrites existing files.
 Public Sub CopyFile(ByVal SourcePath As String, ByVal DestinationPath As String, Optional ByVal Force As Boolean = False)
     Dim src_path As String, dst_path As String
     src_path = GetAbsolutePath(SourcePath)
     dst_path = GetAbsolutePath(DestinationPath)
 
-    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyFile", "コピー対象のファイルがありません。(" & src_path & ")"
+    If Not IsFile(src_path) Then Err.Raise vbObjectError + 1, "Class FileSystemService.CopyFile", "The file to copy does not exist. (" & src_path & ")"
 
     Dim ends_with_sep As Boolean
     ends_with_sep = pEndsWithPathSeparator(DestinationPath)
@@ -664,43 +664,43 @@ Private Sub IFileSystemService_CopyFile(ByVal SourcePath As String, ByVal Destin
     Call CopyFile(SourcePath, DestinationPath, Force:=Force)
 End Sub
 
-' ファイルを削除します。
+' Deletes a file.
 '
-' @param FilePath ファイルのパス。
-' @param Force [省略可] 読み取り専用属性でも削除するか。
-' @return 実際に削除したか。
+' @param FilePath File path.
+' @param Force [Optional] Whether to delete even when the read-only attribute is set.
+' @return Whether a file was actually deleted.
 '
 ' @details
-' 指定されたパスにあるファイルを削除します。すでにファイルが存在していなかった場合は何もせず、戻り値が False になります。
-' 実際にファイルを削除した場合は、戻り値が True になります。
+' Deletes the file at the specified path. If the file does not already exist, does nothing and returns False.
+' Returns True when a file was actually deleted.
 Public Function RemoveFile(ByVal FilePath As String, Optional ByVal Force As Boolean = False) As Boolean
     Dim file_path As String
     file_path = GetAbsolutePath(FilePath)
 
     If Not IsFile(file_path) Then
-        Debug.Print file_path & "を消そうとしましたが､存在しませんでした｡"
+        Debug.Print file_path & " was requested for deletion, but it did not exist."
         RemoveFile = False
         Exit Function
     End If
 
-    Call pFSO.DeleteFile(file_path, Force:=Force) 'ロックは関係ない、読み取り専用属性を無視するか否か
+    Call pFSO.DeleteFile(file_path, Force:=Force) ' Locks are irrelevant; this controls whether read-only attributes are ignored.
     RemoveFile = True
 End Function
 Private Function IFileSystemService_RemoveFile(ByVal FilePath As String, Optional ByVal Force As Boolean = False) As Boolean
     IFileSystemService_RemoveFile = RemoveFile(FilePath, Force:=Force)
 End Function
 
-' 指定されたフォルダー直下にある、指定された名前のファイルのうち、最新のものを取得します。
+' Gets the newest file among files with the specified name directly under the specified folder.
 '
-' @param DirectoryPath 検索対象のフォルダーのパス
-' @param CatchRegExp [省略可] チェック対象とするファイル名の正規表現。
-' @param IgnoreRegExp [省略可] チェック対象としないファイル名の正規表現。
-' @param IgnoreCase [省略可] 正規表現の大小文字を無視するか。
-' @return 最新のファイルのフルパス。該当するファイルがない場合は空文字列
+' @param DirectoryPath Path of the folder to search.
+' @param CatchRegExp [Optional] Regular expression for file names to check.
+' @param IgnoreRegExp [Optional] Regular expression for file names not to check.
+' @param IgnoreCase [Optional] Whether to ignore case in the regular expressions.
+' @return Full path of the newest file. Returns an empty string when no matching file exists.
 '
 ' @details
-' 指定されたフォルダー内のファイルを検索し、指定されたパターンに一致するファイルの中で
-' 最も新しいもののフルパスを返します。走査順は FileSystemObject / OS の列挙順のままで、同一時刻の順序は保証しません。
+' Searches files in the specified folder and returns the full path of the newest file among those matching the specified pattern.
+' The traversal order follows the FileSystemObject / OS enumeration order, and ordering for identical timestamps is not guaranteed.
 Public Function GetNewestFile(ByVal DirectoryPath As String, Optional ByVal CatchRegExp As String = "", Optional ByVal IgnoreRegExp As String = "", Optional ByVal IgnoreCase As Boolean = True) As String
     Dim catch_re As Object, ignore_re As Object 'RegExp
     Call pCreateRegExpObject(catch_re, ignore_re, CatchRegExp, IgnoreRegExp, IgnoreCase)
@@ -734,22 +734,22 @@ Private Function IFileSystemService_GetNewestFile(ByVal DirectoryPath As String,
     IFileSystemService_GetNewestFile = GetNewestFile(DirectoryPath, CatchRegExp:=CatchRegExp, IgnoreRegExp:=IgnoreRegExp, IgnoreCase:=IgnoreCase)
 End Function
 
-' バックアップファイルを作成します。
+' Creates a backup file.
 '
-' @param SourceFilePath [省略可] バックアップ対象のファイルパス (既定値は現在のワークブックのパス)
-' @param DestinationDirectoryPath [省略可] バックアップ先のディレクトリパス (既定値は対象ファイルのディレクトリ)
-' @param BackupSuffix [省略可] バックアップファイル名に追加するサフィックス (既定値はタイムスタンプ)
-' @param Force [省略可] 既存のバックアップファイルを強制的に上書きするかどうか
-' @param Move [省略可] バックアップ時に元のファイルを移動するかどうか (True の場合、移動)
-' @param FailIfSourceNotFound 対象ファイルが存在しない場合にエラーを発生させるかどうか (True の場合、エラー)
-' @return 作成されたバックアップファイルのフルパス
+' @param SourceFilePath [Optional] File path to back up. The default is the current workbook path.
+' @param DestinationDirectoryPath [Optional] Destination directory path for the backup. The default is the target file's directory.
+' @param BackupSuffix [Optional] Suffix to add to the backup file name. The default is a timestamp.
+' @param Force [Optional] Whether to force overwriting an existing backup file.
+' @param Move [Optional] Whether to move the original file during backup. True means move.
+' @param FailIfSourceNotFound Whether to raise an error when the target file does not exist. True means raise an error.
+' @return Full path of the created backup file.
 '
 ' @details
-' 指定されたファイルのバックアップを作成します。バックアップ先のファイル名には元のファイル名に
-' サフィックスが追加されます。既存のファイルがある場合は `Force` の設定に基づいて処理されます。
-' `Force:=True` は既存のバックアップ ファイルを上書きします。
-' `Force:=False` かつ `BackupSuffix:=""` の既定サフィックスが衝突した場合は、既存バックアップのパスを返し、内容比較や `Move:=True` の移動は行いません。
-' `Force:=False` かつ `BackupSuffix` を明示した場合の衝突はエラーです。
+' Creates a backup of the specified file. The backup destination file name is the original file name with
+' the suffix appended. If an existing file is present, it is handled based on the Force setting.
+' Force:=True overwrites the existing backup file.
+' When Force:=False and the default suffix from BackupSuffix:="" collides, returns the existing backup path and does not compare contents or move with Move:=True.
+' A collision when Force:=False and BackupSuffix is explicitly specified is an error.
 Public Function CreateBackupFile( _
         Optional ByVal SourceFilePath As String = "", _
         Optional ByVal DestinationDirectoryPath As String = "", _
@@ -767,24 +767,24 @@ Public Function CreateBackupFile( _
     Dim dst_dir_path As String
     Dim suffix_str As String
 
-    ' バックアップ対象ファイルが指定されなかったら、このワークブックが指定されたものとする。
+    ' If no source file is specified for backup, use this workbook.
     If SourceFilePath = "" Then
         src_file_path = ThisWorkbook.FullName
     Else
         src_file_path = GetAbsolutePath(SourceFilePath)
     End If
 
-    ' バックアップ対象ファイルがない場合はエラー
+    ' Raise an error when the source file for backup does not exist.
     If Not IsFile(src_file_path) Then
         If FailIfSourceNotFound Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ対象のファイルがありません。(" & SourceFilePath & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="The file to back up does not exist. (" & SourceFilePath & ")"
         Else
-            Debug.Print "バックアップ対象のファイルがありませんでした。(" & src_file_path & ")"
+            Debug.Print "The file to back up did not exist. (" & src_file_path & ")"
             Exit Function
         End If
     End If
 
-    ' バックアップ先ディレクトリが指定されなかった場合は、対象ファイルと同じディレクトリを出力先とする。
+    ' If no backup destination directory is specified, use the same directory as the target file.
     If DestinationDirectoryPath = "" Then
         dst_dir_path = GetParentPath(src_file_path, IgnoreEndSep:=True)
     Else
@@ -795,44 +795,44 @@ Public Function CreateBackupFile( _
         End If
     End If
 
-    ' バックアップ先ディレクトリがない場合は作成する。
+    ' Create the backup destination directory when it does not exist.
     If IsFile(dst_dir_path) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ出力先がディレクトリではありません。(" & DestinationDirectoryPath & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="The backup destination is not a directory. (" & DestinationDirectoryPath & ")"
     ElseIf Not IsDirectory(dst_dir_path) Then
         Call CreateDirectory(dst_dir_path, Recursive:=True)
     End If
 
-    ' サフィックスが指定されない場合は、最終更新日時を使用する
+    ' If no suffix is specified, use the last modified date and time.
     If BackupSuffix = "" Then
         suffix_str = Format(GetLastModified(src_file_path), "_yyyy-MM-dd_HH-mm-ss")
     Else
         suffix_str = BackupSuffix
     End If
 
-    ' 元のパスからファイル名を得る。
+    ' Get the file name from the original path.
     file_base = GetLeafFromPath(src_file_path, BaseName:=True, Extension:=False)
     file_ext = GetLeafFromPath(src_file_path, BaseName:=False, Extension:=True)
 
-    ' バックアップ先ファイルパスを得る。
+    ' Get the backup destination file path.
     dst_file_path = JoinPath(dst_dir_path, file_base & suffix_str & file_ext)
 
     If IsFile(dst_file_path) Then
         If Not Force Then
-            ' 強制フラグが立っていない場合、バックアップ対象ファイルがある場合はエラー
+            ' If the force flag is not set and the backup target file exists, raise an error.
             If BackupSuffix = "" Then
-                ' 時刻に基づいたサフィックスで重複する場合は、バックアップ済みなので処理終了
-                Debug.Print "すでにバックアップ済みでした。(" & src_file_path & ")"
+                ' If a time-based suffix duplicates an existing backup, backup is already complete, so finish processing.
+                Debug.Print "The file was already backed up. (" & src_file_path & ")"
                 CreateBackupFile = dst_file_path
                 Exit Function
             Else
-                Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ先のファイルがすでにあります。(" & dst_file_path & ")"
+                Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="The backup destination file already exists. (" & dst_file_path & ")"
             End If
         End If
     ElseIf IsDirectory(dst_file_path) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="バックアップ先のファイルと同名のディレクトリがあります。(" & dst_file_path & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class FileSystemService.CreateBackupFile", Description:="A directory with the same name as the backup destination file exists. (" & dst_file_path & ")"
     End If
 
-    ' ファイルをバックアップ
+    ' Back up the file.
     If Move Then
         Call MoveFile(src_file_path, dst_file_path, Force:=Force)
     Else
@@ -872,15 +872,15 @@ End Function
 
 Private Sub pValidateOperationDestination(ByVal SourcePath As String, ByVal DestinationPath As String, ByVal SourceIsDirectory As Boolean)
     If pPathsEqual(SourcePath, DestinationPath) Then
-        Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動元とコピー/移動先が同一です。(" & SourcePath & ")"
+        Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "The copy/move source and copy/move destination are the same. (" & SourcePath & ")"
     End If
 
     If SourceIsDirectory Then
         If pIsPathInside(DestinationPath, SourcePath) Then
-            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動先がコピー/移動元の配下です。(" & DestinationPath & ")"
+            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "The copy/move destination is under the copy/move source. (" & DestinationPath & ")"
         End If
         If pIsPathInside(SourcePath, DestinationPath) Then
-            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "コピー/移動先がコピー/移動元の親ディレクトリです。(" & DestinationPath & ")"
+            Err.Raise vbObjectError + 1, "Class FileSystemService.pValidateOperationDestination", "The copy/move destination is the parent directory of the copy/move source. (" & DestinationPath & ")"
         End If
     End If
 End Sub

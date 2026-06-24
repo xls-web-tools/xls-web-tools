@@ -15,81 +15,81 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! コレクションを列挙するための列挙子のインターフェイスです。
+'! Enumerator interface for iterating over a collection.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IEnumerator", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IEnumerator", Description:="This class is intended for interfaces."
 End Sub
 
-'* 現在の要素
+'* Current element.
 Public Property Get Current() As Variant
 End Property
 
-'* 現在のインデックス
+'* Current index.
 Public Property Get Index() As Long
 End Property
 
-'* 列挙対象のコレクション
+'* Collection being enumerated.
 Public Property Get Target() As Variant
 End Property
 
-'* 逆順かどうか
+'* Whether enumeration is in reverse order.
 Public Property Get Descending() As Boolean
 End Property
 
-'* 読み取り専用かどうか
+'* Whether this enumerator is read-only.
 Public Property Get IsReadOnly() As Boolean
 End Property
 
-'* 次の要素に移動します。
+'* Moves to the next element.
 '*
-'* @return Boolean 次の要素が存在する場合は True、それ以外は False。
+'* @return Boolean True if the next element exists; otherwise, False.
 '*
 '* @details
-'* 現在の位置を次の要素に移動します。リストの終端に達した場合は False を返します。
-'* 初期値はコレクションの先頭の 1 つ前であり、1 回呼び出すことで最初の要素を指すことになります。
+'* Moves the current position to the next element. Returns False if the end of the list has been reached.
+'* The initial value is one position before the start of the collection, so calling this once points to the first element.
 Public Function MoveNext() As Boolean
 End Function
 
-'* 列挙をリセットします。
+'* Resets enumeration.
 '*
 '* @details
-'* 列挙の現在位置をリストの先頭の 1 つ前に戻します。
+'* Returns the current enumeration position to one position before the start of the list.
 Public Sub Reset()
 End Sub
 
-'* 指定した位置までスキップします。
+'* Skips to the specified position.
 '*
-'* @param TargetIndex 移動先のインデックス。
+'* @param TargetIndex Destination index.
 '*
 '* @details
-'* 指定されたインデックスまで現在位置を進めます。現在位置より前やリストの範囲外を指定するとエラーを発生させます。
+'* Advances the current position to the specified index. Raises an error if the index is before the current position or outside the list range.
 Public Sub SkipTo(ByVal TargetIndex As Long)
 End Sub
 
-'* 現在の要素を削除します。
+'* Removes the current element.
 '*
-'* @return Variant 削除された要素。
+'* @return Variant The removed element.
 '*
 '* @details
-'* 現在の要素を削除します。内部的には、対象コレクションの Remove(ItemIndex) メソッドが呼び出されます。
-'* この操作を行うと、この列挙子が示す位置は一つ前に戻ります。
-'* 順序を保証しないコレクションに対して使用した場合、この操作後の列挙子の動作は保証されません。
-'* IsReadOnly が True の場合はエラーを発生させます。
+'* Removes the current element. Internally, this calls the Remove(ItemIndex) method of the target collection.
+'* After this operation, the position indicated by this enumerator moves back by one.
+'* When used with a collection that does not guarantee order, behavior of the enumerator after this operation is not guaranteed.
+'* Raises an error when IsReadOnly is True.
 Public Function Remove() As Variant
 End Function
 
-'* 現在の要素を更新します。
+'* Updates the current element.
 '*
-'* @param ItemObject 更新する要素の値。
+'* @param ItemObject Value of the element to update.
 '*
 '* @details
-'* 現在の要素を更新します。内部的には、対象コレクションの Update(ItemIndex, ItemObject) メソッドが呼び出されます。
-'* 配列列挙子など、実装が書き込みをサポートしない場合はエラーを発生させます。
-'* 順序を保証しないコレクションに対して使用した場合、この操作後の列挙子の動作は保証されません。
-'* IsReadOnly が True の場合はエラーを発生させます。
+'* Updates the current element. Internally, this calls the Update(ItemIndex, ItemObject) method of the target collection.
+'* Raises an error when the implementation does not support writes, such as an array enumerator.
+'* When used with a collection that does not guarantee order, behavior of the enumerator after this operation is not guaranteed.
+'* Raises an error when IsReadOnly is True.
 Public Sub Update(ByVal ItemObject As Variant)
 End Sub
 

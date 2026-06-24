@@ -6,19 +6,19 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! TextFileService の共通インスタンスを管理するモジュールです。
+'! Module that manages the shared TextFileService instance.
 '!
 ' #############################################################################
 
-'* TextFileService。ユニットテスト時にはテスト ダブルに置き換えてください。
+'* TextFileService. Replace with a test double during unit tests.
 Public TfSrv As ITextFileService
 
-'* TextFileService を初期化します。
+'* Initializes TextFileService.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* TfSrv が未設定の場合、または Force が True の場合に TextFileService を生成します。テストで差し替え済みの場合は Force が False のときだけ維持します。
+'* Creates TextFileService when TfSrv is unset or Force is True. If it has been replaced in tests, keeps it only when Force is False.
 Public Sub InitializeTextFileService(Optional ByVal Force As Boolean = False)
     If Force Or (TfSrv Is Nothing) Then Set TfSrv = New TextFileService
 End Sub

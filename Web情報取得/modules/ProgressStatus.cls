@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! 進捗状況を管理するクラスです。タスクの進行状態を視覚的に表示し、更新します。
+'! Class that manages progress status. It visually displays and updates task progress.
 '!
 ' #############################################################################
 
@@ -29,7 +29,7 @@ Private pIsComplete As Boolean
 Private pIntervalPercent As Integer
 Private pNextUpdate As Integer
 
-'* タスク名。
+'* Task name.
 Public Property Get TaskName() As String
     TaskName = pTaskName
 End Property
@@ -37,27 +37,27 @@ Public Property Let TaskName(ByVal NewValue As String)
     pTaskName = NewValue
 End Property
 
-'* ブロック数。(デフォルトは 10)
-'* 進捗バーのセグメント数です。
+'* Number of blocks. (Default is 10.)
+'* Number of progress bar segments.
 Public Property Get BlockCount() As Long
     BlockCount = pBlockCount
 End Property
 Public Property Let BlockCount(ByVal NewValue As Long)
     If NewValue < 1 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.BlockCount", Description:="ブロック数は正の整数である必要があります。(" & NewValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.BlockCount", Description:="BlockCount must be a positive integer. (" & NewValue & ")"
         Exit Property
     End If
     pBlockCount = NewValue
 End Property
 
-'* 開始値。(デフォルトは 0)
-'* このプロパティを変更すると、進捗値も変更されます。
+'* Start value. (Default is 0.)
+'* Changing this property also changes the progress value.
 Public Property Get StartValue() As Double
     StartValue = pStartValue
 End Property
 Public Property Let StartValue(ByVal NewValue As Double)
     If TotalValue <= NewValue Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.StartValue", Description:="開始値は終了値より小さい必要があります。(新しい値: " & NewValue & " / TotalValue: " & pTotalValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.StartValue", Description:="StartValue must be less than TotalValue. (new value: " & NewValue & " / TotalValue: " & pTotalValue & ")"
         Exit Property
     End If
     Dim value_diff As Double
@@ -67,19 +67,19 @@ Public Property Let StartValue(ByVal NewValue As Double)
     pNextUpdate = 0
 End Property
 
-'* 終了値。(デフォルトは 100)
+'* Finish value. (Default is 100.)
 Public Property Get TotalValue() As Double
     TotalValue = pTotalValue
 End Property
 Public Property Let TotalValue(ByVal NewValue As Double)
     If NewValue <= StartValue Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.TotalValue", Description:="終了値は開始値より大きい必要があります。(新しい値: " & NewValue & " / StartValue: " & pStartValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.TotalValue", Description:="TotalValue must be greater than StartValue. (new value: " & NewValue & " / StartValue: " & pStartValue & ")"
         Exit Property
     End If
     pTotalValue = NewValue
 End Property
 
-'* 現在の進捗値。(デフォルトは 0)
+'* Current progress value. (Default is 0.)
 Public Property Get ProcessedValue() As Double
     ProcessedValue = pProcessedValue
 End Property
@@ -88,7 +88,7 @@ Public Property Let ProcessedValue(ByVal NewValue As Double)
     Call pUpdateStatus
 End Property
 
-'* タスクが完了しているか否か。
+'* Whether the task is completed.
 Public Property Get IsComplete() As Boolean
     IsComplete = pIsComplete
 End Property
@@ -108,13 +108,13 @@ Private Sub Class_Terminate()
     On Error GoTo 0
 End Sub
 
-'* 指定された範囲でループを処理するための設定を行います。
+'* Configures settings for processing a loop over the specified range.
 '*
-'* @param FinishIndex ループの終了インデックス。
-'* @param Optional StartIndex ループの開始インデックス。デフォルトは 0。
+'* @param FinishIndex Loop finish index.
+'* @param Optional StartIndex Loop start index. Default is 0.
 '*
 '* @details
-'* StartIndex と FinishIndex を設定し、インデックスを ProcessedValue に設定することにより進捗が更新されるようにして、ループ処理に対応する進捗を管理します。
+'* Sets StartIndex and FinishIndex, and updates progress by setting the index to ProcessedValue, to manage progress corresponding to loop processing.
 Public Sub SetForLoop(ByVal FinishIndex As Long, Optional ByVal StartIndex As Long = 0)
     Dim start_value As Double
     start_value = CDbl(StartIndex) - 1
@@ -123,7 +123,7 @@ Public Sub SetForLoop(ByVal FinishIndex As Long, Optional ByVal StartIndex As Lo
     total_value = CDbl(FinishIndex)
 
     If total_value <= start_value Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.SetForLoop", Description:="終了値は開始値より大きい必要があります。(FinishIndex: " & FinishIndex & " / StartIndex: " & StartIndex & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ProgressStatus.SetForLoop", Description:="FinishIndex must be greater than StartIndex. (FinishIndex: " & FinishIndex & " / StartIndex: " & StartIndex & ")"
         Exit Sub
     End If
 
@@ -134,12 +134,12 @@ Public Sub SetForLoop(ByVal FinishIndex As Long, Optional ByVal StartIndex As Lo
     pNextUpdate = 0
 End Sub
 
-'* 進捗状況の監視を開始します。
+'* Starts progress monitoring.
 '*
-'* @return 進捗監視が正常に開始されたかどうかを示すブール値。
+'* @return Boolean value indicating whether progress monitoring started successfully.
 '*
 '* @details
-'* 進捗の初期値を設定し、進捗状況の表示を開始します。
+'* Sets the initial progress value and starts displaying progress status.
 Public Function Start() As Boolean
     If pProcessedValue < pStartValue + 1 Then
         pProcessedValue = pStartValue + 1
@@ -151,22 +151,22 @@ Public Function Start() As Boolean
     End If
 End Function
 
-'* タスクを完了とマークします。
+'* Marks the task as completed.
 '*
 '* @details
-'* 進捗値を最大値に設定し、タスクを完了状態にします。
+'* Sets the progress value to the maximum value and marks the task completed.
 Public Sub MarkAsComplete()
     pProcessedValue = pTotalValue
     Call pUpdateStatus
 End Sub
 
-'* 進捗状況をリセットします。
+'* Resets progress status.
 '*
-'* @param Optional ResetTaskName タスク名もリセットするかどうか。デフォルトは True。
-'* @param Optional ResetStartAndTotalValue 開始値と終了値もリセットするかどうか。デフォルトは True。
+'* @param Optional ResetTaskName Whether to also reset the task name. Default is True.
+'* @param Optional ResetStartAndTotalValue Whether to also reset the start and finish values. Default is True.
 '*
 '* @details
-'* 進捗状況を初期状態に戻し、必要に応じてタスク名や値もリセットします。
+'* Returns progress status to its initial state and also resets the task name and values as needed.
 Public Sub Reset(Optional ByVal ResetTaskName As Boolean = True, Optional ByVal ResetStartAndTotalValue As Boolean = True)
     If ResetTaskName Then pTaskName = ""
     If ResetStartAndTotalValue Then Call pInitializeStartAndTotal
@@ -176,10 +176,10 @@ Public Sub Reset(Optional ByVal ResetTaskName As Boolean = True, Optional ByVal 
     Application.StatusBar = False
 End Sub
 
-'* 現在の進捗情報を手動で表示します。
+'* Manually displays the current progress information.
 '*
 '* @details
-'* 進捗状況を強制的に更新し、ステータスバーに表示します。
+'* Forcibly updates progress status and displays it in the status bar.
 Public Sub DisplayProgress()
     Call pDisplayProgress(Force:=True)
 End Sub

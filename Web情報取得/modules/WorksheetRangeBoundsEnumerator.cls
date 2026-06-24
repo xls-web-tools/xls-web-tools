@@ -15,7 +15,7 @@ Implements IEnumerator
 ' #############################################################################
 '!
 '! @brief
-'! WorksheetRangeBounds の行、列、セルを列挙するための列挙子のクラスです。
+'! Enumerator class for enumerating rows, columns, and cells of WorksheetRangeBounds.
 '!
 ' #############################################################################
 
@@ -34,7 +34,7 @@ Private Property Get IEnumerator_Descending() As Boolean
     IEnumerator_Descending = Descending
 End Property
 
-'* 読み取り専用かどうか
+'* Whether this enumerator is read-only.
 Public Property Get IsReadOnly() As Boolean
     Call pCheckInit
     IsReadOnly = True
@@ -43,13 +43,13 @@ Private Property Get IEnumerator_IsReadOnly() As Boolean
     IEnumerator_IsReadOnly = IsReadOnly
 End Property
 
-'* 列挙方式。
+'* Enumeration mode.
 Public Property Get EnumerationMode() As Long
     Call pCheckInit
     EnumerationMode = pEnumerationMode
 End Property
 
-' 現在の要素
+' Current element.
 Public Property Get Current() As Variant
     Call pCheckInit
     Call pCheckEndOfList
@@ -69,7 +69,7 @@ Private Property Get IEnumerator_Current() As Variant
     Set IEnumerator_Current = Current
 End Property
 
-' 現在のインデックス
+' Current index.
 Public Property Get Index() As Long
     Call pCheckInit
     Index = pIndex
@@ -78,7 +78,7 @@ Private Property Get IEnumerator_Index() As Long
     IEnumerator_Index = Index
 End Property
 
-' 列挙対象のコレクション
+' Collection being enumerated.
 Public Property Get Target() As Variant
     Call pCheckInit
     Set Target = pRangeBounds
@@ -86,7 +86,7 @@ End Property
 Private Property Set Target(ByVal NewValue As Object)
     Set pRangeBounds = NewValue
 
-    ' 長さを計算
+    ' Calculate the length.
     Call pCalculateLength
 End Property
 
@@ -94,21 +94,21 @@ Private Property Get IEnumerator_Target() As Variant
     Set IEnumerator_Target = Target
 End Property
 
-'* このオブジェクトを初期化します。
+'* Initializes this object.
 '*
-'* @param TargetCollection 列挙対象の WorksheetRangeBounds。Nothing はエラーです。
-'* @param EnumerationMode [省略可] 列挙方式。
-'* @param Descending [省略可] 降順で列挙するか否か。
+'* @param TargetCollection WorksheetRangeBounds to enumerate. Nothing is an error.
+'* @param EnumerationMode [Optional] Enumeration mode.
+'* @param Descending [Optional] Whether to enumerate in descending order.
 '*
 '* @details
-'* このオブジェクトを初期化します。TargetCollection は WorksheetRangeBounds.GetEnumerator から渡される前提です。
+'* Initializes this object. TargetCollection is expected to be passed from WorksheetRangeBounds.GetEnumerator.
 Public Sub Initialize( _
         ByVal TargetCollection As WorksheetRangeBounds, _
         Optional ByVal EnumerationMode As Long = G_RANGE_ENUM_MODE_ROWS, _
         Optional ByVal Descending As Boolean = False)
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "初期化済みです。"
-    If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "列挙対象が Nothing です。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "The object is already initialized."
+    If TargetCollection Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Initialize", "The enumeration target is Nothing."
 
     Set Target = TargetCollection
     Call pSetEnumerationMode(EnumerationMode)
@@ -123,17 +123,17 @@ Private Sub pSetEnumerationMode(ByVal NewValue As Long)
     Call pCheckEnumerationMode(NewValue)
     pEnumerationMode = NewValue
 
-    ' 設定に合わせて長さを再計算
+    ' Recalculate the length according to the settings.
     Call pCalculateLength
 End Sub
 
-' 次の要素に移動します。
+' Moves to the next element.
 '
-' @return Boolean 次の要素が存在する場合は True、それ以外は False。
+' @return Boolean True if the next element exists; otherwise, False.
 '
 ' @details
-' 現在の位置を次の要素に移動します。リストの終端に達した場合は False を返します。
-' 初期値はコレクションの先頭の 1 つ前であり、1 回呼び出すことで最初の要素を指すことになります。
+' Moves the current position to the next element. Returns False if the end of the list has been reached.
+' The initial position is one before the start of the collection, so calling this once points to the first element.
 Public Function MoveNext() As Boolean
     Call pCheckInit
     If Descending Then
@@ -158,10 +158,10 @@ Private Function IEnumerator_MoveNext() As Boolean
     IEnumerator_MoveNext = MoveNext()
 End Function
 
-' 列挙をリセットします。
+' Resets enumeration.
 '
 ' @details
-' 列挙の現在位置をリストの先頭の 1 つ前 (逆順のときはリストの末尾の 1 つ後) に戻します。
+' Returns the current enumeration position to one before the start of the list (or one after the end of the list when descending).
 Public Sub Reset()
     Call pCheckInit
     If Descending Then
@@ -174,19 +174,19 @@ Private Sub IEnumerator_Reset()
     Call Reset
 End Sub
 
-' 指定した位置までスキップします。
+' Skips to the specified position.
 '
-' @param TargetIndex 移動先のインデックス。
+' @param TargetIndex Destination index.
 '
 ' @details
-' 指定されたインデックスまで現在位置を進めます。現在位置より前やリストの範囲外を指定するとエラーを発生させます。
+' Advances the current position to the specified index. Raises an error if the index is before the current position or outside the list range.
 Public Sub SkipTo(ByVal TargetIndex As Long)
     Call pCheckInit
-    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
+    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "The destination is outside the valid range. (min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
     If Descending Then
-        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "Cannot move to a position before the current position. (current: " & pIndex & " / target: " & TargetIndex & ")"
     Else
-        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.SkipTo", "Cannot move to a position before the current position. (current: " & pIndex & " / target: " & TargetIndex & ")"
     End If
     pIndex = TargetIndex
 End Sub
@@ -194,29 +194,29 @@ Private Sub IEnumerator_SkipTo(ByVal TargetIndex As Long)
     Call SkipTo(TargetIndex)
 End Sub
 
-' 現在の要素の削除を試行します。
+' Attempts to remove the current element.
 '
-' @return Variant 削除された要素。
+' @return Variant The removed element.
 '
 ' @details
-' WorksheetRangeBoundsEnumerator は読み取り専用です。
-' このメソッドは常にエラーを発生させます。
+' WorksheetRangeBoundsEnumerator is read-only.
+' This method always raises an error.
 Public Function Remove() As Variant
-    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Remove", "このコレクションは読み取り専用です。要素の削除に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Remove", "This collection is read-only and does not support removing elements."
 End Function
 Private Function IEnumerator_Remove() As Variant
     Set IEnumerator_Remove = Remove()
 End Function
 
-' 現在の要素の更新を試行します。
+' Attempts to update the current element.
 '
-' @param ItemObject 更新する要素の値。
+' @param ItemObject Value of the element to update.
 '
 ' @details
-' WorksheetRangeBoundsEnumerator は読み取り専用です。
-' このメソッドは常にエラーを発生させます。
+' WorksheetRangeBoundsEnumerator is read-only.
+' This method always raises an error.
 Public Sub Update(ByVal ItemObject As Variant)
-    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Update", "このコレクションは読み取り専用です。要素の更新に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.Update", "This collection is read-only and does not support updating elements."
 End Sub
 Private Sub IEnumerator_Update(ByVal ItemObject As Variant)
     Call Update(ItemObject)
@@ -229,12 +229,12 @@ Private Sub pCheckEnumerationMode(ByVal TargetEnumerationMode As Long)
      Case G_RANGE_ENUM_MODE_CELLS_HORIZONTAL
      Case G_RANGE_ENUM_MODE_CELLS_VERTICAL
      Case Else
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEnumerationMode", "列挙方式が不正です。(" & TargetEnumerationMode & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEnumerationMode", "Invalid enumeration mode. (" & TargetEnumerationMode & ")"
     End Select
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckInit", "The object is not initialized."
 End Sub
 
 Private Sub pCalculateLength()
@@ -255,6 +255,6 @@ End Sub
 
 Private Sub pCheckEndOfList()
     If pIndex < 0 Or pLength <= pIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEndOfList", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBoundsEnumerator.pCheckEndOfList", "There is no current element. (index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
     End If
 End Sub

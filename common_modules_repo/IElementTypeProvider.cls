@@ -15,24 +15,24 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! オブジェクトをコレクション内で扱う要素型を自己申告できることを示すインターフェイスです。
+'! Interface indicating that an object can self-report the element type used when it is handled in a collection.
 '!
-'! 型付き要素コレクションは、このインターフェイスを実装するオブジェクトから ElementTypeKey を読み取り、そのオブジェクトをどの要素型契約として扱うかを決定します。
-'! ElementTypeKey が実際に代入可能な型を表すことは、実装クラス側の責任です。
+'! A typed element collection reads ElementTypeKey from an object that implements this interface and determines which element type contract to use for that object.
+'! The implementing class is responsible for ensuring that ElementTypeKey represents a type that can actually be assigned.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IElementTypeProvider", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IElementTypeProvider", Description:="This class is intended for interfaces."
 End Sub
 
-'* 要素型契約名。
+'* Element type contract name.
 '*
-'* @return 要素型契約名。
+'* @return Element type contract name.
 '*
 '* @details
-'* クラス モジュール名に使用可能な文字だけで構成された 31 文字以内の名前を返します。
-'* 先頭文字は英字、2 文字目以降は英字、数字、アンダースコアを使用できます。
-'* この名前が実際に代入可能な型を表すことは、実装クラス側の責任です。
+'* Returns a name of 31 characters or fewer, composed only of characters that can be used in class module names.
+'* The first character can be a letter; the second and later characters can be letters, digits, or underscores.
+'* The implementing class is responsible for ensuring that this name represents a type that can actually be assigned.
 Public Property Get ElementTypeKey() As String
 End Property

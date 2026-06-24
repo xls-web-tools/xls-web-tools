@@ -14,19 +14,19 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! ITextFileEntity を生成するサービスのインターフェイスです。
+'! Interface for a service that creates ITextFileEntity objects.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface ITextFileService", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface ITextFileService", Description:="This class is intended for interfaces."
 End Sub
 
-'* TextFileEntity を生成します。
+'* Creates a TextFileEntity.
 '*
-'* @param FilePath ファイルのパス。
+'* @param FilePath File path.
 '*
 '* @details
-'* TextFileEntity を生成します。
+'* Creates a TextFileEntity.
 Public Function GetTextFileEntity(ByVal FilePath As String) As ITextFileEntity
 End Function

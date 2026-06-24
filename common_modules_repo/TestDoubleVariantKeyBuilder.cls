@@ -13,13 +13,13 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! Variant 値からテストダブル用のキーを生成するクラスです。
+'! Class that generates keys for test doubles from Variant values.
 '!
 ' #############################################################################
 
 Private pObjectKeyMode As Long
 
-'* トップレベルのオブジェクト引数に適用するキー化モード。
+'* Keying mode applied to top-level object arguments.
 Public Property Get ObjectKeyMode() As Long
     ObjectKeyMode = pObjectKeyMode
 End Property
@@ -32,30 +32,30 @@ Private Sub Class_Initialize()
     pObjectKeyMode = G_OBJECT_KEY_MODE_REFERENCE
 End Sub
 
-'* 指定された引数群からキーを生成します。
+'* Generates a key from the specified arguments.
 '*
 '* @details
-'* 0 件の引数は空文字列としてキー化します。
+'* Zero arguments are keyed as an empty string.
 Public Function BuildKey(ParamArray Args() As Variant) As String
     BuildKey = BuildKeyFromArray(Args)
 End Function
 
-'* ParamArray と同じ形式の配列からキーを生成します。
+'* Generates a key from an array in the same format as ParamArray.
 '*
 '* @details
-'* Args には初期化済みの 1 次元配列を指定してください。
-'* 非配列、多次元配列、未初期化の動的配列はエラーになります。
-'* ObjectKeyMode はトップレベルのオブジェクト引数にだけ適用します。
-'* 配列引数は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
+'* Specify an initialized one-dimensional array for Args.
+'* Non-arrays, multidimensional arrays, and uninitialized dynamic arrays are errors.
+'* ObjectKeyMode is applied only to top-level object arguments.
+'* Array arguments are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
 Public Function BuildKeyFromArray(ByVal Args As Variant) As String
     BuildKeyFromArray = GetTypedMultiKeyByModeFromArray(pObjectKeyMode, Args)
 End Function
 
-'* 1 つの値からキーを生成します。
+'* Generates a key from one value.
 '*
 '* @details
-'* ObjectKeyMode はトップレベルのオブジェクト値にだけ適用します。
-'* 配列値は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
+'* ObjectKeyMode is applied only to top-level object values.
+'* Array values are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
 Public Function BuildItemKey(ByVal Value As Variant) As String
     BuildItemKey = pBuildItemKey(Value)
 End Function
@@ -98,7 +98,7 @@ Private Function pBuildObjectItemKey(ByVal Value As Variant) As String
             End If
 
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pBuildObjectItemKey", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pBuildObjectItemKey", "Unsupported object key mode. (" & CStr(pObjectKeyMode) & ")"
     End Select
 
     pBuildObjectItemKey = GetTypedValueKey(Value, effective_object_key_mode)
@@ -109,6 +109,6 @@ Private Sub pValidateObjectKeyMode(ByVal NewValue As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pValidateObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(NewValue) & ")"
+            Err.Raise vbObjectError + 1, "Class TestDoubleVariantKeyBuilder.pValidateObjectKeyMode", "Unsupported object key mode. (" & CStr(NewValue) & ")"
     End Select
 End Sub

@@ -14,18 +14,18 @@ Implements IWorkbookService
 ' #############################################################################
 '!
 '! @brief
-'! Excel ファイルのオープン、クローズ、書き込みなどを管理するサービスの実装です。
+'! Implementation of the service that manages opening, closing, and writing Excel files.
 '!
 ' #############################################################################
 
 Private Const C_VBEXT_CT_DOCUMENT As Long = 100
 
-'* ThisWorkbook のブック名を得ます。
+'* Gets the workbook name of ThisWorkbook.
 '*
-'* @return ThisWorkbook のブック名。
+'* @return Workbook name of ThisWorkbook.
 '*
 '* @details
-'* 呼び出し元が ThisWorkbook を直接参照せずに、自ブック名を取得するために使用します。
+'* Used by callers to get their own workbook name without directly referencing ThisWorkbook.
 Public Function GetThisWorkbookName() As String
     GetThisWorkbookName = ThisWorkbook.Name
 End Function
@@ -33,13 +33,13 @@ Private Function IWorkbookService_GetThisWorkbookName() As String
     IWorkbookService_GetThisWorkbookName = GetThisWorkbookName()
 End Function
 
-'* ThisWorkbook を基準にしたディレクトリ パスを得ます。
+'* Gets the directory path based on ThisWorkbook.
 '*
-'* @return 絶対パスのディレクトリ パス。
+'* @return Absolute directory path.
 '*
 '* @details
-'* ThisWorkbook が保存済みの場合は、その保存先ディレクトリを返します。
-'* ThisWorkbook が未保存の場合は、CurDir の結果を絶対パスにして返します。
+'* If ThisWorkbook has been saved, returns its saved destination directory.
+'* If ThisWorkbook has not been saved, returns the result of CurDir converted to an absolute path.
 Public Function GetThisWorkbookDirectoryPath() As String
     Dim dir_path As String
 
@@ -54,13 +54,13 @@ Private Function IWorkbookService_GetThisWorkbookDirectoryPath() As String
     IWorkbookService_GetThisWorkbookDirectoryPath = GetThisWorkbookDirectoryPath()
 End Function
 
-' ワークブックが存在するかを確認します。
+' Checks whether a workbook exists.
 '
-' @param Book ワークブック名。
-' @return ワークブックが存在するか。
+' @param Book Workbook name.
+' @return Whether the workbook exists.
 '
 ' @details
-' ワークブック名が存在するかを確認します。
+' Checks whether the workbook name exists.
 Public Function WorkbookExists(ByVal Book As String) As Boolean
     Dim target_book As Workbook
     On Error Resume Next
@@ -78,12 +78,12 @@ Private Function IWorkbookService_WorkbookExists(ByVal Book As String) As Boolea
     IWorkbookService_WorkbookExists = WorkbookExists(Book)
 End Function
 
-' 開いているすべてのワークブックの一覧を得ます。
+' Gets a list of all open workbooks.
 '
-' @return ワークブックの一覧。
+' @return List of workbooks.
 '
 ' @details
-' ThisWorkbook を含む、開いているすべてのワークブック名の一覧を、文字列の配列で得ます。
+' Gets a list of all open workbook names, including ThisWorkbook, as a string array.
 Public Function GetAllWorkbooks() As String()
     Dim result_arr() As String
     result_arr = EmptyStringArray()
@@ -98,12 +98,12 @@ Private Function IWorkbookService_GetAllWorkbooks() As String()
     IWorkbookService_GetAllWorkbooks = GetAllWorkbooks()
 End Function
 
-' ThisWorkbook 以外のワークブックの一覧を得ます。
+' Gets a list of workbooks other than ThisWorkbook.
 '
-' @return ワークブックの一覧。
+' @return List of workbooks.
 '
 ' @details
-' ThisWorkbook を除くワークブック名の一覧を、文字列の配列で得ます。
+' Gets a list of workbook names other than ThisWorkbook as a string array.
 Public Function GetOtherWorkbooks() As String()
     Dim result_arr() As String
     result_arr = EmptyStringArray()
@@ -118,15 +118,15 @@ Private Function IWorkbookService_GetOtherWorkbooks() As String()
     IWorkbookService_GetOtherWorkbooks = GetOtherWorkbooks()
 End Function
 
-' ワークシートが存在するかを確認します。
+' Checks whether a worksheet exists.
 '
-' @param Sheet ワークシート名。
-' @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-' @return ワークシートが存在するか。
+' @param Sheet Worksheet name.
+' @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+' @return Whether the worksheet exists.
 '
 ' @details
-' ワークブック内にワークシートが存在するかを確認します。
-' 指定された名前のワークブックがない場合もエラーにはならず False が返ります。
+' Checks whether the worksheet exists in the workbook.
+' Returns False instead of raising an error even when no workbook with the specified name exists.
 Public Function WorksheetExists(ByVal Sheet As String, Optional ByVal Book As String = "") As Boolean
     Dim target_book As Workbook
     If Book = "" Then
@@ -159,13 +159,13 @@ Private Function IWorkbookService_WorksheetExists(ByVal Sheet As String, Optiona
     IWorkbookService_WorksheetExists = WorksheetExists(Sheet, Book:=Book)
 End Function
 
-' ワークシートの一覧を得ます。
+' Gets a list of worksheets.
 '
-' @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-' @return ワークシートの一覧。
+' @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+' @return List of worksheets.
 '
 ' @details
-' 対象ブックの ActiveSheet を含む、ワークブック内のすべてのワークシート名の一覧を、文字列の配列で得ます。
+' Gets a list of all worksheet names in the workbook, including the target book's ActiveSheet, as a string array.
 Public Function GetAllWorksheets(Optional ByVal Book As String = "") As String()
     GetAllWorksheets = pGetWorksheetNames(Book, IncludeActiveSheet:=True)
 End Function
@@ -173,13 +173,13 @@ Private Function IWorkbookService_GetAllWorksheets(Optional ByVal Book As String
     IWorkbookService_GetAllWorksheets = GetAllWorksheets(Book:=Book)
 End Function
 
-' 対象ブックの ActiveSheet 以外のワークシートの一覧を得ます。
+' Gets a list of worksheets other than the target book's ActiveSheet.
 '
-' @param Book ワークブック名。省略した場合は ThisWorkbook 内を確認します。
-' @return ワークシートの一覧。
+' @param Book Workbook name. If omitted, checks inside ThisWorkbook.
+' @return List of worksheets.
 '
 ' @details
-' 対象ブックの ActiveSheet を除くワークシート名の一覧を、文字列の配列で得ます。
+' Gets a list of worksheet names excluding the target book's ActiveSheet as a string array.
 Public Function GetOtherWorksheets(Optional ByVal Book As String = "") As String()
     GetOtherWorksheets = pGetWorksheetNames(Book, IncludeActiveSheet:=False)
 End Function
@@ -187,14 +187,14 @@ Private Function IWorkbookService_GetOtherWorksheets(Optional ByVal Book As Stri
     IWorkbookService_GetOtherWorksheets = GetOtherWorksheets(Book:=Book)
 End Function
 
-' ワークブックを開きます。
+' Opens a workbook.
 '
-' @param FilePath [省略可] ファイルパス。
-' @return ブック名。
+' @param FilePath [Optional] File path.
+' @return Book name.
 '
 ' @details
-' ワークブックを開きます。ファイルパスを省略すると新規作成となります。
-' 元ファイルはロックしません。
+' Opens a workbook. If FilePath is omitted, creates a new workbook.
+' Does not lock the original file.
 Public Function OpenWorkbook(Optional ByVal FilePath As String = "") As String
     Dim app_state As ApplicationScreenUpdateManager
     Set app_state = New ApplicationScreenUpdateManager
@@ -205,7 +205,7 @@ Public Function OpenWorkbook(Optional ByVal FilePath As String = "") As String
     Err.Clear
     On Error GoTo ON_ERROR
 
-    'ブックを開く
+    ' Open the workbook.
     Dim workbook_obj As Workbook
     If FilePath = "" Then
         Set workbook_obj = Workbooks.Add()
@@ -216,7 +216,7 @@ Public Function OpenWorkbook(Optional ByVal FilePath As String = "") As String
     End If
     ActiveWindow.Visible = False
 
-    ' ブックを開いたことによって変わったアプリケーション設定を元に戻す
+    ' Restore application settings changed by opening the workbook.
     If Not current_active_workbook Is Nothing Then Call current_active_workbook.Activate
     Call app_state.Restore
 
@@ -242,15 +242,15 @@ Private Function IWorkbookService_OpenWorkbook(Optional ByVal FilePath As String
     IWorkbookService_OpenWorkbook = OpenWorkbook(FilePath:=FilePath)
 End Function
 
-' ワークブックを保存します。
+' Saves a workbook.
 '
-' @param Book 対象のブック名。
-' @param FilePath 保存先ファイル パス。
-' @param Force [省略可] 強制的に保存するか否か。
-' @return 保存後のブック名。
+' @param Book Target book name.
+' @param FilePath Destination file path.
+' @param Force [Optional] Whether to force saving.
+' @return Book name after saving.
 '
 ' @details
-' ワークブックを保存します。Force が False のときに、すでにファイルが存在している場合、確認メッセージが表示されます。
+' Saves a workbook. When Force is False and the file already exists, a confirmation message is displayed.
 Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Optional ByVal Force As Boolean = True) As String
     Dim app_state As ApplicationScreenUpdateManager
     Set app_state = New ApplicationScreenUpdateManager
@@ -263,7 +263,7 @@ Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Opt
     Dim file_path As String
     file_path = pGetAbsolutePath(FilePath)
 
-    ' アクティブ ブックと保存対象ウィンドウの状態を控える
+    ' Save the state of the active book and the target window.
     Dim current_active_workbook As Workbook
     On Error Resume Next
     Set current_active_workbook = ActiveWorkbook
@@ -282,7 +282,7 @@ Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Opt
     Call target_book.SaveAs(file_path, FileFormat:=GetExcelFileFormat(file_path))
     target_book.Windows(1).Visible = target_window_visible
 
-    ' 保存によって変わったアクティブ ブックとアプリケーション設定を元に戻す
+    ' Restore the active book and application settings changed by saving.
     If Not current_active_workbook Is Nothing Then
         If current_active_workbook.Name <> target_book.Name Or target_window_visible Then
             Call current_active_workbook.Activate
@@ -290,7 +290,7 @@ Public Function SaveWorkbook(ByVal Book As String, ByVal FilePath As String, Opt
     End If
     Call app_state.Restore
 
-    ' 保存後のブック名を返す。
+    ' Return the book name after saving.
     SaveWorkbook = target_book.Name
     On Error GoTo 0
     Exit Function
@@ -320,13 +320,13 @@ Private Function IWorkbookService_SaveWorkbook(ByVal Book As String, ByVal FileP
     IWorkbookService_SaveWorkbook = SaveWorkbook(Book, FilePath, Force:=Force)
 End Function
 
-' ワークブックが最終保存後に変更されていないか確認します。
+' Checks whether the workbook has not changed since it was last saved.
 '
-' @param Book 対象のブック名。
-' @return 最終保存後に変更されていないか否か。
+' @param Book Target book name.
+' @return Whether the workbook has not changed since it was last saved.
 '
 ' @details
-' Excel の Workbook.Saved と同じ意味で、保存先パスの有無は判定しません。
+' Has the same meaning as Excel's Workbook.Saved and does not check whether a destination path exists.
 Public Function IsSaved(ByVal Book As String) As Boolean
     IsSaved = Workbooks(Book).Saved
 End Function
@@ -334,13 +334,13 @@ Private Function IWorkbookService_IsSaved(ByVal Book As String) As Boolean
     IWorkbookService_IsSaved = IsSaved(Book)
 End Function
 
-' ワークブックが保存先パスを持つか確認します。
+' Checks whether the workbook has a destination path.
 '
-' @param Book 対象のブック名。
-' @return 保存先パスを持つか否か。
+' @param Book Target book name.
+' @return Whether the workbook has a destination path.
 '
 ' @details
-' 新規未保存ブックのように保存先パスを持たない場合は False を返します。変更有無は判定しません。
+' Returns False when the workbook has no destination path, such as a new unsaved workbook. Does not check whether it has changed.
 Public Function HasPath(ByVal Book As String) As Boolean
     HasPath = (Workbooks(Book).Path <> "")
 End Function
@@ -348,13 +348,13 @@ Private Function IWorkbookService_HasPath(ByVal Book As String) As Boolean
     IWorkbookService_HasPath = HasPath(Book)
 End Function
 
-' ワークブックを閉じます。
+' Closes a workbook.
 '
-' @param Book 対象のブック名。
-' @param Force [省略可] 強制的に閉じるか否か。True の場合は確認なしで変更を破棄して閉じます。
+' @param Book Target book name.
+' @param Force [Optional] Whether to force closing. When True, closes without confirmation and discards changes.
 '
 ' @details
-' ワークブックを閉じます。Force が False のときには、確認メッセージが表示されます。
+' Closes a workbook. When Force is False, a confirmation message is displayed.
 Public Sub CloseWorkbook(ByVal Book As String, Optional ByVal Force As Boolean = True)
     If Force Then
         Call Workbooks(Book).Close(SaveChanges:=False)
@@ -366,14 +366,14 @@ Private Sub IWorkbookService_CloseWorkbook(ByVal Book As String, Optional ByVal 
     Call CloseWorkbook(Book, Force:=Force)
 End Sub
 
-' ワークブック全体を検索します
+' Searches the entire workbook.
 '
-' @param What 検索する文字列。
-' @param LookInValues [省略可] 値を検索対象とするか。デフォルトは True です。False にした場合は数式を検索対象とします。
-' @param LookAtWhole [省略可] セル内容が完全に同一であるものを検索するか。デフォルトは True です。True にした場合は完全一致で検索します。False としたときは部分一致で検索します。
-' @param MatchCase [省略可] 大文字と小文字を区別するか。デフォルトは True です。True にした場合は区別して検索します。False としたときは区別せずに検索します。
-' @param MatchByte [省略可] 全角と半角を区別するか。デフォルトは True です。True にした場合は区別して検索します。False としたときは区別せずに検索します。
-' @return 見つかったセルの WorksheetRangeBounds を格納した ObjectList。検索結果がない場合は Count = 0 です。
+' @param What String to search for.
+' @param LookInValues [Optional] Whether to search values. The default is True. When False, searches formulas.
+' @param LookAtWhole [Optional] Whether to search for cells whose contents are exactly the same. The default is True. True searches for exact matches. False searches for partial matches.
+' @param MatchCase [Optional] Whether to distinguish uppercase and lowercase. The default is True. True searches case-sensitively. False searches case-insensitively.
+' @param MatchByte [Optional] Whether to distinguish full-width and half-width characters. The default is True. True distinguishes them. False does not distinguish them.
+' @return ObjectList containing WorksheetRangeBounds for found cells. Count = 0 when there are no search results.
 Public Function Find( _
         ByVal What As String, _
         Optional ByVal Book As String = "", _
@@ -431,20 +431,20 @@ End Function
 
 Private Sub pRequireWorksheetService(ByVal MethodName As String)
     If WsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WorkbookService" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WorkbookService" & "." & MethodName, Description:="InitializeCommonService has not been called."
     End If
 End Sub
 
-' ワークシートを追加します。
+' Adds a worksheet.
 '
-' @param Sheet [省略可] 追加するワークシート名。省略したときは自動で命名されます。
-' @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-' @param SheetIndex [省略可] ワークシート番号。省略したときはアクティブなシートが指定されたものとします。
-' @param Before [省略可] 前に追加するか。省略したときは指定されたワークシート番号の後ろに追加されます。
-' @return 追加されたワークシートの名前。
+' @param Sheet [Optional] Worksheet name to add. If omitted, it is named automatically.
+' @param Book [Optional] Workbook name. If omitted, ThisWorkbook's workbook name is used.
+' @param SheetIndex [Optional] Worksheet index. If omitted, the active sheet is treated as specified.
+' @param Before [Optional] Whether to add before. If omitted, adds after the specified worksheet index.
+' @return Name of the added worksheet.
 '
 ' @details
-' ワークシートを追加します。
+' Adds a worksheet.
 Public Function AddWorksheet( _
         Optional ByVal Sheet As String = "", _
         Optional ByVal Book As String = "", _
@@ -453,7 +453,7 @@ Public Function AddWorksheet( _
 
     On Error GoTo ON_ERROR
 
-    ' 処理対象となるワークブックの取得
+    ' Get the workbook to process.
     Dim target_book As Workbook
     If Book = "" Then
         Set target_book = ThisWorkbook
@@ -461,7 +461,7 @@ Public Function AddWorksheet( _
         Set target_book = Application.Workbooks(Book)
     End If
 
-    ' アクティブを控える
+    ' Save the active state.
     Dim current_active_book As Workbook
     Dim current_target_active_sheet As Object
     On Error Resume Next
@@ -470,7 +470,7 @@ Public Function AddWorksheet( _
     Err.Clear
     On Error GoTo ON_ERROR
 
-    ' ワークシート名のチェック
+    ' Check the worksheet name.
     Call pRaiseIfInvalidWorksheetName(Sheet, "Sheet")
 
     Dim existing_sheet As Worksheet
@@ -478,22 +478,22 @@ Public Function AddWorksheet( _
     Set existing_sheet = target_book.Worksheets(Sheet)
     Err.Clear
     On Error GoTo ON_ERROR
-    If Not existing_sheet Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.AddWorksheet", "追加しようとしたシート名が既に存在します。(" & Sheet & "@" & Book & ")"
+    If Not existing_sheet Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.AddWorksheet", "The sheet name to add already exists. (" & Sheet & "@" & Book & ")"
 
-    ' 追加の目標となるシートの取得
+    ' Get the target sheet for insertion.
     Dim target_sheet As Object
     Set target_sheet = pGetTargetSheet(target_book, SheetIndex)
 
     Dim added_sheet As Worksheet
 
-    ' ワークシートの追加
+    ' Add the worksheet.
     If Before Then
         Set added_sheet = target_book.Worksheets.Add(Before:=target_sheet)
     Else
         Set added_sheet = target_book.Worksheets.Add(After:=target_sheet)
     End If
 
-    ' ワークシート名が指定されていたらワークシート名を変更
+    ' Rename the worksheet if a worksheet name was specified.
     If Sheet <> "" Then added_sheet.Name = Sheet
 
     Call pRestoreActiveState(current_active_book, current_target_active_sheet)
@@ -525,20 +525,20 @@ Private Function IWorkbookService_AddWorksheet( _
             SheetIndex:=SheetIndex, Before:=Before)
 End Function
 
-' ワークシートを削除します。
+' Deletes a worksheet.
 '
-' @param Sheet [省略可] 削除するワークシート名。省略したときはアクティブなシートが指定されたものとします。
-' @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
+' @param Sheet [Optional] Worksheet name to delete. If omitted, the active sheet is treated as specified.
+' @param Book [Optional] Workbook name. If omitted, ThisWorkbook's workbook name is used.
 '
 ' @details
-' ワークシートを削除します。
+' Deletes a worksheet.
 Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal Book As String = "")
     Dim app_state As ApplicationScreenUpdateManager
     Set app_state = New ApplicationScreenUpdateManager
 
     On Error GoTo ON_ERROR
 
-    ' 削除対象ワークシートがあるワークブックの取得
+    ' Get the workbook that contains the worksheet to delete.
     Dim target_book As Workbook
     If Book = "" Then
         Set target_book = ThisWorkbook
@@ -546,7 +546,7 @@ Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal B
         Set target_book = Application.Workbooks(Book)
     End If
 
-    ' アクティブを控える
+    ' Save the active state.
     Dim current_active_book As Workbook
     Dim current_target_active_sheet As Object
     On Error Resume Next
@@ -555,7 +555,7 @@ Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal B
     Err.Clear
     On Error GoTo ON_ERROR
 
-    ' 削除対象ワークシートの取得
+    ' Get the worksheet to delete.
     Dim target_sheet As Worksheet
     If Sheet = "" Then
         Set target_sheet = target_book.ActiveSheet
@@ -563,10 +563,10 @@ Public Sub RemoveWorksheet(Optional ByVal Sheet As String = "", Optional ByVal B
         Set target_sheet = target_book.Worksheets(Sheet)
     End If
 
-    ' 削除対象ワークシートがあるワークブックに、削除対象以外のワークシートがない場合、空のワークシートを追加
+    ' If the workbook containing the target worksheet has no worksheets other than the target, add an empty worksheet.
     If target_book.Worksheets.Count <= 1 Then target_book.Worksheets.Add
 
-    ' 対象ワークシートを削除
+    ' Delete the target worksheet.
     Application.DisplayAlerts = False
     Call target_sheet.Delete
     Call pRestoreActiveState(current_active_book, current_target_active_sheet)
@@ -592,18 +592,18 @@ Private Sub IWorkbookService_RemoveWorksheet(Optional ByVal Sheet As String = ""
     Call RemoveWorksheet(Sheet:=Sheet, Book:=Book)
 End Sub
 
-' ワークシートを複製します。
+' Copies a worksheet.
 '
-' @param SourceWorksheetName [省略可] 複製するワークシート名。省略したときはアクティブなシートが指定されたものとします。
-' @param SourceWorkbookName [省略可] 複製するワークシートがあるワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-' @param DestinationWorksheetName [省略可] 複製されたワークシートにつける名前。省略したときは自動で命名されます。
-' @param DestinationWorkbookName [省略可] 複製先のワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
-' @param SheetIndex [省略可] ワークシート番号。省略したときは複製先のワークブックのアクティブなシートが指定されたものとします。
-' @param Before [省略可] 複製したシートを対象の前に追加するか。省略したときは指定されたワークシート番号の後ろに追加されます。
-' @return 追加されたワークシートの名前。
+' @param SourceWorksheetName [Optional] Worksheet name to copy. If omitted, the active sheet is treated as specified.
+' @param SourceWorkbookName [Optional] Workbook name containing the worksheet to copy. If omitted, ThisWorkbook's workbook name is used.
+' @param DestinationWorksheetName [Optional] Name to give to the copied worksheet. If omitted, it is named automatically.
+' @param DestinationWorkbookName [Optional] Destination workbook name. If omitted, ThisWorkbook's workbook name is used.
+' @param SheetIndex [Optional] Worksheet index. If omitted, the active sheet in the destination workbook is treated as specified.
+' @param Before [Optional] Whether to add the copied sheet before the target. If omitted, adds after the specified worksheet index.
+' @return Name of the added worksheet.
 '
 ' @details
-' ワークシートを複製します。
+' Copies a worksheet.
 Public Function CopyWorksheet( _
         Optional ByVal SourceWorksheetName As String = "", _
         Optional ByVal SourceWorkbookName As String = "", _
@@ -614,7 +614,7 @@ Public Function CopyWorksheet( _
 
     On Error GoTo ON_ERROR
 
-    ' 複製元ワークシートがあるワークブックの取得
+    ' Get the workbook containing the source worksheet.
     Dim src_book As Workbook
     If SourceWorkbookName = "" Then
         Set src_book = ThisWorkbook
@@ -622,7 +622,7 @@ Public Function CopyWorksheet( _
         Set src_book = Application.Workbooks(SourceWorkbookName)
     End If
 
-    ' 複製元となるワークシートの取得
+    ' Get the source worksheet.
     Dim src_sheet As Worksheet
     If SourceWorksheetName = "" Then
         Set src_sheet = src_book.ActiveSheet
@@ -630,7 +630,7 @@ Public Function CopyWorksheet( _
         Set src_sheet = src_book.Worksheets(SourceWorksheetName)
     End If
 
-    ' 複製先ワークブックの取得
+    ' Get the destination workbook.
     Dim dst_book As Workbook
     If DestinationWorkbookName = "" Then
         Set dst_book = ThisWorkbook
@@ -638,7 +638,7 @@ Public Function CopyWorksheet( _
         Set dst_book = Application.Workbooks(DestinationWorkbookName)
     End If
 
-    ' ワークシート名のチェック
+    ' Check the worksheet name.
     Call pRaiseIfInvalidWorksheetName(DestinationWorksheetName, "DestinationWorksheetName")
 
     Dim existing_sheet As Worksheet
@@ -646,9 +646,9 @@ Public Function CopyWorksheet( _
     Set existing_sheet = dst_book.Worksheets(DestinationWorksheetName)
     Err.Clear
     On Error GoTo ON_ERROR
-    If Not existing_sheet Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.CopyWorksheet", "複製先のシート名が既に存在します。(" & DestinationWorksheetName & "@" & DestinationWorkbookName & ")"
+    If Not existing_sheet Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.CopyWorksheet", "The destination sheet name already exists. (" & DestinationWorksheetName & "@" & DestinationWorkbookName & ")"
 
-    ' アクティブを控える
+    ' Save the active state.
     Dim current_active_book As Workbook
     Dim current_destination_active_sheet As Object
     On Error Resume Next
@@ -657,26 +657,26 @@ Public Function CopyWorksheet( _
     Err.Clear
     On Error GoTo ON_ERROR
 
-    ' 追加の目標となるシートの取得
+    ' Get the target sheet for insertion.
     Dim target_sheet As Object
     Set target_sheet = pGetTargetSheet(dst_book, SheetIndex)
 
     Dim added_sheet As Worksheet
 
-    ' ワークシートの追加
+    ' Add the worksheet.
     If Before Then
         Call src_sheet.Copy(Before:=target_sheet)
     Else
         Call src_sheet.Copy(After:=target_sheet)
     End If
 
-    ' 複製されたシートの取得
+    ' Get the copied sheet.
     Set added_sheet = dst_book.ActiveSheet
 
-    ' ワークシート名が指定されていたらワークシート名を変更
+    ' Rename the worksheet if a worksheet name was specified.
     If DestinationWorksheetName <> "" Then added_sheet.Name = DestinationWorksheetName
 
-    ' アクティブを戻す
+    ' Restore the active state.
     Call pRestoreActiveState(current_active_book, current_destination_active_sheet)
 
     CopyWorksheet = added_sheet.Name
@@ -713,14 +713,14 @@ Private Function IWorkbookService_CopyWorksheet( _
             Before:=Before)
 End Function
 
-'* VBA コンポーネントを削除します。
+'* Removes VBA components.
 '*
-'* @param ComponentNames 削除対象のコンポーネント名、またはその配列。
-'* @param ComponentType [省略可] 削除対象の VBIDE コンポーネント種別。0 の場合は種類を限定しません。
-'* @param Book [省略可] ワークブック名。省略したときは ThisWorkbook のワークブック名が使用されます。
+'* @param ComponentNames Component name or array of component names to remove.
+'* @param ComponentType [Optional] VBIDE component type to remove. When 0, the type is not limited.
+'* @param Book [Optional] Workbook name. When omitted, the workbook name of ThisWorkbook is used.
 '*
 '* @details
-'* 対象ブックの VBProject から、指定された名前の VBA コンポーネントを削除します。
+'* Removes VBA components with the specified names from the target workbook VBProject.
 Public Sub RemoveVBComponents(ByVal ComponentNames As Variant, Optional ByVal ComponentType As Long = 0, Optional ByVal Book As String = "")
     Dim target_book As Workbook
     If Book = "" Then
@@ -752,7 +752,7 @@ Private Function pBuildComponentNameSet(ByVal ComponentNames As Variant) As Obje
     component_name_set.CompareMode = vbTextCompare
 
     If IsArray(ComponentNames) Then
-        If Not pIsArrayInitialized(ComponentNames) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pBuildComponentNameSet", "ComponentNames には 1 件以上のコンポーネント名を指定してください。"
+        If Not pIsArrayInitialized(ComponentNames) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pBuildComponentNameSet", "Specify one or more component names in ComponentNames."
 
         Dim name_item As Variant
         For Each name_item In ComponentNames
@@ -762,7 +762,7 @@ Private Function pBuildComponentNameSet(ByVal ComponentNames As Variant) As Obje
         Call pAddComponentName(component_name_set, ComponentNames)
     End If
 
-    If component_name_set.Count = 0 Then Err.Raise vbObjectError + 1, "Class WorkbookService.pBuildComponentNameSet", "ComponentNames には 1 件以上のコンポーネント名を指定してください。"
+    If component_name_set.Count = 0 Then Err.Raise vbObjectError + 1, "Class WorkbookService.pBuildComponentNameSet", "Specify one or more component names in ComponentNames."
 
     Set pBuildComponentNameSet = component_name_set
 End Function
@@ -773,17 +773,17 @@ Private Sub pValidateVBComponentsForRemove(ByVal VBComponents As Object, ByVal C
         Dim vb_comp As Object
         Set vb_comp = pFindVBComponent(VBComponents, CStr(component_name))
 
-        If vb_comp Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "削除対象の VBA コンポーネントが存在しません。(" & CStr(component_name) & ")"
-        If ComponentType <> 0 And vb_comp.Type <> ComponentType Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "削除対象の VBA コンポーネント種別が一致しません。(" & CStr(component_name) & ")"
-        If vb_comp.Type = C_VBEXT_CT_DOCUMENT Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "Document モジュールは削除できません。(" & CStr(component_name) & ")"
+        If vb_comp Is Nothing Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "The VBA component to remove does not exist. (" & CStr(component_name) & ")"
+        If ComponentType <> 0 And vb_comp.Type <> ComponentType Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "The VBA component type to remove does not match. (" & CStr(component_name) & ")"
+        If vb_comp.Type = C_VBEXT_CT_DOCUMENT Then Err.Raise vbObjectError + 1, "Class WorkbookService.pValidateVBComponentsForRemove", "Document modules cannot be removed. (" & CStr(component_name) & ")"
     Next component_name
 End Sub
 
 '
-' ワークシートをアクティブにします。
+' Activates a worksheet.
 '
 Public Sub ActivateWorksheet(ByVal Sheet As String, Optional ByVal Book As String = "")
-    ' 対象ワークシートがあるワークブックの取得
+    ' Get the workbook containing the target worksheet.
     Dim target_book As Workbook
     If Book = "" Then
         Set target_book = ThisWorkbook
@@ -791,7 +791,7 @@ Public Sub ActivateWorksheet(ByVal Sheet As String, Optional ByVal Book As Strin
         Set target_book = Application.Workbooks(Book)
     End If
 
-    ' 対象ワークシートの取得
+    ' Get the target worksheet.
     Dim target_sheet As Worksheet
     Set target_sheet = target_book.Worksheets(Sheet)
 
@@ -849,13 +849,13 @@ End Function
 
 Private Function pGetTargetSheet(ByVal TargetBook As Workbook, ByVal SheetIndex As Long) As Object
     If SheetIndex = 0 Then
-        ' シート番号が 0 なら、Sheets 全体でのアクティブなシートを基準にします。
+        ' If the sheet index is 0, use the active sheet across the entire Sheets collection as the reference.
         Set pGetTargetSheet = TargetBook.ActiveSheet
     ElseIf SheetIndex < 0 Then
-        ' シート番号が 0 未満なら、ワークシート末尾から。-1 は末尾、-2 は末尾から 2 番目です。
+        ' If the sheet index is less than 0, count from the end of the worksheets. -1 is the last sheet, and -2 is the second from last.
         Set pGetTargetSheet = TargetBook.Worksheets(MaxLng(TargetBook.Worksheets.Count + 1 + SheetIndex, 1))
     Else
-        ' シート番号を超えるなら、ワークシート末尾に丸めます。
+        ' If the sheet index exceeds the worksheet count, clamp it to the end.
         Set pGetTargetSheet = TargetBook.Worksheets(MinLng(SheetIndex, TargetBook.Worksheets.Count))
     End If
 End Function
@@ -864,10 +864,10 @@ Private Sub pRaiseIfInvalidWorksheetName(ByVal WorksheetName As String, ByVal Ar
     If WorksheetName = "" Then Exit Sub
 
     If Len(WorksheetName) > 31 Then
-        Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " は 31 文字以下のシート名を指定してください。(" & WorksheetName & ")"
+        Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " must be a sheet name of 31 characters or fewer. (" & WorksheetName & ")"
     End If
     If Left$(WorksheetName, 1) = "'" Or Right$(WorksheetName, 1) = "'" Then
-        Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " の先頭または末尾にはアポストロフィを使用できません。(" & WorksheetName & ")"
+        Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " cannot start or end with an apostrophe. (" & WorksheetName & ")"
     End If
 
     Dim invalid_chars As Variant
@@ -876,7 +876,7 @@ Private Sub pRaiseIfInvalidWorksheetName(ByVal WorksheetName As String, ByVal Ar
     Dim invalid_char As Variant
     For Each invalid_char In invalid_chars
         If InStr(1, WorksheetName, CStr(invalid_char), vbBinaryCompare) > 0 Then
-            Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " にシート名として使用できない文字が含まれています。(" & CStr(invalid_char) & ")"
+            Err.Raise vbObjectError + 1, "Class WorkbookService.pRaiseIfInvalidWorksheetName", ArgumentName & " contains a character that cannot be used in a sheet name. (" & CStr(invalid_char) & ")"
         End If
     Next invalid_char
 End Sub
@@ -915,16 +915,16 @@ Private Function pIsArrayInitialized(ByVal TargetArray As Variant) As Boolean
 End Function
 
 Private Sub pAddComponentName(ByVal ComponentNameSet As Object, ByVal ComponentNameValue As Variant)
-    If IsArray(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames には文字列のコンポーネント名を指定してください。"
-    If IsObject(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames には文字列のコンポーネント名を指定してください。"
-    If IsError(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames にエラー値は指定できません。"
-    If IsNull(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames に Null は指定できません。"
-    If IsEmpty(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames に Empty は指定できません。"
-    If VarType(ComponentNameValue) <> vbString Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames には文字列のコンポーネント名を指定してください。"
+    If IsArray(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames must contain string component names."
+    If IsObject(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames must contain string component names."
+    If IsError(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames cannot contain error values."
+    If IsNull(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames cannot contain Null."
+    If IsEmpty(ComponentNameValue) Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames cannot contain Empty."
+    If VarType(ComponentNameValue) <> vbString Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames must contain string component names."
 
     Dim component_name As String
     component_name = CStr(ComponentNameValue)
-    If component_name = "" Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames に空文字列は指定できません。"
+    If component_name = "" Then Err.Raise vbObjectError + 1, "Class WorkbookService.pAddComponentName", "ComponentNames cannot contain empty strings."
 
     If Not ComponentNameSet.Exists(component_name) Then Call ComponentNameSet.Add(component_name, component_name)
 End Sub

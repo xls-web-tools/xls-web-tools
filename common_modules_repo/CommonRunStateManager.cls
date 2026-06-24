@@ -12,7 +12,7 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! 1 回の GUI 実行で使用する共通実行状態を管理するクラスです。
+'! Manages shared run state used during a single GUI run.
 '!
 ' #############################################################################
 
@@ -21,10 +21,10 @@ Private Sub Class_Initialize()
     Set ProgStat = New ProgressStatus
 End Sub
 
-'* 共通実行状態を明示的に初期化します。
+'* Explicitly initializes the shared run state.
 '*
 '* @details
-'* DbgInfo と ProgStat に新規オブジェクトを割り当てます。
+'* Assigns new objects to DbgInfo and ProgStat.
 Public Sub Initialize()
     Set DbgInfo = New DebugInformation
     Set ProgStat = New ProgressStatus
@@ -36,10 +36,10 @@ Private Sub Class_Terminate()
     On Error GoTo 0
 End Sub
 
-'* 共通実行状態を明示的に破棄します。
+'* Explicitly releases the shared run state.
 '*
 '* @details
-'* DbgInfo と ProgStat を Nothing に戻し、次の GUI 実行へ状態を持ち越さないようにします。
+'* Sets DbgInfo and ProgStat back to Nothing so state does not carry over to the next GUI run.
 Public Sub Clear()
     Set DbgInfo = Nothing
     Set ProgStat = Nothing

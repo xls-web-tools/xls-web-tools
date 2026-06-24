@@ -6,19 +6,19 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! FileSystemService の共通インスタンスを管理するモジュールです。
+'! Module that manages the shared FileSystemService instance.
 '!
 ' #############################################################################
 
-'* FileSystemService。ユニットテスト時にはテスト ダブルに置き換えてください。
+'* FileSystemService. Replace with a test double during unit tests.
 Public FsSrv As IFileSystemService
 
-'* FileSystemService を初期化します。
+'* Initializes FileSystemService.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* FsSrv が未設定の場合、または Force が True の場合に FileSystemService を生成します。テストで差し替え済みの場合は Force が False のときだけ維持します。
+'* Creates FileSystemService when FsSrv is unset or Force is True. If it has been replaced in tests, keeps it only when Force is False.
 Public Sub InitializeFileSystemService(Optional ByVal Force As Boolean = False)
     If Force Or (FsSrv Is Nothing) Then Set FsSrv = New FileSystemService
 End Sub

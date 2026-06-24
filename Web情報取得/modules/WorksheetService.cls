@@ -14,12 +14,12 @@ Implements IWorksheetService
 ' #############################################################################
 '!
 '! @brief
-'! ワークシートへのアクセスを管理するサービスの実装です。
+'! Implementation of the service that manages worksheet access.
 '!
 ' #############################################################################
 
 '
-' 範囲を検索します
+' Searches a range.
 '
 Public Function Find( _
         ByVal What As String, _
@@ -56,14 +56,14 @@ Public Function Find( _
 
     Dim target_range As Range
     If RangeBounds.IsEntireSheet Then
-        ' シート全体を検索
+        ' Search the entire sheet.
         Set target_range = target_sheet.Cells
     Else
-        ' 範囲を検索
+        ' Search the range.
         Set target_range = target_sheet.Range(RangeBounds.ToString(CellOnly:=True))
     End If
 
-    ' 1 個目を検索
+    ' Search for the first item.
     Dim first_cell As Range
     Set first_cell = target_range.Find( _
             What:=What, _
@@ -76,7 +76,7 @@ Public Function Find( _
             MatchByte:=MatchByte, _
             SearchFormat:=False)
 
-    ' 1 個も見つからない場合は空リストを返す
+    ' If nothing is found, return an empty list.
     If first_cell Is Nothing Then
         Call pResetFindState(target_sheet)
         Set Find = result_value
@@ -93,7 +93,7 @@ Public Function Find( _
         Set found_cell = target_range.FindNext(After:=found_cell)
     Loop While found_cell.Address(External:=True) <> first_cell.Address(External:=True)
 
-    ' 完全一致を解除する (通常使用時に完全一致は扱いづらい)
+    ' Disable exact matching. (Exact matching is hard to use in normal usage.)
     Call pResetFindState(target_sheet)
 
     Set Find = result_value
@@ -125,7 +125,7 @@ Private Sub pSortCore(ByVal RangeBounds As WorksheetRangeBounds, ByVal SortKeyAn
     If IsEmptyArray(SortKeyAndOrder) Then Exit Sub
     If RangeBounds.IsEmpty Then Exit Sub
     If (UBound(SortKeyAndOrder) - LBound(SortKeyAndOrder)) Mod 2 = 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pSortCore", "SortKeyAndOrder の要素数が偶数ではありません。(奇数番目の要素は、ソートのキーとなる列の番号、偶数番目の要素は、xlAscending か xlDescending)"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pSortCore", "SortKeyAndOrder must contain an even number of elements. (Odd-numbered elements are column numbers used as sort keys; even-numbered elements are xlAscending or xlDescending.)"
     End If
     Call pRaiseIfSortKeyAndOrderInvalid(RangeBounds, SortKeyAndOrder)
 
@@ -155,12 +155,12 @@ Private Sub pSortCore(ByVal RangeBounds As WorksheetRangeBounds, ByVal SortKeyAn
     End With
 End Sub
 
-' 範囲をアクティブにします。
+' Activates a range.
 '
 ' @details
-' 範囲をアクティブにします。
+' Activates a range.
 Public Sub ActivateRange(ByVal RangeBounds As WorksheetRangeBounds)
-    If RangeBounds.IsEmpty Then Err.Raise vbObjectError + 1, "Class WorksheetService.ActivateRange", "RangeBounds が空範囲です。(" & RangeBounds.ToString() & ")"
+    If RangeBounds.IsEmpty Then Err.Raise vbObjectError + 1, "Class WorksheetService.ActivateRange", "RangeBounds is an empty range. (" & RangeBounds.ToString() & ")"
 
     Dim target_book As Workbook
     Set target_book = pGetWorkbook(RangeBounds)
@@ -185,8 +185,8 @@ Private Function pGetWorkbook(ByVal RangeBounds As WorksheetRangeBounds) As Work
 End Function
 
 '
-' 指定されたセルに文字列または数式を設定します。
-' TypeConvert が True の場合、数値文字列は整数として表せる場合は整数、それ以外は小数として扱います。
+' Sets a string or formula in the specified cell.
+' When TypeConvert is True, numeric strings are treated as integers if they can be represented as integers, or as decimals otherwise.
 '
 Public Sub WriteCell( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -198,19 +198,19 @@ Public Sub WriteCell( _
         Optional ByVal TypeConvert As Boolean = True)
 
     If RangeBounds.IsEmpty Then Exit Sub
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.WriteCell", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.WriteCell", "RangeBounds is not a cell. (" & RangeBounds.ToString() & ")"
 
     Dim target_cell As Range
     Set target_cell = pGetCell(RangeBounds)
 
     If Expression = "" And IgnoreEmpty Then Exit Sub
 
-    ' 表示形式を設定する
+    ' Set the number format.
     If NumberFormat <> "" Then
         target_cell.NumberFormatLocal = NumberFormat
     End If
 
-    ' 空白の処理
+    ' Process blanks.
     If Expression = "" Then
         If ClearWhenEmpty Then
             target_cell.ClearContents
@@ -224,14 +224,14 @@ Public Sub WriteCell( _
     End If
 
     If AsFormula Then
-        ' 通常数式の処理
+        ' Process normal formulas.
         target_cell.Formula = Expression
     Else
         If TypeConvert Then
-            ' 型変換する場合
+            ' When type conversion is enabled.
             Dim err_val As Variant
             If TryConvertExcelErrorStringToCVErr(Expression, err_val) Then
-                target_cell.Value = err_val  ' CVErr(...) をセット
+                target_cell.Value = err_val  ' Set CVErr(...).
                 Exit Sub
             End If
 
@@ -307,7 +307,7 @@ Public Sub WriteCell( _
             End If
         End If
 
-        ' 文字列として処理
+        ' Process as text.
         Dim target_was_protected As Boolean
         target_was_protected = target_cell.Worksheet.ProtectContents
 
@@ -405,14 +405,14 @@ Private Sub pRestoreCellContentsAndNumberFormat( _
 End Sub
 
 '
-' 範囲に 2 次元配列を書き込みます。
+' Writes a two-dimensional array to a range.
 '
 Public Sub WriteRange(ByVal RangeBounds As WorksheetRangeBounds, ByVal ValuesArray As Variant)
     Dim value_row_count As Long
     Dim value_column_count As Long
     Call pGetTwoDimensionalArraySize(value_row_count, value_column_count, ValuesArray)
     Call pRaiseIfDestinationShapeIsInvalid(RangeBounds, value_row_count, value_column_count, "RangeBounds")
-    Call pRaiseIfDestinationOutOfSheet(RangeBounds, value_row_count, value_column_count, "書き込み")
+    Call pRaiseIfDestinationOutOfSheet(RangeBounds, value_row_count, value_column_count, "write")
 
     Dim target_range As Range
     Set target_range = pGetDestinationRange(RangeBounds, value_row_count, value_column_count)
@@ -441,7 +441,7 @@ Private Sub pGetTwoDimensionalArraySize( _
         ByVal TargetArray As Variant)
 
     If Not IsArray(TargetArray) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。(" & TypeName(TargetArray) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray must be a two-dimensional array. (" & TypeName(TargetArray) & ")"
     End If
 
     Dim lower_bounds() As Long
@@ -449,17 +449,17 @@ Private Sub pGetTwoDimensionalArraySize( _
     Call GetArrayBounds(lower_bounds, upper_bounds, TargetArray)
 
     If IsEmptyArray(lower_bounds) Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray must be a two-dimensional array."
     End If
     If UBound(lower_bounds) - LBound(lower_bounds) + 1 <> 2 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray must be a two-dimensional array."
     End If
 
     RowCount = upper_bounds(LBound(upper_bounds)) - lower_bounds(LBound(lower_bounds)) + 1
     ColumnCount = upper_bounds(LBound(upper_bounds) + 1) - lower_bounds(LBound(lower_bounds) + 1) + 1
 
     If RowCount < 1 Or ColumnCount < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray は 1 要素以上の 2 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetTwoDimensionalArraySize", "ValuesArray must be a two-dimensional array with at least one element."
     End If
 End Sub
 
@@ -472,18 +472,18 @@ Private Sub pRaiseIfDestinationOutOfSheet( _
     Dim destination_finish_row As Long
     destination_finish_row = DestinationRangeBounds.Row + SourceRowCount - 1
     If G_ROW_MAX < destination_finish_row Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", OperationName & "先範囲の終了行がシート上限を超過しています。(row: " & DestinationRangeBounds.Row & ", row_count: " & SourceRowCount & ", finish_row: " & destination_finish_row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", "The " & OperationName & " destination range finish row exceeds the sheet limit. (row: " & DestinationRangeBounds.Row & ", row_count: " & SourceRowCount & ", finish_row: " & destination_finish_row & ")"
     End If
 
     Dim destination_finish_column As Long
     destination_finish_column = DestinationRangeBounds.Column + SourceColumnCount - 1
     If G_COL_MAX < destination_finish_column Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", OperationName & "先範囲の終了列がシート上限を超過しています。(column: " & DestinationRangeBounds.Column & ", column_count: " & SourceColumnCount & ", finish_column: " & destination_finish_column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfDestinationOutOfSheet", "The " & OperationName & " destination range finish column exceeds the sheet limit. (column: " & DestinationRangeBounds.Column & ", column_count: " & SourceColumnCount & ", finish_column: " & destination_finish_column & ")"
     End If
 End Sub
 
 '
-' 範囲に配列 (CSE) 数式を書き込みます。
+' Writes an array (CSE) formula to a range.
 '
 Public Sub WriteArrayFormula(ByVal RangeBounds As WorksheetRangeBounds, ByVal FormulaArray As String)
     If RangeBounds.IsEmpty Then Exit Sub
@@ -498,7 +498,7 @@ Private Sub IWorksheetService_WriteArrayFormula(ByVal RangeBounds As WorksheetRa
 End Sub
 
 '
-' セルから値を読み取ります。
+' Reads a value from a cell.
 '
 Public Function ReadCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByRef Expression As String = "", Optional ByRef NumberFormat As String = "", Optional ByVal GetText As Boolean = False) As String
     Expression = ""
@@ -508,7 +508,7 @@ Public Function ReadCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByR
         ReadCell = ""
         Exit Function
     End If
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.ReadCell", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.ReadCell", "RangeBounds is not a cell. (" & RangeBounds.ToString() & ")"
 
     Dim target_cell As Range
     Set target_cell = pGetCell(RangeBounds)
@@ -601,7 +601,7 @@ RESTORE_COLUMN_WIDTH:
 End Sub
 
 '
-' 範囲から値を読み取ります。
+' Reads values from a range.
 '
 Public Function ReadRange(ByVal RangeBounds As WorksheetRangeBounds) As Variant()
     If RangeBounds.IsEmpty Then Exit Function
@@ -622,7 +622,7 @@ Private Function IWorksheetService_ReadRange(ByVal RangeBounds As WorksheetRange
 End Function
 
 '
-' 数式を評価します。
+' Evaluates a formula.
 '
 Public Function EvaluateFormula(ByVal ContextRangeBounds As WorksheetRangeBounds, ByVal Formula As String) As Variant
     If ContextRangeBounds.IsEmpty Then Exit Function
@@ -637,7 +637,7 @@ Private Function IWorksheetService_EvaluateFormula(ByVal ContextRangeBounds As W
 End Function
 
 '
-' XLOOKUP の結果を取得します。
+' Gets the XLOOKUP result.
 '
 Public Function XLookup( _
         ByVal LookupValue As Variant, _
@@ -713,8 +713,8 @@ Private Function pGetFormulaLiteral(ByVal Value As Variant) As String
 End Function
 
 '
-' 指定されたセルの値または数式をコピーします。
-' 数式のコピーでは配列数式にも対応します。
+' Copies the value or formula in the specified cell.
+' Formula copying also supports array formulas.
 '
 Public Sub CopyCell( _
         ByVal SourceRangeBounds As WorksheetRangeBounds, _
@@ -724,8 +724,8 @@ Public Sub CopyCell( _
 
     If SourceRangeBounds.IsEmpty Then Exit Sub
     If DestinationRangeBounds.IsEmpty Then Exit Sub
-    If Not SourceRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "SourceRangeBounds がセルではありません。(" & SourceRangeBounds.ToString() & ")"
-    If Not DestinationRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "DestinationRangeBounds がセルではありません。(" & DestinationRangeBounds.ToString() & ")"
+    If Not SourceRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "SourceRangeBounds is not a cell. (" & SourceRangeBounds.ToString() & ")"
+    If Not DestinationRangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.CopyCell", "DestinationRangeBounds is not a cell. (" & DestinationRangeBounds.ToString() & ")"
 
     Dim src_sheet As Worksheet
     Set src_sheet = pGetWorksheet(SourceRangeBounds)
@@ -748,8 +748,8 @@ Private Sub IWorksheetService_CopyCell( _
 End Sub
 
 '
-' 指定された範囲の値または数式をコピーします。
-' 数式のコピーでは配列数式にも対応します。
+' Copies the value or formula in the specified range.
+' Formula copying also supports array formulas.
 '
 Public Sub CopyRange( _
         ByVal SourceRangeBounds As WorksheetRangeBounds, _
@@ -806,20 +806,20 @@ Public Sub CopyRange( _
         End If
     End If
 
-    ' 処理済みの配列数式を記録する配列を準備
+    ' Prepare an array to record processed array formulas.
     Dim procd_arr() As String: ReDim procd_arr(0)
     Dim row_idx As Long, col_idx As Long
     For row_idx = row_start_idx To row_end_idx Step row_step
         For col_idx = col_start_idx To col_end_idx Step col_step
-            ' 配列数式のアンカーセルを得る (配列数式でない場合は Nothing)
+            ' Get the anchor cell of the array formula. (Nothing if it is not an array formula.)
             Dim arr_anchor As Range
             Set arr_anchor = pGetArrayFormulaAnchor(src_sheet, src_bounds.Row + row_idx, src_bounds.Column + col_idx)
             If pIsArrayFormulaToBeProcessed(arr_anchor, procd_arr) Then
-                ' 配列数式であり、かつ、未処理の場合は、
+                ' When this is an array formula and it has not been processed yet,
                 Dim arr_rows As Long, arr_cols As Long
-                ' 配列数式の、貼り付け先でのサイズを算出
+                ' calculate the size of the array formula at the destination.
                 Call pCalculateArrayCount(arr_rows, arr_cols, arr_anchor, SourceRangeBounds)
-                ' 配列数式として強制的に処理
+                ' Force processing as an array formula.
                 Call pCopyCellCore( _
                     src_bounds.Row + row_idx, src_bounds.Column + col_idx, _
                     dst_bounds.Row + row_idx, dst_bounds.Column + col_idx, _
@@ -827,10 +827,10 @@ Public Sub CopyRange( _
                     RemainRowCount:=arr_rows, _
                     RemainColumnCount:=arr_cols, _
                     ForcePasteIfArrayFormula:=True)
-                ' 処理済み配列に記録
+                ' Record it in the processed array.
                 Call pAddItemToStringArray(procd_arr, arr_anchor.Address)
             Else
-                ' 通常の処理
+                ' Normal processing.
                 Call pCopyCellCore( _
                     src_bounds.Row + row_idx, src_bounds.Column + col_idx, _
                     dst_bounds.Row + row_idx, dst_bounds.Column + col_idx, _
@@ -852,7 +852,7 @@ Private Sub pRaiseIfCopyRangeDestinationOutOfSheet( _
         ByVal SourceRangeBounds As WorksheetRangeBounds, _
         ByVal DestinationRangeBounds As WorksheetRangeBounds)
 
-    Call pRaiseIfDestinationOutOfSheet(DestinationRangeBounds, SourceRangeBounds.RowCount, SourceRangeBounds.ColumnCount, "コピー")
+    Call pRaiseIfDestinationOutOfSheet(DestinationRangeBounds, SourceRangeBounds.RowCount, SourceRangeBounds.ColumnCount, "copy")
 End Sub
 
 Private Sub pAddItemToStringArray(ByRef TargetArray() As String, ByVal ItemToBeAdded As String)
@@ -906,7 +906,7 @@ Private Sub pCalculateArrayCount(ByRef ArrayRowCount As Long, ByRef ArrayColumnC
 End Sub
 
 '
-' セルが空かどうかを調べます。IgnoreEmptyString を True に指定した場合、数式が入っていても計算結果が空文字列であれば、空であると判定されます。
+' Checks whether the cell is empty. When IgnoreEmptyString is True, the cell is considered empty if it contains a formula whose calculated result is an empty string.
 '
 Public Function IsEmptyCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByVal IgnoreEmptyString As Boolean = False) As Boolean
     If RangeBounds.IsEmpty Then
@@ -953,11 +953,11 @@ Private Function pIsEmptyCellCore(ByVal TargetCell As Range, Optional ByVal Igno
 End Function
 
 '
-' セルに数式が入力されているかを調べます。
+' Checks whether a formula is entered in the cell.
 '
 Public Function HasFormula(ByVal RangeBounds As WorksheetRangeBounds) As Boolean
     If RangeBounds.IsEmpty Then Exit Function
-    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.HasFormula", "RangeBounds がセルではありません。(" & RangeBounds.ToString() & ")"
+    If Not RangeBounds.IsCell Then Err.Raise vbObjectError + 1, "Class WorksheetService.HasFormula", "RangeBounds is not a cell. (" & RangeBounds.ToString() & ")"
     HasFormula = pGetCell(RangeBounds).HasFormula
 End Function
 Private Function IWorksheetService_HasFormula(ByVal RangeBounds As WorksheetRangeBounds) As Boolean
@@ -965,7 +965,7 @@ Private Function IWorksheetService_HasFormula(ByVal RangeBounds As WorksheetRang
 End Function
 
 '
-' 指定した範囲内の、実際に使用されている範囲を返します。
+' Returns the actual used range within the specified range.
 '
 Public Function GetUsedRangeBounds( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -974,7 +974,7 @@ Public Function GetUsedRangeBounds( _
         Optional ByVal IsUsedStartColumn As Boolean = True, _
         Optional ByVal GetRawRange As Boolean = False) As WorksheetRangeBounds
 
-    ' 空範囲はそのまま返す。
+    ' Return an empty range as-is.
     If RangeBounds.IsEmpty Then
         Set GetUsedRangeBounds = RangeBounds
         Exit Function
@@ -983,11 +983,11 @@ Public Function GetUsedRangeBounds( _
     Dim target_sheet As Worksheet
     Set target_sheet = pGetWorksheet(RangeBounds)
 
-    ' 生の UsedRange を得る。
+    ' Get the raw UsedRange.
     Dim raw_range As WorksheetRangeBounds
     Set raw_range = pGetRawUsedRange(target_sheet, RangeBounds, IsUsedStartRow, IsUsedStartColumn)
 
-    ' GetRawRange が True か、UsedRange の時点で空の場合はここで処理終了。
+    ' If GetRawRange is True or UsedRange is empty at this point, finish processing here.
     If GetRawRange Or raw_range.IsEmpty Then
         Set GetUsedRangeBounds = raw_range
         Exit Function
@@ -996,34 +996,34 @@ Public Function GetUsedRangeBounds( _
     Dim row_start As Long, row_finish As Long
     Dim col_start As Long, col_finish As Long
 
-    ' 最終行を得る。
+    ' Get the last row.
     row_finish = pGetLastRowCore(target_sheet, raw_range.Row, raw_range.Column, raw_range.FinishRow, raw_range.FinishColumn, IgnoreEmpty)
 
-    ' 最初の行を得る。
+    ' Get the first row.
     If IsUsedStartRow Then
         row_start = RangeBounds.Row
     Else
         row_start = pGetFirstRowCore(target_sheet, raw_range.Row, raw_range.Column, row_finish, raw_range.FinishColumn, IgnoreEmpty)
     End If
 
-    ' 最終列を得る。
+    ' Get the last column.
     col_finish = pGetLastColumnCore(target_sheet, row_start, raw_range.Column, row_finish, raw_range.FinishColumn, IgnoreEmpty)
 
-    ' 最初の列を得る。
+    ' Get the first column.
     If IsUsedStartColumn Then
         col_start = RangeBounds.Column
     Else
         col_start = pGetFirstColumnCore(target_sheet, row_start, raw_range.Column, row_finish, col_finish, IgnoreEmpty)
     End If
 
-    ' 処理結果を整形
+    ' Normalize the processing result.
     If row_finish < row_start Or col_finish < col_start Then
         Set GetUsedRangeBounds = New_RangeBounds(Row:=RangeBounds.Row, Column:=RangeBounds.Column, FinishRow:=0, FinishColumn:=0, Sheet:=RangeBounds.WorksheetName, Book:=RangeBounds.WorkbookName)
     Else
         Set GetUsedRangeBounds = New_RangeBounds(Row:=row_start, Column:=col_start, FinishRow:=row_finish, FinishColumn:=col_finish, Sheet:=RangeBounds.WorksheetName, Book:=RangeBounds.WorkbookName)
     End If
 
-    ' 完全一致を解除する (通常使用時に完全一致は扱いづらい)
+    ' Disable exact matching. (Exact matching is hard to use in normal usage.)
     Call pResetFindState(target_sheet)
 End Function
 Private Function IWorksheetService_GetUsedRangeBounds( _
@@ -1066,7 +1066,7 @@ Private Function pGetRawUsedRange( _
             And TargetSheet.Cells(used_s_row, used_s_col).Borders(xlEdgeBottom).LineStyle = xlLineStyleNone _
             And TargetSheet.Cells(used_s_row, used_s_col).Borders(xlEdgeLeft).LineStyle = xlLineStyleNone _
             And TargetSheet.Cells(used_s_row, used_s_col).Borders(xlEdgeRight).LineStyle = xlLineStyleNone Then
-        ' 空の領域
+        ' Empty region.
         Set used_bounds = New_RangeBounds( _
                 Row:=used_s_row, _
                 Column:=used_s_col, _
@@ -1075,7 +1075,7 @@ Private Function pGetRawUsedRange( _
                 Sheet:=TargetSheet.Name, _
                 Book:=TargetSheet.Parent.Name)
     Else
-        ' 普通の領域
+        ' Normal region.
         Set used_bounds = New_RangeBounds( _
                 Row:=used_s_row, _
                 Column:=used_s_col, _
@@ -1085,7 +1085,7 @@ Private Function pGetRawUsedRange( _
                 Book:=TargetSheet.Parent.Name)
     End If
 
-    ' 元の範囲との交差を取る
+    ' Intersect with the original range.
     Dim intersect_bounds As WorksheetRangeBounds
     Set intersect_bounds = RangeBounds.Intersect(used_bounds)
 
@@ -1136,8 +1136,8 @@ Private Function pGetLastRowCore( _
     End If
 
     Dim fnd_cell As Range
-    ' 最終行 → SearchOrder=xlByRows, SearchDirection=xlPrevious
-    ' After は検索範囲の左上セル
+    ' Last row -> SearchOrder=xlByRows, SearchDirection=xlPrevious.
+    ' After is the upper-left cell of the search range.
     Set fnd_cell = srch_rng.Find(What:="*", _
                                  After:=srch_rng.Cells(1), _
                                  LookAt:=xlPart, _
@@ -1181,8 +1181,8 @@ Private Function pGetLastColumnCore( _
     End If
 
     Dim fnd_cell As Range
-    ' 最終列 → SearchOrder=xlByColumns, SearchDirection=xlPrevious
-    ' After は検索範囲の左上セル
+    ' Last column -> SearchOrder=xlByColumns, SearchDirection=xlPrevious.
+    ' After is the upper-left cell of the search range.
     Set fnd_cell = srch_rng.Find(What:="*", _
                                  After:=srch_rng.Cells(1), _
                                  LookAt:=xlPart, _
@@ -1226,8 +1226,8 @@ Private Function pGetFirstRowCore( _
     End If
 
     Dim fnd_cell As Range
-    ' 最初の行 → SearchOrder=xlByRows, SearchDirection=xlNext
-    ' After は検索範囲の右下セル
+    ' First row -> SearchOrder=xlByRows, SearchDirection=xlNext.
+    ' After is the lower-right cell of the search range.
     Set fnd_cell = srch_rng.Find(What:="*", _
                                  After:=srch_rng.Cells(srch_rng.Rows.Count, srch_rng.Columns.Count), _
                                  LookAt:=xlPart, _
@@ -1271,8 +1271,8 @@ Private Function pGetFirstColumnCore( _
     End If
 
     Dim fnd_cell As Range
-    ' 最初の列 → SearchOrder=xlByColumns, SearchDirection=xlNext
-    ' After は検索範囲の右下セル
+    ' First column -> SearchOrder=xlByColumns, SearchDirection=xlNext.
+    ' After is the lower-right cell of the search range.
     Set fnd_cell = srch_rng.Find(What:="*", _
                                  After:=srch_rng.Cells(srch_rng.Rows.Count, srch_rng.Columns.Count), _
                                  LookAt:=xlPart, _
@@ -1290,7 +1290,7 @@ Private Function pGetFirstColumnCore( _
 End Function
 
 '
-' 範囲を指定してクリアします。
+' Clears the specified range.
 '
 Public Sub ClearRange( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -1309,10 +1309,10 @@ Public Sub ClearRange( _
     Dim target_range As Range
     Set target_range = pGetRange(RangeBounds)
 
-    ' ひとまず範囲全体を処理
+    ' Process the entire range for now.
     Call pClearRangeCore(target_range, ClearAll, ClearContents, ClearNumberFormats, ClearColors, ClearComments, ClearHyperlinks)
 
-    ' 使用中の範囲を取得
+    ' Get the used range.
     Dim used_row As Long, used_col As Long
     If 0 < target_sheet.UsedRange.Rows.Count Then
         used_row = target_sheet.UsedRange.Rows(target_sheet.UsedRange.Rows.Count).Row
@@ -1324,7 +1324,7 @@ Public Sub ClearRange( _
     Dim item_idx As Long
     For item_idx = RangeBounds.Row To MinLng(used_row, RangeBounds.FinishRow)
         If target_sheet.Rows(item_idx).Hidden Then
-            ' 範囲内の非表示状態の行を処理
+            ' Process hidden rows within the range.
             Set target_range = target_sheet.Range(target_sheet.Cells(item_idx, RangeBounds.Column), target_sheet.Cells(item_idx, RangeBounds.FinishColumn))
             Call pClearRangeCore(target_range, ClearAll, ClearContents, ClearNumberFormats, ClearColors, ClearComments, ClearHyperlinks)
         End If
@@ -1332,7 +1332,7 @@ Public Sub ClearRange( _
 
     For item_idx = RangeBounds.Column To MinLng(used_col, RangeBounds.FinishColumn)
         If target_sheet.Columns(item_idx).Hidden Then
-            ' 範囲内の非表示状態の列を処理
+            ' Process hidden columns within the range.
             Set target_range = target_sheet.Range(target_sheet.Cells(RangeBounds.Row, item_idx), target_sheet.Cells(RangeBounds.FinishRow, item_idx))
             Call pClearRangeCore(target_range, ClearAll, ClearContents, ClearNumberFormats, ClearColors, ClearComments, ClearHyperlinks)
         End If
@@ -1369,7 +1369,7 @@ Private Sub pClearRangeCore( _
 End Sub
 
 '
-' 範囲内の重複行を削除します。
+' Removes duplicate rows within the range.
 '
 Public Sub RemoveDuplicates(ByVal RangeBounds As WorksheetRangeBounds, ByVal DuplicateColumns As Variant)
     If RangeBounds.IsEmpty Then Exit Sub
@@ -1386,7 +1386,7 @@ End Sub
 Private Function pBuildDuplicateColumnsArgument(ByVal RangeBounds As WorksheetRangeBounds, ByVal DuplicateColumns As Variant) As Variant
     If IsArray(DuplicateColumns) Then
         If IsEmptyArray(DuplicateColumns) Then
-            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
+            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns must contain one or more column numbers."
         End If
 
         Dim result_columns() As Variant
@@ -1403,7 +1403,7 @@ Private Function pBuildDuplicateColumnsArgument(ByVal RangeBounds As WorksheetRa
         Next column_item
 
         If column_count = 0 Then
-            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns には 1 つ以上の列番号を指定してください。"
+            Err.Raise vbObjectError + 1, "Class WorksheetService.pBuildDuplicateColumnsArgument", "DuplicateColumns must contain one or more column numbers."
         End If
 
         pBuildDuplicateColumnsArgument = result_columns
@@ -1413,7 +1413,7 @@ Private Function pBuildDuplicateColumnsArgument(ByVal RangeBounds As WorksheetRa
 End Function
 
 '
-' 行を挿入します。
+' Inserts rows.
 '
 Public Sub InsertRows(ByVal RangeBounds As WorksheetRangeBounds)
     Call pRaiseIfNotEntireRowRange(RangeBounds, "InsertRows")
@@ -1428,7 +1428,7 @@ Private Sub IWorksheetService_InsertRows(ByVal RangeBounds As WorksheetRangeBoun
 End Sub
 
 '
-' 行を削除します。
+' Deletes rows.
 '
 Public Sub DeleteRows(ByVal RangeBounds As WorksheetRangeBounds)
     Call pRaiseIfNotEntireRowRange(RangeBounds, "DeleteRows")
@@ -1443,8 +1443,8 @@ Private Sub IWorksheetService_DeleteRows(ByVal RangeBounds As WorksheetRangeBoun
 End Sub
 
 '
-' すべてのデータを表示します。
-' Sheet.ShowAllData、Rows.Hidden = False、Columns.Hidden = False します。
+' Shows all data.
+' Calls Sheet.ShowAllData, Rows.Hidden = False, and Columns.Hidden = False.
 '
 Public Sub SetAllDataVisible(ByVal RangeBounds As WorksheetRangeBounds)
     Dim target_sheet As Worksheet
@@ -1461,7 +1461,7 @@ Private Sub IWorksheetService_SetAllDataVisible(ByVal RangeBounds As WorksheetRa
 End Sub
 
 '
-' 構成済みのアウトラインに対して、表示するアウトライン レベルを設定します。
+' Sets the outline levels to display for a configured outline.
 '
 Public Sub SetSheetOutlineLevel(ByVal RangeBounds As WorksheetRangeBounds, Optional ByVal RowLevels As Long = 0, Optional ByVal ColumnLevels As Long = 0)
     If RowLevels = 0 And ColumnLevels = 0 Then Exit Sub
@@ -1482,7 +1482,7 @@ Private Sub IWorksheetService_SetSheetOutlineLevel(ByVal RangeBounds As Workshee
 End Sub
 
 '
-' シートのタブ色を設定します。インデックスと値を同時に指定した場合、値指定が優先されます。
+' Sets the sheet tab color. If both index and value are specified, the value takes precedence.
 '
 Public Sub SetSheetTabColor( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -1506,7 +1506,7 @@ Private Sub IWorksheetService_SetSheetTabColor( _
 End Sub
 
 '
-' 範囲の色を設定します。インデックスと値を同時に指定した場合、値指定が優先されます。
+' Sets the range color. If both index and value are specified, the value takes precedence.
 '
 Public Sub SetRangeColor( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -1542,7 +1542,7 @@ Private Sub IWorksheetService_SetRangeColor( _
 End Sub
 
 '
-' テキストを折り返して表示するかを設定する。
+' Sets whether to wrap text.
 '
 Public Sub SetWrapText(ByVal RangeBounds As WorksheetRangeBounds, ByVal WrapText As Boolean)
     If RangeBounds.IsEmpty Then Exit Sub
@@ -1557,7 +1557,7 @@ Private Sub IWorksheetService_SetWrapText(ByVal RangeBounds As WorksheetRangeBou
 End Sub
 
 '
-' テキストを縮小して全体を表示するかを設定する。
+' Sets whether to shrink text to fit.
 '
 Public Sub SetShrinkToFit(ByVal RangeBounds As WorksheetRangeBounds, ByVal ShrinkToFit As Boolean)
     If RangeBounds.IsEmpty Then Exit Sub
@@ -1572,7 +1572,7 @@ Private Sub IWorksheetService_SetShrinkToFit(ByVal RangeBounds As WorksheetRange
 End Sub
 
 '
-' セル内の配置を設定する。
+' Sets alignment within cells.
 '
 Public Sub SetAlignment( _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -1593,11 +1593,11 @@ Public Sub SetAlignment( _
     Set target_range = pGetRange(RangeBounds)
 
     If Orientation <> G_ALIGNMENT_NO_CHANGE Then
-        target_range.Orientation = Orientation ' 文字の方向
+        target_range.Orientation = Orientation ' Text orientation.
     End If
 
     If IndentLevel <> G_ALIGNMENT_NO_CHANGE Then
-        target_range.IndentLevel = IndentLevel ' インデント
+        target_range.IndentLevel = IndentLevel ' Indent.
     End If
 
     If HorizontalAlignment <> G_ALIGNMENT_NO_CHANGE Then
@@ -1609,33 +1609,33 @@ Public Sub SetAlignment( _
     End If
 
 '    Select Case HorizontalAlignment
-'     Case xlLeft ' 左詰め
+'     Case xlLeft ' Left-aligned.
 '        target_range.HorizontalAlignment = xlLeft
-'     Case xlCenter ' 中央揃え
+'     Case xlCenter ' Centered.
 '        target_range.HorizontalAlignment = xlCenter
-'     Case xlRight ' 右詰め
+'     Case xlRight ' Right-aligned.
 '        target_range.HorizontalAlignment = xlRight
-'     Case xlFill ' 繰り返し
+'     Case xlFill ' Repeat.
 '        target_range.HorizontalAlignment = xlFill
-'     Case xlJustify ' 両端揃え
+'     Case xlJustify ' Justified.
 '        target_range.HorizontalAlignment = xlJustify
-'     Case xlCenterAcrossSelection ' 選択範囲内で中央
+'     Case xlCenterAcrossSelection ' Center across selection.
 '        target_range.HorizontalAlignment = xlCenterAcrossSelection
-'     Case xlDistributed ' 均等割り付け
+'     Case xlDistributed ' Distributed.
 '        target_range.HorizontalAlignment = xlDistributed
-'     Case Else ' 標準
+'     Case Else ' Standard.
 '        target_range.HorizontalAlignment = xlGeneral
 '    End Select
 '    Select Case VerticalAlignment
-'     Case xlTop ' 上詰め
+'     Case xlTop ' Top-aligned.
 '        target_range.VerticalAlignment = xlTop
-'     Case xlCenter ' 中央揃え
+'     Case xlCenter ' Centered.
 '        target_range.VerticalAlignment = xlCenter
-'     Case xlJustify ' 両端揃え
+'     Case xlJustify ' Justified.
 '        target_range.VerticalAlignment = xlJustify
-'     Case xlDistributed ' 均等割り付け
+'     Case xlDistributed ' Distributed.
 '        target_range.VerticalAlignment = xlDistributed
-'     Case Else ' 下詰め
+'     Case Else ' Bottom-aligned.
 '        target_range.VerticalAlignment = xlBottom
 '    End Select
 End Sub
@@ -1655,9 +1655,9 @@ Private Sub IWorksheetService_SetAlignment( _
 End Sub
 
 Private Sub pResetFindState(ByVal TargetSheet As Worksheet)
-    ' Excel の Find 条件は UI と Range.Find の後続呼び出しに共有されるため、
-    ' このサービスの呼び出し後は部分一致・値検索の標準状態へ戻します。
-    ' リセット後の状態: LookIn=xlValues, LookAt=xlPart, SearchOrder=xlByRows,
+    ' Excel Find conditions are shared with the UI and subsequent Range.Find calls, so
+    ' after this service call, reset them to the standard state for partial-match value searches.
+    ' State after reset: LookIn=xlValues, LookAt=xlPart, SearchOrder=xlByRows,
     ' SearchDirection=xlNext, MatchCase=True, MatchByte=True, SearchFormat=False。
     Call TargetSheet.Range("A1:A2").Find( _
             What:="", _
@@ -1679,7 +1679,7 @@ Private Sub pRaiseIfSortKeyAndOrderInvalid(ByVal RangeBounds As WorksheetRangeBo
             Dim sort_order As Long
             sort_order = pGetValidatedLong(SortKeyAndOrder(item_idx + 1), "SortKeyAndOrder")
             If sort_order <> xlAscending And sort_order <> xlDescending Then
-                Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfSortKeyAndOrderInvalid", "SortKeyAndOrder の並び順には xlAscending または xlDescending を指定してください。"
+                Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfSortKeyAndOrderInvalid", "SortKeyAndOrder sort order must be xlAscending or xlDescending."
             End If
         End If
     Next item_idx
@@ -1711,7 +1711,7 @@ Private Sub pRaiseIfDestinationShapeIsInvalid( _
 
     Err.Raise vbObjectError + 1, _
             "Class WorksheetService.pRaiseIfDestinationShapeIsInvalid", _
-            ArgumentName & " は空範囲、1 セル、または元と同じ行数・列数を指定してください。" & _
+            ArgumentName & " must be an empty range, one cell, or a range with the same row and column counts as the source." & _
             "(destination: " & DestinationRangeBounds.RowCount & "x" & DestinationRangeBounds.ColumnCount & _
             ", source: " & SourceRowCount & "x" & SourceColumnCount & ")"
 End Sub
@@ -1749,16 +1749,16 @@ Private Sub pRaiseReadCellTextColumnWidthError( _
 
     Dim reason_text As String
     If TargetCell.Worksheet.ProtectContents Then
-        reason_text = "シート保護により"
+        reason_text = "because of sheet protection"
     Else
-        reason_text = "列幅変更時に Excel がエラーを返したため"
+        reason_text = "because Excel returned an error while changing the column width"
     End If
 
     Err.Raise _
             Number:=vbObjectError + 1, _
             Source:="Class WorksheetService.pRaiseReadCellTextColumnWidthError", _
-            Description:="セル読み取り時、列幅が足りず # 表示になっていますが、" & reason_text & _
-                    "列幅を一時的に広げられませんでした。" & _
+            Description:="When reading the cell, the column is too narrow and displays #, but " & reason_text & _
+                    ", the column width could not be temporarily expanded." & _
                     "(Sheet=" & TargetCell.Worksheet.Name & _
                     ", Address=" & TargetCell.Address(False, False) & _
                     ", Text=" & CellText & _
@@ -1795,7 +1795,7 @@ Private Sub pCopyCellCore( _
     Dim dst_cell As Range
     Set dst_cell = DestinationSheet.Cells(DestinationRow, DestinationColumn)
 
-    ' 値コピー
+        ' Value copy.
     If AsValue Then
         If IsEmpty(src_cell.Value) Then
             dst_cell.ClearContents
@@ -1807,26 +1807,26 @@ Private Sub pCopyCellCore( _
         Exit Sub
     End If
 
-    ' 数式コピー
+        ' Formula copy.
     If src_cell.HasFormula Then
-        ' これだと相対参照が処理されない。(元のままとなってしまう)
+        ' This does not handle relative references. (They remain as in the source.)
         'dst_cell.Formula = src_cell.Formula
         If src_cell.HasArray Then
             If src_cell.Address = src_cell.CurrentArray.Cells(1, 1).Address Or ForcePasteIfArrayFormula Then
                 Dim formula_str As String
-                ' 一旦、元セルの通常の関数に入れる (正常に計算できなくともよい)
+                ' Temporarily put it into the source cell as a normal formula. (It does not have to calculate correctly.)
                 formula_str = src_cell.FormulaArray
                 src_cell = formula_str
-                ' 宛先セルに入れる (FormulaR1C1 から取り出すことにより、なぜか相対参照が正しく処理される)
+                ' Put it into the destination cell. (For some reason, extracting from FormulaR1C1 correctly handles relative references.)
                 If Application.ReferenceStyle = xlA1 Then
                     dst_cell = Application.ConvertFormula(src_cell.FormulaR1C1, xlR1C1, ToReferenceStyle:=xlA1)
                 Else
                     dst_cell = Application.ConvertFormula(src_cell.FormulaR1C1, xlR1C1, ToReferenceStyle:=xlR1C1)
                 End If
-                ' 元セルを配列関数に戻す
+                ' Restore the source cell to the array formula.
                 src_cell.FormulaArray = formula_str
 
-                ' 宛先セルの通常関数を配列関数に入れる。
+                ' Convert the destination cell's normal formula into an array formula.
                 formula_str = dst_cell.Formula
                 Dim resized_dst As Range
                 Set resized_dst = dst_cell.Resize( _
@@ -1835,7 +1835,7 @@ Private Sub pCopyCellCore( _
                 resized_dst.FormulaArray = formula_str
                 If CopyNumberFormat Then resized_dst.NumberFormatLocal = src_cell.NumberFormatLocal
             Else
-                ' マルチセル配列の起点セル以外は何もしない
+                ' Do nothing for cells other than the anchor cell of a multi-cell array.
             End If
         Else
             Dim dst_was_protected As Boolean
@@ -1867,7 +1867,7 @@ Private Sub pCopyCellCore( _
             On Error GoTo 0
         End If
     Else
-        ' 値コピー
+        ' Value copy.
         If IsEmpty(src_cell.Value) Then
             dst_cell.ClearContents
         Else
@@ -1903,7 +1903,7 @@ Private Function pGetValidatedRelativeColumnIndex(ByVal RangeBounds As Worksheet
     Dim column_num As Long
     column_num = pGetValidatedLong(ColumnIndex, ArgumentName)
     If column_num < 1 Or RangeBounds.ColumnCount < column_num Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedRelativeColumnIndex", ArgumentName & " は対象範囲内の相対列番号を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedRelativeColumnIndex", ArgumentName & " must be a relative column number within the target range."
     End If
 
     pGetValidatedRelativeColumnIndex = column_num
@@ -1927,11 +1927,11 @@ Private Function pGetValidatedLong(ByVal TargetValue As Variant, ByVal ArgumentN
 
 INVALID_VALUE:
     On Error GoTo 0
-    Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedLong", ArgumentName & " には整数を指定してください。"
+    Err.Raise vbObjectError + 1, "Class WorksheetService.pGetValidatedLong", ArgumentName & " must be an integer."
 End Function
 
 Private Sub pRaiseIfNotEntireRowRange(ByVal RangeBounds As WorksheetRangeBounds, ByVal MethodName As String)
     If RangeBounds.IsEmpty Or Not RangeBounds.IsEntireRow Then
-        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfNotEntireRowRange", MethodName & " には行全体の範囲を指定してください。"
+        Err.Raise vbObjectError + 1, "Class WorksheetService.pRaiseIfNotEntireRowRange", MethodName & " requires an entire-row range."
     End If
 End Sub

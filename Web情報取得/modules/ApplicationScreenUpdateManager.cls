@@ -13,14 +13,14 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! Excel の実行環境設定を一時退避する one-shot のスコープ管理クラスです。
-'! インスタンス生成時点で ScreenUpdating、EnableEvents、DisplayAlerts、Calculation をバックアップし、Restore でその時点へ戻します。
-'! DisableUpdates は退避済みの設定を変更する補助であり、DisableUpdates を呼ばない場合でも Restore は有効です。
-'! Restore 後の同一インスタンスは再利用できません。再度設定を退避する場合は、新しいインスタンスを生成します。
-'! ネストして使う場合は、生成と逆順の LIFO 順で Restore します。順序違いの復元は呼び出し側の誤りとして扱います。
-'! StatusBar は ProgressStatus の責務であり、このクラスでは退避・復元しません。
-'! インスタンス破棄時には保険として Restore を試行しますが、破棄時の復元エラーは握りつぶします。
-'! Esc キー入力による中断や End ステートメントによる中断など、インスタンスが破棄されない場合は、Restore メソッドを明示的に呼び出す必要があります。
+'! One-shot scope manager that temporarily saves Excel runtime settings.
+'! Backs up ScreenUpdating, EnableEvents, DisplayAlerts, and Calculation when the instance is created, and Restore returns them to that state.
+'! DisableUpdates is a helper for changing settings after they have been saved; Restore is valid even if DisableUpdates is not called.
+'! The same instance cannot be reused after Restore. Create a new instance to save settings again.
+'! When using nested instances, call Restore in LIFO order, the reverse of creation order. Restoring out of order is treated as caller error.
+'! StatusBar is owned by ProgressStatus; this class does not save or restore it.
+'! When the instance is destroyed, Restore is attempted as a fallback, but restore errors during destruction are suppressed.
+'! If the instance is not destroyed, such as when execution is interrupted by the Esc key or the End statement, call the Restore method explicitly.
 '!
 ' #############################################################################
 
@@ -30,25 +30,25 @@ Private pSavedDisplayAlerts As Boolean
 Private pSavedCalculation As Integer
 Private pIsBackedUp As Boolean
 
-'* このオブジェクトに記録された ScreenUpdating の値。
+'* The ScreenUpdating value recorded on this object.
 Public Property Get SavedScreenUpdating() As Boolean
     Call pEnsureBackupExists
     SavedScreenUpdating = pSavedScreenUpdating
 End Property
 
-'* このオブジェクトに記録された EnableEvents の値。
+'* The EnableEvents value recorded on this object.
 Public Property Get SavedEnableEvents() As Boolean
     Call pEnsureBackupExists
     SavedEnableEvents = pSavedEnableEvents
 End Property
 
-'* このオブジェクトに記録された DisplayAlerts の値。
+'* The DisplayAlerts value recorded on this object.
 Public Property Get SavedDisplayAlerts() As Boolean
     Call pEnsureBackupExists
     SavedDisplayAlerts = pSavedDisplayAlerts
 End Property
 
-'* このオブジェクトに記録された Calculation の値。
+'* The Calculation value recorded on this object.
 Public Property Get SavedCalculation() As Integer
     Call pEnsureBackupExists
     SavedCalculation = pSavedCalculation
@@ -58,11 +58,11 @@ Private Sub Class_Initialize()
     Call pBackup
 End Sub
 
-' このオブジェクトに、各種設定をバックアップします。
+' Back up each setting in this object.
 '
 ' @details
-' 現在の Excel の設定 (ScreenUpdating、EnableEvents、DisplayAlerts、Calculation) を記録し、
-' Restore メソッドで元の設定に戻せるようにします。
+' Records the current Excel settings (ScreenUpdating, EnableEvents, DisplayAlerts, Calculation),
+' so the Restore method can return them to their original settings.
 Private Sub pBackup()
     pSavedScreenUpdating = Application.ScreenUpdating
     pSavedEnableEvents = Application.EnableEvents
@@ -77,16 +77,16 @@ Private Sub Class_Terminate()
     On Error GoTo 0
 End Sub
 
-'* 画面アップデートやイベントのトリガーなどを停止します。
+'* Stops screen updating, event firing, and similar Excel updates.
 '*
-'* @param StopScreenUpdating 画面の更新を停止するかどうか (デフォルトは True)
-'* @param StopEvents イベントのトリガーを停止するかどうか (デフォルトは True)
-'* @param StopDisplayAlerts 警告ダイアログの表示を停止するかどうか (デフォルトは True)
-'* @param StopCalculation 計算を手動モードにするかどうか (デフォルトは True)
+'* @param StopScreenUpdating Whether to stop screen updating (default is True).
+'* @param StopEvents Whether to stop event firing (default is True).
+'* @param StopDisplayAlerts Whether to suppress warning dialogs (default is True).
+'* @param StopCalculation Whether to switch calculation to manual mode (default is True).
 '*
 '* @details
-'* インスタンス生成時点の退避内容は変更せず、指定された Excel 設定だけを作業用に変更します。
-'* Restore 後の同一インスタンスでは使用できません。
+'* Changes only the specified Excel settings for work, without changing the values saved when the instance was created.
+'* Cannot be used on the same instance after Restore.
 Public Sub DisableUpdates( _
             Optional ByVal StopScreenUpdating As Boolean = True, _
             Optional ByVal StopEvents As Boolean = True, _
@@ -99,12 +99,12 @@ Public Sub DisableUpdates( _
     If StopCalculation Then Application.Calculation = xlCalculationManual
 End Sub
 
-'* このオブジェクトに保存された設定を明示的にリストアします。
+'* Explicitly restores the settings saved in this object.
 '*
 '* @details
-'* インスタンス生成時点で保存された設定を Excel に復元します。
-'* DisableUpdates を呼んでいない場合でも、生成後に変わった設定を生成時点へ戻します。
-'* 復元後は退避状態を破棄するため、同じインスタンスの再利用や二重復元はエラーになります。
+'* Restores the settings saved at instance creation to Excel.
+'* Even if DisableUpdates has not been called, settings changed after creation are returned to their creation-time values.
+'* After restoration, the saved state is discarded, so reusing the same instance or restoring twice raises an error.
 Public Sub Restore()
     Call pEnsureBackupExists
     Application.ScreenUpdating = pSavedScreenUpdating
@@ -116,6 +116,6 @@ End Sub
 
 Private Sub pEnsureBackupExists()
     If Not pIsBackedUp Then
-        Err.Raise vbObjectError + 1, "Class ApplicationScreenUpdateManager.pEnsureBackupExists", "バックアップされた設定がありません。"
+        Err.Raise vbObjectError + 1, "Class ApplicationScreenUpdateManager.pEnsureBackupExists", "No backed-up settings are available."
     End If
 End Sub

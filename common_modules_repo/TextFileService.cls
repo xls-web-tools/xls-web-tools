@@ -14,7 +14,7 @@ Implements ITextFileService
 ' #############################################################################
 '!
 '! @brief
-'! TextFileEntity を生成するサービスの実装です。
+'! Implementation of the service that creates TextFileEntity objects.
 '!
 ' #############################################################################
 

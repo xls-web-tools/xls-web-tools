@@ -12,23 +12,23 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! Variant 配列を公開 API として最小限に包む低レベル配列ラッパーです。
+'! Low-level array wrapper that exposes a minimal public API around a Variant array.
 '!
 ' #############################################################################
 
 Private pArray() As Variant
 
-'* 現在保持している配列の下限。
+'* The lower bound of the currently held array.
 Public Property Get LowerBound() As Long
     LowerBound = LBound(pArray)
 End Property
 
-'* 現在保持している配列の上限。
+'* The upper bound of the currently held array.
 Public Property Get UpperBound() As Long
     UpperBound = UBound(pArray)
 End Property
 
-'* このコレクションのインデクサ。境界確認は行わず、VBA の配列アクセスと同じエラーを露出します。
+'* Indexer for this collection. It performs no bounds check and exposes the same errors as VBA array access.
 Public Property Get Item(ByVal ItemIndex As Long) As Variant
 Attribute Item.VB_UserMemId = 0
     If IsObject(pArray(ItemIndex)) Then
@@ -58,16 +58,16 @@ End Sub
 '    Next idx
 'End Sub
 
-'* 配列の境界を再設定します。
+'* Resets the array bounds.
 '*
-'* @param LowerBound 新しい下限。
-'* @param UpperBound 新しい上限。
-'* @param PreserveItems 既存要素を保持するかどうか。
+'* @param LowerBound The new lower bound.
+'* @param UpperBound The new upper bound.
+'* @param PreserveItems Whether to preserve existing elements.
 '*
 '* @details
-'* 生成直後は `EmptyVariantArray()` 由来の 0 ベース空配列 (`LBound = 0` / `UBound = -1`) を保持します。
-'* `PreserveItems:=False` の場合は VBA の `ReDim` と同じ契約で動作します。
-'* `PreserveItems:=True` の場合は VBA の `ReDim Preserve` と同じ契約で動作します。つまり既存配列の下限は変更できず、上限のみ変更できます。
+'* Immediately after creation, this holds the 0-based empty array from `EmptyVariantArray()` (`LBound = 0` / `UBound = -1`).
+'* When `PreserveItems:=False`, this follows the same contract as VBA `ReDim`.
+'* When `PreserveItems:=True`, this follows the same contract as VBA `ReDim Preserve`: the lower bound of the existing array cannot be changed, and only the upper bound can be changed.
 Public Sub ReDimArray(ByVal LowerBound As Long, ByVal UpperBound As Long, Optional ByVal PreserveItems As Boolean = False)
     If PreserveItems Then
         ReDim Preserve pArray(LowerBound To UpperBound)
@@ -76,14 +76,14 @@ Public Sub ReDimArray(ByVal LowerBound As Long, ByVal UpperBound As Long, Option
     End If
 End Sub
 
-'* 指定されたインデックスの要素を更新します。
+'* Updates the element at the specified index.
 '*
-'* @param ItemIndex 要素のインデックス。
-'* @param ItemObject 設定する要素。
+'* @param ItemIndex The element index.
+'* @param ItemObject The element to set.
 '*
 '* @details
-'* 境界確認は行わず、VBA の配列アクセスと同じエラーを露出します。
-'* オブジェクトは参照として設定し、それ以外の値は値として設定します。
+'* Performs no bounds check and exposes the same errors as VBA array access.
+'* Objects are set by reference; all other values are set by value.
 Public Sub Update(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
     If IsObject(ItemObject) Then
         Set pArray(ItemIndex) = ItemObject

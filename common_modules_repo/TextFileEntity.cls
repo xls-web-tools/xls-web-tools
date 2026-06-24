@@ -14,7 +14,7 @@ Implements ITextFileEntity
 ' #############################################################################
 '!
 '! @brief
-'! テキスト ファイルのオープン、クローズ、書き込みなどを行うための実装です。
+'! Implementation for opening, closing, and writing text files.
 '!
 ' #############################################################################
 
@@ -29,7 +29,7 @@ Private pAsAppend As Boolean
 Private pGetReadLock As Boolean
 Private pGetWriteLock As Boolean
 
-' ファイルのパス。
+' File path.
 Public Property Get FilePath() As String
     Call pCheckInit
     FilePath = pFilePath
@@ -38,7 +38,7 @@ Private Property Get ITextFileEntity_FilePath() As String
     ITextFileEntity_FilePath = FilePath
 End Property
 
-' 読み取り用か。(未オープンの場合は False)
+' Whether the file is opened for reading. (False when not open.)
 Public Property Get AsRead() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -51,7 +51,7 @@ Private Property Get ITextFileEntity_AsRead() As Boolean
     ITextFileEntity_AsRead = AsRead
 End Property
 
-' 書き込み用か。(未オープンの場合は False)
+' Whether the file is opened for writing. (False when not open.)
 Public Property Get AsWrite() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -64,7 +64,7 @@ Private Property Get ITextFileEntity_AsWrite() As Boolean
     ITextFileEntity_AsWrite = AsWrite
 End Property
 
-' 追記か。(未オープンの場合は False)
+' Whether the file is opened for appending. (False when not open.)
 Public Property Get AsAppend() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -77,7 +77,7 @@ Private Property Get ITextFileEntity_AsAppend() As Boolean
     ITextFileEntity_AsAppend = AsAppend
 End Property
 
-' 読み取りロックを取得しているか。(未オープンの場合は False)
+' Whether a read lock has been acquired. (False when not open.)
 Public Property Get GetReadLock() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -90,7 +90,7 @@ Private Property Get ITextFileEntity_GetReadLock() As Boolean
     ITextFileEntity_GetReadLock = GetReadLock
 End Property
 
-' 書き込みロックを取得しているか。(未オープンの場合は False)
+' Whether a write lock has been acquired. (False when not open.)
 Public Property Get GetWriteLock() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -103,7 +103,7 @@ Private Property Get ITextFileEntity_GetWriteLock() As Boolean
     ITextFileEntity_GetWriteLock = GetWriteLock
 End Property
 
-' 現在ファイルがオープンされているか。
+' Whether the file is currently open.
 Public Property Get IsOpen() As Boolean
     Call pCheckInit
     IsOpen = pIsOpen
@@ -112,7 +112,7 @@ Private Property Get ITextFileEntity_IsOpen() As Boolean
     ITextFileEntity_IsOpen = IsOpen
 End Property
 
-' ファイルの最後か。(未オープンまたは書き込み/追記モードの場合は True)
+' Whether the file is at end of file. (True when not open or when in write/append mode.)
 Public Property Get IsEndOfFile() As Boolean
     Call pCheckInit
     If Not pIsOpen Then
@@ -127,15 +127,15 @@ Private Property Get ITextFileEntity_IsEndOfFile() As Boolean
     ITextFileEntity_IsEndOfFile = IsEndOfFile
 End Property
 
-'* 各値を設定します。
+'* Sets each value.
 '*
-'* @param FilePath ファイルのパス。
+'* @param FilePath File path.
 '*
 '* @details
-'* 各値を設定します。初期化済みインスタンスは再初期化できません。
+'* Sets each value. An initialized instance cannot be reinitialized.
 Public Sub Initialize(ByVal FilePath As String)
-    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "すでに初期化されています。(" & pFilePath & ")"
+    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "An open file cannot be reinitialized. (" & pFilePath & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.Initialize", "The file has already been initialized. (" & pFilePath & ")"
 
     pFilePath = pGetAbsolutePath(FilePath)
     pIsInitialized = True
@@ -155,27 +155,27 @@ Private Sub Class_Terminate()
     On Error GoTo 0
 End Sub
 
-' ファイルをオープンします。
+' Opens the file.
 '
-' @param FilePath ファイルのパス。
-' @param AsWrite [省略可] 書き込み用として開くかどうか。デフォルトは False であり、読み取り用として開きます。
-' @param AsAppend [省略可] 追記として開くかどうか。AsWrite が False のときに AsAppend を True にすると失敗します。
-' @param GetReadLock [省略可] ファイルの読み取りロックを取得するか。
-' @param GetWriteLock [省略可] ファイルの書き込みロックを取得するか。
+' @param FilePath File path.
+' @param AsWrite [Optional] Whether to open for writing. The default is False, which opens the file for reading.
+' @param AsAppend [Optional] Whether to open for appending. Setting AsAppend to True fails when AsWrite is False.
+' @param GetReadLock [Optional] Whether to acquire a read lock on the file.
+' @param GetWriteLock [Optional] Whether to acquire a write lock on the file.
 '
 ' @details
-' ファイルをオープンします。
+' Opens the file.
 Public Sub OpenFile( _
         Optional ByVal AsWrite As Boolean = False, Optional ByVal AsAppend As Boolean = False, _
         Optional ByVal GetReadLock As Boolean = False, Optional ByVal GetWriteLock As Boolean = False, _
         Optional ByVal Force As Boolean = False)
 
     Call pCheckInit
-    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "ファイルは既に開かれています。(" & pFilePath & ")"
-    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "AsWrite が False のときに AsAppend が True となりました。"
+    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "The file is already open. (" & pFilePath & ")"
+    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.OpenFile", "AsAppend cannot be True when AsWrite is False."
 
     If Dir(pFilePath, vbNormal Or vbHidden Or vbSystem Or vbDirectory) <> "" And AsWrite And Not AsAppend Then
-        If Not Force Then Err.Raise vbObjectError + 1, "Class TextFileEntity.OpenFile", "すでにファイルが存在しています。(" & pFilePath & ")"
+        If Not Force Then Err.Raise vbObjectError + 1, "Class TextFileEntity.OpenFile", "The file already exists. (" & pFilePath & ")"
     End If
 
     pGetReadLock = GetReadLock
@@ -224,15 +224,15 @@ Private Sub ITextFileEntity_OpenFile( _
     Call OpenFile(AsWrite:=AsWrite, AsAppend:=AsAppend, GetReadLock:=GetReadLock, GetWriteLock:=GetWriteLock, Force:=Force)
 End Sub
 
-' ファイルから 1 行読み取ります。
+' Reads one line from the file.
 '
-' @return 読み取った文字列。
+' @return The string that was read.
 '
 ' @details
-' ファイルから文字列を 1 行分読み取ります。
+' Reads one line of text from the file.
 Public Function ReadLine() As String
     Call pCheckOpened
-    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.ReadLine", "書き込み用で開いています。(" & pFilePath & ")"
+    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntity.ReadLine", "The file is open for writing. (" & pFilePath & ")"
 
     Dim result_value As String
     Line Input #pFileDesc, result_value
@@ -242,15 +242,15 @@ Private Function ITextFileEntity_ReadLine() As String
     ITextFileEntity_ReadLine = ReadLine()
 End Function
 
-' 文字列をファイルに書き込みます。
+' Writes a string to the file.
 '
-' @param Expression 書き込む文字列。
+' @param Expression The string to write.
 '
 ' @details
-' 文字列をファイルに書き込みます。末尾に改行記号が自動で付与されます。
+' Writes a string to the file. A line break is automatically appended to the end.
 Public Sub WriteLine(ByVal Expression As String)
     Call pCheckOpened
-    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntity.WriteLine", "読み取り用で開いています。(" & pFilePath & ")"
+    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntity.WriteLine", "The file is open for reading. (" & pFilePath & ")"
 
     Print #pFileDesc, Expression
 End Sub
@@ -258,10 +258,10 @@ Private Sub ITextFileEntity_WriteLine(ByVal Expression As String)
     Call WriteLine(Expression)
 End Sub
 
-' ファイルをクローズします。
+' Closes the file.
 '
 ' @details
-' ファイルをクローズします。未オープンの場合は何もしません。
+' Closes the file. Does nothing if the file is not open.
 Public Sub CloseFile()
     Call pCheckInit
     If Not IsOpen Then Exit Sub
@@ -274,11 +274,11 @@ Private Sub ITextFileEntity_CloseFile()
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckInit", "The object is not initialized."
 End Sub
 
 Private Sub pCheckOpened()
-    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckOpened", "ファイルがオープンされていません。"
+    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntity.pCheckOpened", "The file is not open."
 End Sub
 
 Private Sub pResetOpenState()
@@ -293,6 +293,6 @@ End Sub
 
 Private Sub pRequireFileSystemService(ByVal MethodName As String)
     If FsSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntity" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntity" & "." & MethodName, Description:="InitializeCommonService has not been called."
     End If
 End Sub

@@ -13,9 +13,9 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! ダイナミックな型とサイズのオブジェクトリストを管理するクラスです。
-'! このクラスは、オブジェクトおよびプリミティブ型の動的配列を提供し、
-'! 型の一貫性、オブジェクト操作、および拡張機能をサポートします。
+'! Class that manages an object list with dynamic type and size.
+'! This class provides a dynamic array for objects and primitive types,
+'! and supports type consistency, object operations, and extensions.
 '!
 ' #############################################################################
 
@@ -38,69 +38,69 @@ Private pNewEnumSnapshot As Collection
 Private pNewEnumSnapshotVersion As Long
 Private pEnumerationVersion As Long
 
-'* リストの現在の件数。
+'* Current number of items in the list.
 Public Property Get Count() As Long
     Count = pCount
 End Property
 
-'* リスト内の要素の型。
+'* Type of elements in the list.
 Public Property Get ItemTypeName() As String
     ItemTypeName = pTypeName
 End Property
 
-'* リストに要素型契約が設定されているか否か。
+'* Whether an element type contract is set on the list.
 Public Property Get HasItemTypeContract() As Boolean
     HasItemTypeContract = pHasItemTypeContract
 End Property
 
-'* Initialize で指定できる要素型契約名。
+'* Element type contract name that can be specified in Initialize.
 Public Property Get ElementTypeName() As String
     ElementTypeName = pElementTypeName
 End Property
 
-'* 要素に IComparable 実装を要求するか否か。
+'* Whether elements must implement IComparable.
 Public Property Get RequireComparable() As Boolean
     RequireComparable = pRequireComparable
 End Property
 
-'* オブジェクトの同一性/重複判定モード。
+'* Object identity / duplicate check mode.
 Public Property Get ObjectKeyMode() As Long
     ObjectKeyMode = pObjectKeyMode
 End Property
 
-'* 要素型がオブジェクト型か否か。
+'* Whether the element type is an object type.
 Public Property Get IsObjectItemType() As Boolean
     IsObjectItemType = pIsObject
 End Property
 
-'* 要素型が IComparable として扱われるか否か。
+'* Whether the element type is treated as IComparable.
 Public Property Get IsComparableItemType() As Boolean
     IsComparableItemType = pIsComparable
 End Property
 
-'* 要素型が IStringable として扱われるか否か。
+'* Whether the element type is treated as IStringable.
 Public Property Get IsStringableItemType() As Boolean
     IsStringableItemType = pIsStringable
 End Property
 
-'* 要素型が IEquatable として扱われるか否か。
+'* Whether the element type is treated as IEquatable.
 Public Property Get IsEquatableItemType() As Boolean
     IsEquatableItemType = pIsEquatable
 End Property
 
-'* 要素型が IDuplicateCheckable として扱われるか否か。
+'* Whether the element type is treated as IDuplicateCheckable.
 Public Property Get IsDuplicateCheckableItemType() As Boolean
     IsDuplicateCheckableItemType = pIsDuplicateCheckable
 End Property
 
-'* 標準 For Each 用の列挙子を得ます。
+'* Gets the enumerator for standard For Each.
 '*
-'* @return 標準 For Each が使用する列挙子。
+'* @return Enumerator used by standard For Each.
 '*
 '* @details
-'* 列挙開始時点の要素スナップショットを列挙します。
-'* 標準 For Each の列挙中にこのリストを更新した場合、実行中の列挙の継続は保証されません。
-'* 更新や削除を伴う列挙では GetEnumerator を使用してください。
+'* Enumerates a snapshot of elements from the start of enumeration.
+'* If this list is updated during standard For Each enumeration, continuation of the running enumeration is not guaranteed.
+'* Use GetEnumerator for enumeration that updates or removes elements.
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
@@ -112,9 +112,9 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* このコレクションのインデクサ。既存 index の参照・代入であり、範囲外 index を指定した場合はエラーになります。
+'* Indexer for this collection. References or assigns an existing index; specifying an out-of-range index raises an error.
 '*
-'* @param ItemIndex 要素のインデックス。
+'* @param ItemIndex Element index.
 Public Property Get Item(ByVal ItemIndex As Long) As Variant
 Attribute Item.VB_UserMemId = 0
     Call pCheckIndex(ItemIndex)
@@ -168,25 +168,25 @@ Private Sub pInitializeCore()
     Set pNewEnumSnapshot = Nothing
 End Sub
 
-'* リストの要素型契約を初期化します。
+'* Initializes the element type contract of the list.
 '*
-'* @param ElementTypeName 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
+'* @param ElementTypeName Element type contract name.
+'* @param RequireComparable Whether elements must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
 '*
 '* @details
-'* オブジェクト型の要素だけを受け入れるリストとして初期化します。
-'* ElementTypeName は、自己申告された ElementTypeKey または TypeName と比較されます。
+'* Initializes this as a list that accepts only object-type elements.
+'* ElementTypeName is compared with the self-reported ElementTypeKey or TypeName.
 Public Sub Initialize( _
         ByVal ElementTypeName As String, _
         Optional ByVal RequireComparable As Boolean = False, _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE)
 
     If pCount <> 0 Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "An initialized list cannot be reinitialized."
     End If
     If Not IsValidElementTypeKey(ElementTypeName) Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "ElementTypeName はクラス モジュール名に使用可能な文字で指定してください。(" & ElementTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.Initialize", "ElementTypeName must contain only characters allowed in class module names. (" & ElementTypeName & ")"
     End If
 
     Call pCheckObjectKeyMode(ObjectKeyMode)
@@ -201,15 +201,15 @@ Public Sub Initialize( _
     pIsDuplicateCheckable = (ObjectKeyMode = G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE)
 End Sub
 
-'* 他のリストと同じ要素型状態で初期化します。
+'* Initializes with the same element type state as another list.
 '*
-'* @param Other 初期化元のリスト。
+'* @param Other Source list for initialization.
 '*
 '* @details
-'* 他のリストが管理している要素型状態をこのリストへ引き継ぎます。
+'* Inherits the element type state managed by another list into this list.
 Public Sub InitializeFromOther(ByVal Other As ObjectList)
     If pCount <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromOther", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromOther", "An initialized list cannot be reinitialized."
     End If
 
     pTypeName = Other.ItemTypeName
@@ -224,15 +224,15 @@ Public Sub InitializeFromOther(ByVal Other As ObjectList)
     pIsDuplicateCheckable = Other.IsDuplicateCheckableItemType
 End Sub
 
-'* 他の集合と同じ要素型状態で初期化します。
+'* Initializes with the same element type state as another set.
 '*
-'* @param OtherSet 初期化元の集合。
+'* @param OtherSet Source set for initialization.
 '*
 '* @details
-'* 他の集合が管理している要素型状態をこのリストへ引き継ぎます。
+'* Inherits the element type state managed by another set into this list.
 Public Sub InitializeFromSet(ByVal OtherSet As ObjectSet)
     If pCount <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromSet", "初期化済みのリストを再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.InitializeFromSet", "An initialized list cannot be reinitialized."
     End If
 
     pTypeName = OtherSet.ItemTypeName
@@ -251,7 +251,7 @@ Private Sub pCheckObjectKeyMode(ByVal ObjectKeyMode As Long)
     Select Case ObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectKeyMode", "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -265,13 +265,13 @@ Private Sub Class_Terminate()
     Next item_idx
 End Sub
 
-'* 指定されたインデックスの要素を更新します。
+'* Updates the element at the specified index.
 '*
-'* @param ItemIndex 更新する要素のインデックス。
-'* @param ItemObject 新しい要素。
+'* @param ItemIndex Index of the element to update.
+'* @param ItemObject New element.
 '*
 '* @details
-'* 指定されたインデックスの要素を更新します。
+'* Updates the element at the specified index.
 Public Sub Update(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
     Call pCheckIndex(ItemIndex)
     If pTypeName = "" Then
@@ -283,12 +283,12 @@ Public Sub Update(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
     Call pUpdateCore(ItemIndex, ItemObject)
 End Sub
 
-'* リストを配列として返します。
+'* Returns the list as an array.
 '*
-'* @return 要素の配列。
+'* @return Array of elements.
 '*
 '* @details
-'* リストを配列として返します。要素数 0 の場合は、0 ベースの空配列を返します。
+'* Returns the list as an array. If the element count is 0, returns a 0-based empty array.
 Public Function ConvertToArray() As Variant()
     If pCount = 0 Then
         ConvertToArray = EmptyVariantArray()
@@ -311,12 +311,12 @@ Public Function ConvertToArray() As Variant()
     ConvertToArray = result_value
 End Function
 
-'* リストを文字列の配列として返します。
+'* Returns the list as a string array.
 '*
-'* @return 文字列の配列。
+'* @return String array.
 '*
 '* @details
-'* リストを文字列の配列として返します。要素数 0 の場合は、0 ベースの空配列を返します。
+'* Returns the list as a string array. If the element count is 0, returns a 0-based empty array.
 Public Function ConvertToStringArray() As String()
     If pCount = 0 Then
         ConvertToStringArray = EmptyStringArray()
@@ -355,12 +355,12 @@ Public Function ConvertToStringArray() As String()
     ConvertToStringArray = result_value
 End Function
 
-'* 新しい要素をリストに追加します。
+'* Adds a new element to the list.
 '*
-'* @param ItemObject 追加する要素。
+'* @param ItemObject Element to add.
 '*
 '* @details
-'* 新しい要素をリストに追加します。
+'* Adds a new element to the list.
 Public Sub Add(ByVal ItemObject As Variant)
     If pTypeName = "" Then
         Call pInitializeItemType(ItemObject)
@@ -419,14 +419,14 @@ Private Sub pExpandIfNeed(ByVal RemainIndex As Long)
     pDepth = pDepth + 1
 End Sub
 
-'* 配列の各要素をリストに追加します。
+'* Adds each element of an array to the list.
 '*
-'* @param ItemArray 追加する要素の配列。
+'* @param ItemArray Array of elements to add.
 '*
 '* @details
-'* 配列の各要素をリストに追加します。
+'* Adds each element of an array to the list.
 Public Sub AddArray(ByVal ItemArray As Variant)
-    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectList.AddArray", "引数が配列ではありません"
+    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectList.AddArray", "The argument is not an array."
     If IsEmptyArray(ItemArray) Then Exit Sub
 
     Dim item_obj As Variant
@@ -436,12 +436,12 @@ Public Sub AddArray(ByVal ItemArray As Variant)
     Next item_obj
 End Sub
 
-'* 他のリストの要素をこのリストに取り込みます。
+'* Imports elements from another list into this list.
 '*
-'* @param OtherList 取り込む要素を持つリスト。
+'* @param OtherList List containing elements to import.
 '*
 '* @details
-'* 他のリストの要素をこのリストに取り込みます。
+'* Imports elements from another list into this list.
 Public Sub AddOther(ByVal OtherList As ObjectList)
     If pTypeName = "" And OtherList.HasItemTypeContract Then
         Call InitializeFromOther(OtherList)
@@ -459,12 +459,12 @@ Public Sub AddOther(ByVal OtherList As ObjectList)
     Next item_idx
 End Sub
 
-'* 他のセットの要素をこのリストに取り込みます。
+'* Imports elements from another set into this list.
 '*
-'* @param OtherSet 取り込む要素を持つセット。
+'* @param OtherSet Set containing elements to import.
 '*
 '* @details
-'* 他のセットの要素をこのリストに取り込みます。
+'* Imports elements from another set into this list.
 Public Sub AddSet(ByVal OtherSet As ObjectSet)
     If pTypeName = "" And OtherSet.HasItemTypeContract Then
         Call InitializeFromSet(OtherSet)
@@ -482,13 +482,13 @@ Public Sub AddSet(ByVal OtherSet As ObjectSet)
     Next item_idx
 End Sub
 
-'* このリストの複製を生成します。
+'* Creates a duplicate of this list.
 '*
-'* @return 複製された新しいリスト。
+'* @return New duplicated list.
 '*
 '* @details
-'* このリストの複製を生成します。
-'* リストの要素はもとのインスタンスがそのまま利用されます。(シャロー コピー)
+'* Creates a duplicate of this list.
+'* List elements use the original instances as is. (Shallow copy.)
 Public Function CopyList() As ObjectList
     Dim item_idx As Long
     Dim new_list As ObjectList
@@ -503,13 +503,13 @@ Public Function CopyList() As ObjectList
     Set CopyList = new_list
 End Function
 
-'* 指定されたインデックスの要素を削除します。
+'* Removes the element at the specified index.
 '*
-'* @param ItemIndex 削除する要素のインデックス。
-'* @return 削除された要素。
+'* @param ItemIndex Index of the element to remove.
+'* @return Removed element.
 '*
 '* @details
-'* 指定されたインデックスの要素を削除します。
+'* Removes the element at the specified index.
 Public Function Remove(ByVal ItemIndex As Long) As Variant
     Dim item_idx As Long
     Dim old_obj As Variant
@@ -537,10 +537,10 @@ Public Function Remove(ByVal ItemIndex As Long) As Variant
     End If
 End Function
 
-'* このリストの内容をすべて削除します。
+'* Removes all contents of this list.
 '*
 '* @details
-'* このリストの内容をすべて削除します。要素の型状態は保持します。
+'* Removes all contents of this list. Preserves the element type state.
 Public Sub RemoveAll()
     Dim item_idx As Long
     For item_idx = 0 To pCount - 1
@@ -550,16 +550,16 @@ Public Sub RemoveAll()
     pCount = 0
 End Sub
 
-'* このリストに登録されている、引数と同じ要素を削除します。
+'* Removes the element registered in this list that is the same as the argument.
 '*
-'* @param ItemObject 削除対象の要素。
-'* @return 削除が成功したかどうかを示すブール値。
+'* @param ItemObject Element to remove.
+'* @return Boolean value indicating whether removal succeeded.
 '*
 '* @details
-'* このリストに登録されている、引数と同じ要素を削除します。
-'* - このリストの要素が IDuplicateCheckable であれば、IsDuplicateOf の結果に基づいて処理します。
-'* - このリストの要素が IEquatable であれば、Equals の結果に基づいて処理します。
-'* - IEquotable かつ IDuplicateCheckable の場合は、IDuplicateCheckable としての扱いが優先されます。
+'* Removes the element registered in this list that is the same as the argument.
+'* - If elements of this list are IDuplicateCheckable, processing is based on the result of IsDuplicateOf.
+'* - If elements of this list are IEquatable, processing is based on the result of Equals.
+'* - If elements are both IEquatable and IDuplicateCheckable, treatment as IDuplicateCheckable takes precedence.
 Public Function RemoveItem(ByVal ItemObject As Variant) As Boolean
     Dim result_value As Boolean
     result_value = False
@@ -588,12 +588,12 @@ Private Function pCheckRemoveItem(ByVal ItemObject1 As Variant, ByVal ItemObject
     pCheckRemoveItem = pItemsEqual(ItemObject1, ItemObject2)
 End Function
 
-'* このリストに重複して登録されている要素を削除します。
+'* Removes duplicate elements registered in this list.
 '*
-'* @return 重複削除が実行されたかどうかを示すブール値。
+'* @return Boolean value indicating whether duplicate removal was performed.
 '*
 '* @details
-'* このリストに重複して登録されている要素を削除します。
+'* Removes duplicate elements registered in this list.
 Public Function RemoveDuplicate() As Boolean
     Dim item_idx As Long
     Dim search_idx As Long
@@ -670,22 +670,22 @@ Private Function pItemsEqual(ByVal ItemObject1 As Variant, ByVal ItemObject2 As 
     End If
 End Function
 
-'* このリストの末尾に要素を追加します。
+'* Adds an element to the end of this list.
 '*
-'* @param ItemObject 追加する要素。
+'* @param ItemObject Element to add.
 '*
 '* @details
-'* このリストの末尾に要素を追加します。Add(ItemObject) と同じです。
+'* Adds an element to the end of this list. Same as Add(ItemObject).
 Public Sub PushItem(ByVal ItemObject As Variant)
     Call Me.Add(ItemObject)
 End Sub
 
-'* このリストの末尾から要素を取り出します。
+'* Pops an element from the end of this list.
 '*
-'* @return 取り出された要素。
+'* @return Popped element.
 '*
 '* @details
-'* このリストの末尾から要素を取り出します。Remove(Me.Count - 1) と同じです。
+'* Pops an element from the end of this list. Same as Remove(Me.Count - 1).
 Public Function PopItem() As Variant
     If pIsObject Then
         Set PopItem = Me.Remove(Me.Count - 1)
@@ -694,15 +694,15 @@ Public Function PopItem() As Variant
     End If
 End Function
 
-'* 等しいものを探しインデックスを返します。
+'* Finds an equal element and returns its index.
 '*
-'* @param ItemObject 探す要素。
-'* @param Optional StartIndex 探索を開始するインデックス。
-'* @param Optional Reverse 逆順に探索するかどうか。
-'* @return 見つかった要素のインデックス。見つからない場合は -1。
+'* @param ItemObject Element to find.
+'* @param Optional StartIndex Index at which to start searching.
+'* @param Optional Reverse Whether to search in reverse order.
+'* @return Index of the found element. -1 if not found.
 '*
 '* @details
-'* 等しいものを探しインデックスを返します。
+'* Finds an equal element and returns its index.
 Public Function GetIndexByItem(ByVal ItemObject As Variant, Optional ByVal StartIndex As Long = -1, Optional ByVal Reverse As Variant = False) As Long
     Dim result_value As Long
     result_value = -1
@@ -746,13 +746,13 @@ Public Function GetIndexByItem(ByVal ItemObject As Variant, Optional ByVal Start
     GetIndexByItem = result_value
 End Function
 
-'* 等しいものが含まれるかを確認します。
+'* Checks whether an equal element is included.
 '*
-'* @param ItemObject 探す要素。
-'* @return 含まれているかどうかを示すブール値。
+'* @param ItemObject Element to find.
+'* @return Boolean value indicating whether it is included.
 '*
 '* @details
-'* 等しいものが含まれるかを確認します。
+'* Checks whether an equal element is included.
 Public Function Exists(ByVal ItemObject As Variant) As Boolean
     Dim result_value As Boolean
     result_value = False
@@ -773,45 +773,45 @@ Public Function Exists(ByVal ItemObject As Variant) As Boolean
     Exists = result_value
 End Function
 
-'* このリストの中身をソートします。
+'* Sorts the contents of this list.
 '*
-'* @param Optional Descending 降順にソートするかどうか。
+'* @param Optional Descending Whether to sort in descending order.
 '*
 '* @details
-'* このリストの中身をソートします。
-'* 通常のプリミティブ値は VBA の大小比較で処理します。
-'* 配列、Excel エラー値、非 IComparable オブジェクトはキー文字列で処理します。
-'* IComparable は CompareTo の結果で処理します。
-'* Nothing はすべての非 Nothing オブジェクトより小さいものとして処理します。
+'* Sorts the contents of this list.
+'* Normal primitive values are processed with VBA comparison operators.
+'* Arrays, Excel error values, and non-IComparable objects are processed by key string.
+'* IComparable is processed by the result of CompareTo.
+'* Nothing is processed as less than all non-Nothing objects.
 Public Sub Sort(Optional ByVal Descending As Boolean = False)
     Call pSortCore(0, pCount - 1, Descending)
 End Sub
 
 Private Sub pSortCore(ByVal MinIndex As Long, ByVal MaxIndex As Long, ByVal Descending As Boolean)
-    If MinIndex >= MaxIndex Then Exit Sub ' MinIndex が MaxIndex 以降になる場合は関数を抜ける
+    If MinIndex >= MaxIndex Then Exit Sub ' Exit when MinIndex is greater than or equal to MaxIndex.
     Dim item_idx As Long
     Dim pos_lng As Long: pos_lng = MinIndex
 
-    Call Swap(MinIndex, Int((MinIndex + MaxIndex) \ 2)) '配列中央の値を基準値にして先頭と入れ替え
+    Call Swap(MinIndex, Int((MinIndex + MaxIndex) \ 2)) ' Use the middle array value as the pivot and swap it to the front.
     For item_idx = MinIndex + 1 To MaxIndex
-        If pShouldComeBefore(item_idx, MinIndex, Descending) Then ' MinIndex の要素を基準値として比較していく
-            pos_lng = pos_lng + 1 '基準値より小さい数があるごとにpを1つ進める
-            Call Swap(item_idx, pos_lng) 'Swap関数で入れ替えを行う。
+        If pShouldComeBefore(item_idx, MinIndex, Descending) Then ' Compare against the MinIndex element as the pivot.
+            pos_lng = pos_lng + 1 ' Advance p by one for each value smaller than the pivot.
+            Call Swap(item_idx, pos_lng) ' Swap with the Swap function.
         End If
     Next
-    Call Swap(MinIndex, pos_lng) 'Swap関数で入れ替え
+    Call Swap(MinIndex, pos_lng) ' Swap with the Swap function.
 
-    Call pSortCore(MinIndex, pos_lng - 1, Descending) '基準値より小さいグループを再帰処理
-    Call pSortCore(pos_lng + 1, MaxIndex, Descending) '基準値より大きいグループを再帰処理
+    Call pSortCore(MinIndex, pos_lng - 1, Descending) ' Recursively process the group smaller than the pivot.
+    Call pSortCore(pos_lng + 1, MaxIndex, Descending) ' Recursively process the group larger than the pivot.
 End Sub
 
-'* 指定したインデックスの要素を入れ替えます。
+'* Swaps the elements at the specified indexes.
 '*
-'* @param ItemIndex1 入れ替える要素の一つ目のインデックス。
-'* @param ItemIndex2 入れ替える要素の二つ目のインデックス。
+'* @param ItemIndex1 First index of the elements to swap.
+'* @param ItemIndex2 Second index of the elements to swap.
 '*
 '* @details
-'* 指定したインデックスの要素を入れ替えます。
+'* Swaps the elements at the specified indexes.
 Public Sub Swap(ByVal ItemIndex1 As Long, ByRef ItemIndex2 As Long)
     Dim tmp_item As Variant
     If pIsObject Then
@@ -824,14 +824,14 @@ Public Sub Swap(ByVal ItemIndex1 As Long, ByRef ItemIndex2 As Long)
     Call Update(ItemIndex2, tmp_item)
 End Sub
 
-'* このリストの列挙子を得ます。
+'* Gets the enumerator for this list.
 '*
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @param IsReadOnly [省略可] 読み取り専用にするか否か。
-'* @return 列挙子オブジェクト。
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @param IsReadOnly [Optional] Whether to make the enumerator read-only.
+'* @return Enumerator object.
 '*
 '* @details
-'* このリストの列挙子を得ます。
+'* Gets the enumerator for this list.
 Public Function GetEnumerator(Optional ByVal Descending As Boolean = False, Optional ByVal IsReadOnly As Boolean = False) As IEnumerator
     Dim result_value As Enumerator
     Set result_value = New Enumerator
@@ -859,7 +859,7 @@ Private Sub pPrepareToAddObjectContract( _
     If StrComp(pElementTypeName, SourceElementTypeName, vbTextCompare) <> 0 _
             Or pRequireComparable <> SourceRequireComparable _
             Or pObjectKeyMode <> SourceObjectKeyMode Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.pPrepareToAddObjectContract", "取り込み元と取り込み先の要素型契約が異なります。"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pPrepareToAddObjectContract", "The source and destination element type contracts differ."
     End If
 End Sub
 
@@ -1038,11 +1038,11 @@ End Function
 
 Private Sub pCheckIndex(ByVal ItemIndex As Long)
     If pCount = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="Index is out of range. (index: " & ItemIndex & ", count: " & pCount & ")"
     End If
 
     If ItemIndex < 0 Or pCount <= ItemIndex Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="インデックスが範囲外です。(index: " & ItemIndex & ", count: " & pCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class ObjectList.pCheckIndex", Description:="Index is out of range. (index: " & ItemIndex & ", count: " & pCount & ")"
     End If
 End Sub
 
@@ -1093,9 +1093,9 @@ Private Sub pInitializeItemType(ByVal ItemObject As Variant)
         End If
     Else
         If pIsObject Then
-            Err.Raise vbObjectError + 1, "Class ObjectList.pInitializeItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pInitializeItemType", "The first element was an object, but the new element is not an object. (" & pTypeName & ")"
         Else
-            ' プリミティブ型
+            ' Primitive type.
             pTypeName = GetTypeString(ItemObject)
             pHasItemTypeContract = True
         End If
@@ -1109,7 +1109,7 @@ Private Function pGetElementTypeName(ByVal ItemObject As Object) As String
         Set element_type_provider = ItemObject
         result_value = element_type_provider.ElementTypeKey
         If Not IsValidElementTypeKey(result_value) Then
-            Err.Raise vbObjectError + 1, "Class ObjectList.pGetElementTypeName", "ElementTypeKey はクラス モジュール名に使用可能な文字で指定してください。(" & result_value & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pGetElementTypeName", "ElementTypeKey must contain only characters allowed in class module names. (" & result_value & ")"
         End If
     Else
         result_value = TypeName(ItemObject)
@@ -1120,21 +1120,21 @@ End Function
 
 Private Sub pCheckObjectItemAbilities(ByVal ItemObject As Object)
     If pRequireComparable And Not TypeOf ItemObject Is IComparable Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IComparable ではないオブジェクトを RequireComparable=True のリストへ追加しようとしました。(" & pTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IComparable to a RequireComparable=True list. (" & pTypeName & ")"
     End If
 
     Select Case pObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE
         Case G_OBJECT_KEY_MODE_I_EQUATABLE
             If Not TypeOf ItemObject Is IEquatable Then
-                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IEquatable ではないオブジェクトを IEquatable モードのリストへ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IEquatable to a list in IEquatable mode. (" & pTypeName & ")"
             End If
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             If Not TypeOf ItemObject Is IDuplicateCheckable Then
-                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "IDuplicateCheckable ではないオブジェクトを IDuplicateCheckable モードのリストへ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IDuplicateCheckable to a list in IDuplicateCheckable mode. (" & pTypeName & ")"
             End If
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckObjectItemAbilities", "Unsupported object key mode. (" & CStr(pObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -1175,7 +1175,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
 
     If pIsObject Then
         If Not IsObject(ItemObject) Then
-            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "The first element was an object, but the new element is not an object. (" & pTypeName & ")"
         End If
         If ItemObject Is Nothing Then Exit Sub
     End If
@@ -1188,7 +1188,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
     End If
 
     If StrComp(item_type_name, pTypeName, vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "最初に設定された要素と型が異なります。(list: " & pTypeName & ", item: " & item_type_name & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectList.pCheckItemType", "The item type differs from the initially set element type. (list: " & pTypeName & ", item: " & item_type_name & ")"
     End If
 
     If pIsObject Then
@@ -1199,8 +1199,8 @@ End Sub
 Private Sub pCheckUnsupportedSpecialValue(ByVal ItemObject As Variant)
     If IsObject(ItemObject) Then Exit Sub
     If IsArray(ItemObject) Then Exit Sub
-    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Empty は要素として使用できません。"
-    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Null は要素として使用できません。"
+    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Empty cannot be used as an element."
+    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectList.pCheckUnsupportedSpecialValue", "Null cannot be used as an element."
 End Sub
 
 Private Function pErrorValuesEqual(ByVal ErrorValue1 As Variant, ByVal ErrorValue2 As Variant) As Boolean

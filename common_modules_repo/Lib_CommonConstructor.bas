@@ -6,38 +6,38 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! 共通クラス モジュールのコンストラクター相当関数をまとめた標準モジュールです。
+'! Standard module that groups functions equivalent to constructors for common class modules.
 '!
 ' #############################################################################
 
-'* WorksheetRangeBounds インスタンスを新規作成します。
+'* Creates a new WorksheetRangeBounds instance.
 '*
-'* @param RowIndex [省略可] 行番号。
-'* @param ColumnIndex [省略可] 列番号。
-'* @param FinishRowIndex [省略可] 最後の行番号。
-'* @param FinishColumnIndex [省略可] 最後の列番号。
-'* @param SheetName [省略可] ワークシート名。
-'* @param BookName [省略可] ワークブック名。
-'* @return 新しい WorksheetRangeBounds インスタンス
+'* @param RowIndex [Optional] Row number.
+'* @param ColumnIndex [Optional] Column number.
+'* @param FinishRowIndex [Optional] Last row number.
+'* @param FinishColumnIndex [Optional] Last column number.
+'* @param SheetName [Optional] Worksheet name.
+'* @param BookName [Optional] Workbook name.
+'* @return New WorksheetRangeBounds instance.
 '*
 '* @details
-'* WorksheetRangeBounds インスタンスを新規作成します。
+'* Creates a new WorksheetRangeBounds instance.
 '*
-'* 使用例:
+'* Usage example:
 '* @code
-'* ' 1 セル (B5)
+'* ' One cell (B5).
 '* Dim cell_bounds As WorksheetRangeBounds
 '* Set cell_bounds = New_RangeBounds(Row:=5, Column:=2)
 '*
-'* ' 1 行全体 (5:5)
+'* ' Entire row (5:5).
 '* Dim row_bounds As WorksheetRangeBounds
 '* Set row_bounds = New_RangeBounds(Row:=5)
 '*
-'* ' 2 列全体 (B:C)
+'* ' Two entire columns (B:C).
 '* Dim two_columns_bounds As WorksheetRangeBounds
 '* Set two_columns_bounds = New_RangeBounds(Column:=2, FinishColumn:=3)
 '*
-'* ' 表全体 (B2:E20)
+'* ' Entire table (B2:E20).
 '* Dim table_bounds As WorksheetRangeBounds
 '* Set table_bounds = New_RangeBounds(Row:=2, Column:=2, FinishRow:=20, FinishColumn:=5)
 '* @endcode
@@ -63,15 +63,15 @@ Public Function New_RangeBounds( _
     Set New_RangeBounds = result_value
 End Function
 
-'* ObjectList インスタンスを新規作成し、要素型契約を設定します。
+'* Creates a new ObjectList instance and sets its element type contract.
 '*
-'* @param ElementTypeName 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
-'* @return 初期化済みの ObjectList インスタンス。
+'* @param ElementTypeName Element type contract name.
+'* @param RequireComparable Whether elements must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
+'* @return Initialized ObjectList instance.
 '*
 '* @details
-'* New_ 系の処理は薄いファクトリに留め、実処理は ObjectList.Initialize に委譲します。
+'* New_ processing remains a thin factory and delegates the actual processing to ObjectList.Initialize.
 Public Function New_ObjectList( _
         ByVal ElementTypeName As String, _
         Optional ByVal RequireComparable As Boolean = False, _
@@ -87,15 +87,15 @@ Public Function New_ObjectList( _
     Set New_ObjectList = result_value
 End Function
 
-'* ObjectSet インスタンスを新規作成し、要素型契約を設定します。
+'* Creates a new ObjectSet instance and sets its element type contract.
 '*
-'* @param ElementTypeName 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
-'* @return 初期化済みの ObjectSet インスタンス。
+'* @param ElementTypeName Element type contract name.
+'* @param RequireComparable Whether elements must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
+'* @return Initialized ObjectSet instance.
 '*
 '* @details
-'* New_ 系の処理は薄いファクトリに留め、実処理は ObjectSet.Initialize に委譲します。
+'* New_ processing remains a thin factory and delegates the actual processing to ObjectSet.Initialize.
 Public Function New_ObjectSet( _
         ByVal ElementTypeName As String, _
         Optional ByVal RequireComparable As Boolean = False, _
@@ -111,15 +111,15 @@ Public Function New_ObjectSet( _
     Set New_ObjectSet = result_value
 End Function
 
-'* ObjectDictionary インスタンスを新規作成し、必要に応じて要素型契約を設定します。
+'* Creates a new ObjectDictionary instance and sets its element type contract as needed.
 '*
-'* @param ElementTypeName [省略可] 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
-'* @return 新しい ObjectDictionary インスタンス。
+'* @param ElementTypeName [Optional] Element type contract name.
+'* @param RequireComparable Whether elements must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
+'* @return New ObjectDictionary instance.
 '*
 '* @details
-'* ElementTypeName を省略した場合、最初に追加された要素から ObjectList と同じ型推論を行います。
+'* When ElementTypeName is omitted, the same type inference as ObjectList is performed from the first added element.
 Public Function New_ObjectDictionary( _
         Optional ByVal ElementTypeName As String = "", _
         Optional ByVal RequireComparable As Boolean = False, _
@@ -137,13 +137,13 @@ Public Function New_ObjectDictionary( _
     Set New_ObjectDictionary = result_value
 End Function
 
-'* Excel アドレス文字列から WorksheetRangeBounds インスタンスを新規作成します。
+'* Creates a new WorksheetRangeBounds instance from an Excel address string.
 '*
-'* @param AddressString 初期化に使用する Excel アドレス文字列。
-'* @return 新しい WorksheetRangeBounds インスタンス
+'* @param AddressString Excel address string to use for initialization.
+'* @return New WorksheetRangeBounds instance.
 '*
 '* @details
-'* New_ 系の処理は薄いファクトリに留め、実処理は WorksheetRangeBounds.InitializeFromAddress に委譲します。
+'* New_ processing remains a thin factory and delegates the actual processing to WorksheetRangeBounds.InitializeFromAddress.
 Public Function New_RangeBoundsFromAddress(ByVal AddressString As String) As WorksheetRangeBounds
     Dim result_value As WorksheetRangeBounds
     Set result_value = New WorksheetRangeBounds
@@ -152,17 +152,17 @@ Public Function New_RangeBoundsFromAddress(ByVal AddressString As String) As Wor
     Set New_RangeBoundsFromAddress = result_value
 End Function
 
-'* WorksheetVirtualTable インスタンスを新規作成します。
+'* Creates a new WorksheetVirtualTable instance.
 '*
-'* @param ColumnRangeList 仮想表の列として扱う WorksheetRangeBounds 一覧。
-'* @param HeaderNames [省略可] header 名の文字列配列。
-'* @param TreatFirstRowAsHeader True の場合は各範囲の 1 行目を header として読み取ります。
-'* @param HeaderCompareMode header の重複判定と行 Dictionary の比較モード。
-'* @param HeaderJoinDelimiter 複数列範囲の header セルを連結するときの区切り文字。
-'* @return 初期化済みの WorksheetVirtualTable インスタンス。
+'* @param ColumnRangeList List of WorksheetRangeBounds objects to treat as virtual table columns.
+'* @param HeaderNames [Optional] String array of header names.
+'* @param TreatFirstRowAsHeader When True, reads the first row of each range as headers.
+'* @param HeaderCompareMode Comparison mode for header duplicate checks and row Dictionary objects.
+'* @param HeaderJoinDelimiter Delimiter used when joining header cells from multi-column ranges.
+'* @return Initialized WorksheetVirtualTable instance.
 '*
 '* @details
-'* New_ 系の処理は薄いファクトリに留め、実処理は WorksheetVirtualTable.Initialize に委譲します。
+'* New_ processing remains a thin factory and delegates the actual processing to WorksheetVirtualTable.Initialize.
 Public Function New_WorksheetVirtualTable( _
         ByVal ColumnRangeList As ObjectList, _
         Optional ByVal HeaderNames As Variant, _
@@ -182,17 +182,17 @@ Public Function New_WorksheetVirtualTable( _
     Set New_WorksheetVirtualTable = result_value
 End Function
 
-'* WorksheetRangeBounds から WorksheetVirtualTable インスタンスを新規作成します。
+'* Creates a new WorksheetVirtualTable instance from WorksheetRangeBounds.
 '*
-'* @param TableRange 仮想表の列に分割する WorksheetRangeBounds。
-'* @param HeaderNames [省略可] header 名の文字列配列。
-'* @param TreatFirstRowAsHeader True の場合は各範囲の 1 行目を header として読み取ります。
-'* @param HeaderCompareMode header の重複判定と行 Dictionary の比較モード。
-'* @param HeaderJoinDelimiter 複数列範囲の header セルを連結するときの区切り文字。
-'* @return 初期化済みの WorksheetVirtualTable インスタンス。
+'* @param TableRange WorksheetRangeBounds to split into virtual table columns.
+'* @param HeaderNames [Optional] String array of header names.
+'* @param TreatFirstRowAsHeader When True, reads the first row of each range as headers.
+'* @param HeaderCompareMode Comparison mode for header duplicate checks and row Dictionary objects.
+'* @param HeaderJoinDelimiter Delimiter used when joining header cells from multi-column ranges.
+'* @return Initialized WorksheetVirtualTable instance.
 '*
 '* @details
-'* New_ 系の処理は薄いファクトリに留め、実処理は WorksheetVirtualTable.InitializeFromRangeBounds に委譲します。
+'* New_ processing remains a thin factory and delegates the actual processing to WorksheetVirtualTable.InitializeFromRangeBounds.
 Public Function New_WorksheetVirtualTableFromRangeBounds( _
         ByVal TableRange As WorksheetRangeBounds, _
         Optional ByVal HeaderNames As Variant, _

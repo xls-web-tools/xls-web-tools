@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! カウントするためのクラスです。
+'! Class for counting.
 '!
 ' #############################################################################
 
@@ -22,18 +22,18 @@ Private pCountStep As Long
 Private pStopWhenMax As Boolean
 Private pMaxCount As Long
 
-'* 現在のカウント (デフォルトは 0)
+'* Current count (default is 0).
 Public Property Get Count() As Long
     Count = pCount
 End Property
 
-'* カウントの間隔 (デフォルトは 1)
+'* Count interval (default is 1).
 Public Property Get CountStep() As Long
     CountStep = pCountStep
 End Property
 
-'* MaxCount に達したらカウントをやめるか否か (HasNext が False を返すようになるか)
-'* デフォルトは False であり、常に HasNext が True を返します。
+'* Whether to stop counting when MaxCount is reached (that is, whether HasNext returns False).
+'* The default is False, so HasNext always returns True.
 Public Property Get StopWhenMax() As Boolean
     StopWhenMax = pStopWhenMax
 End Property
@@ -41,7 +41,7 @@ Public Property Let StopWhenMax(ByVal NewValue As Boolean)
     pStopWhenMax = NewValue
 End Property
 
-'* カウントを止める最大値
+'* Maximum value at which to stop counting.
 Public Property Get MaxCount() As Long
     MaxCount = pMaxCount
 End Property
@@ -53,16 +53,16 @@ Private Sub Class_Initialize()
     pCountStep = 1
 End Sub
 
-'* カウンタを初期化します。
+'* Initializes the counter.
 '*
-'* @param InitialCount 初期値 (デフォルトは 0)。
-'* @param CountStepNumber カウント間隔 (デフォルトは 1)。
+'* @param InitialCount Initial value (default is 0).
+'* @param CountStepNumber Count interval (default is 1).
 '*
 '* @details
-'* カウンタを初期化します。
+'* Initializes the counter.
 Public Sub Initialize(Optional ByVal InitialCount As Long = 0, Optional ByVal CountStepNumber As Long = 1)
     If CountStepNumber = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.Initialize", Description:="CountStepNumber は 0 以外である必要があります。(" & CountStepNumber & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.Initialize", Description:="CountStepNumber must be nonzero. (" & CountStepNumber & ")"
         Exit Sub
     End If
 
@@ -70,12 +70,12 @@ Public Sub Initialize(Optional ByVal InitialCount As Long = 0, Optional ByVal Co
     pCountStep = CountStepNumber
 End Sub
 
-'* カウントを進められるかどうかを確認します。
+'* Checks whether the count can advance.
 '*
-'* @return Boolean 次に進める場合は True、それ以外は False。
+'* @return Boolean True if the count can advance; otherwise, False.
 '*
 '* @details
-'* カウントを進められるかどうかを確認します。
+'* Checks whether the count can advance.
 Public Function HasNext() As Boolean
     If Not StopWhenMax Then
         HasNext = True
@@ -91,14 +91,14 @@ Public Function HasNext() As Boolean
     End If
 End Function
 
-'* カウントを次に進め、現在のカウント値を返します。
+'* Advances the count and returns the current count value.
 '*
-'* @return Long 進んだ後のカウント値。
+'* @return Long The count value after advancing.
 '* @details
-'* カウントを次に進め、現在のカウント値を返します。HasNext が False の場合はエラーを発生させます。
+'* Advances the count and returns the current count value. Raises an error if HasNext is False.
 Public Function GoNext() As Long
     If Not HasNext() Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.GoNext", Description:="次のカウントはありません。(count: " & pCount & ", step: " & pCountStep & ", max: " & pMaxCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class Counter.GoNext", Description:="There is no next count. (count: " & pCount & ", step: " & pCountStep & ", max: " & pMaxCount & ")"
     End If
 
     pCount = pCount + pCountStep

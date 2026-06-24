@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! キーで要素を参照できる型付きオブジェクト辞書を管理するクラスです。
+'! Class that manages a typed object dictionary whose elements can be referenced by key.
 '!
 ' #############################################################################
 
@@ -25,26 +25,26 @@ Private pNewEnumSnapshot As Collection
 Private pNewEnumSnapshotVersion As Long
 Private pEnumerationVersion As Long
 
-'* 辞書の現在の件数。
+'* Current number of items in the dictionary.
 Public Property Get Count() As Long
     Count = pValues.Count
 End Property
 
-'* 文字列 key の比較モード。
+'* Comparison mode for string keys.
 Public Property Get CompareMode() As Long
     CompareMode = pKeyToIndex.CompareMode
 End Property
 Public Property Let CompareMode(ByVal NewValue As Long)
     If pHasEverAdded Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary.CompareMode", "要素追加後に CompareMode を変更することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.CompareMode", "CompareMode cannot be changed after elements have been added."
     End If
 
     pKeyToIndex.CompareMode = NewValue
 End Property
 
-'* 標準 For Each 用の key 列挙子を得ます。
+'* Gets the key enumerator for standard For Each.
 '*
-'* @return 標準 For Each が使用する列挙子。
+'* @return Enumerator used by standard For Each.
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
@@ -56,20 +56,20 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* value を key 順で保持する ObjectList copy を返します。
+'* Returns an ObjectList copy holding values in key order.
 '*
-'* @return value の ObjectList copy。
+'* @return ObjectList copy of values.
 Public Property Get Items() As ObjectList
     Set Items = pValues.CopyList()
 End Property
 
-'* このコレクションのインデクサ。参照時は指定されたキーに対応する要素を返します。代入時は AddOrUpdate と同様に動作します。
+'* Indexer for this collection. When referenced, returns the element corresponding to the specified key. When assigned, behaves like AddOrUpdate.
 '*
-'* @param Key 参照するキー。
+'* @param Key Key to reference.
 Public Property Get Item(ByVal Key As Variant) As Variant
 Attribute Item.VB_UserMemId = 0
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Item", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Item", "The specified key does not exist. (" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long
@@ -98,11 +98,11 @@ Private Sub Class_Initialize()
     pEnumerationVersion = 0
 End Sub
 
-'* 辞書の要素型契約を初期化します。
+'* Initializes the element type contract of the dictionary.
 '*
-'* @param ElementTypeName 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
+'* @param ElementTypeName Element type contract name.
+'* @param RequireComparable Whether values must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
 Public Sub Initialize( _
         ByVal ElementTypeName As String, _
         Optional ByVal RequireComparable As Boolean = False, _
@@ -114,24 +114,24 @@ Public Sub Initialize( _
             ObjectKeyMode:=ObjectKeyMode)
 End Sub
 
-'* 他の辞書と同じ value 要素型状態と key 比較モードで初期化します。
+'* Initializes with the same value element type state and key comparison mode as another dictionary.
 '*
-'* @param Other 初期化元の辞書。
+'* @param Other Source dictionary for initialization.
 '*
 '* @details
-'* 他の辞書が管理している value 要素型状態と key 比較モードをこの辞書へ引き継ぎます。
+'* Inherits the value element type state and key comparison mode managed by another dictionary into this dictionary.
 Public Sub InitializeFromOther(ByVal Other As ObjectDictionary)
     Call pValues.InitializeFromOther(Other.Items)
     Me.CompareMode = Other.CompareMode
 End Sub
 
-'* 新しい key-value pair を辞書に追加します。
+'* Adds a new key-value pair to the dictionary.
 '*
-'* @param Key 追加するキー。
-'* @param Value 追加する値。
+'* @param Key Key to add.
+'* @param Value Value to add.
 Public Sub Add(ByVal Key As Variant, ByVal Value As Variant)
     If pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Add", "指定されたキーは既に存在します。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Add", "The specified key already exists. (" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim new_index As Long
@@ -177,14 +177,14 @@ Private Sub pAddKey(ByVal Key As Variant)
     End If
 End Sub
 
-'* 他の辞書の key-value pair をこの辞書に取り込みます。
+'* Imports key-value pairs from another dictionary into this dictionary.
 '*
-'* @param OtherDictionary 取り込む key-value pair を持つ他の辞書。
-'* @param ErrorIfExists [省略可] key が既に存在する場合にエラーを発生させるか否か。
-'* @param UpdateIfExists [省略可] key が既に存在する場合に value を更新するか否か。
+'* @param OtherDictionary Other dictionary containing key-value pairs to import.
+'* @param ErrorIfExists [Optional] Whether to raise an error if the key already exists.
+'* @param UpdateIfExists [Optional] Whether to update the value if the key already exists.
 '*
 '* @details
-'* 他の辞書の key-value pair をこの辞書に取り込みます。UpdateIfExists が True の場合、ErrorIfExists の値に関わらず既存 key の value を更新します。
+'* Imports key-value pairs from another dictionary into this dictionary. When UpdateIfExists is True, updates values for existing keys regardless of ErrorIfExists.
 Public Sub AddOther( _
         ByVal OtherDictionary As ObjectDictionary, _
         Optional ByVal ErrorIfExists As Boolean = True, _
@@ -204,7 +204,7 @@ Public Sub AddOther( _
             If UpdateIfExists Then
                 Call Me.Update(dict_key, OtherDictionary.Item(dict_key))
             ElseIf ErrorIfExists Then
-                Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "指定されたキーは既に存在します。(" & pKeyToDisplayString(dict_key) & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "The specified key already exists. (" & pKeyToDisplayString(dict_key) & ")"
             End If
         Else
             Call Me.Add(dict_key, OtherDictionary.Item(dict_key))
@@ -225,26 +225,26 @@ Private Sub pCheckNoExistingKeys(ByVal OtherDictionary As ObjectDictionary)
     Dim dict_key As Variant
     For Each dict_key In other_keys
         If Me.Exists(dict_key) Then
-            Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "指定されたキーは既に存在します。(" & pKeyToDisplayString(dict_key) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectDictionary.AddOther", "The specified key already exists. (" & pKeyToDisplayString(dict_key) & ")"
         End If
     Next dict_key
 End Sub
 
-'* 指定されたキーが存在するか否かを返します。
+'* Returns whether the specified key exists.
 '*
-'* @param Key 確認するキー。
-'* @return キーが存在する場合は True。
+'* @param Key Key to check.
+'* @return True when the key exists.
 Public Function Exists(ByVal Key As Variant) As Boolean
     Exists = pKeyToIndex.Exists(Key)
 End Function
 
-'* 指定されたキーに対応する要素を更新します。
+'* Updates the element corresponding to the specified key.
 '*
-'* @param Key 更新するキー。
-'* @param Value 新しい値。
+'* @param Key Key to update.
+'* @param Value New value.
 Public Sub Update(ByVal Key As Variant, ByVal Value As Variant)
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Update", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Update", "The specified key does not exist. (" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long
@@ -252,10 +252,10 @@ Public Sub Update(ByVal Key As Variant, ByVal Value As Variant)
     Call pValues.Update(item_idx, Value)
 End Sub
 
-'* 指定されたキーが存在しない場合は追加し、存在する場合は値を更新します。
+'* Adds the specified key if it does not exist, or updates the value if it exists.
 '*
-'* @param Key 追加または更新するキー。
-'* @param Value 追加または更新する値。
+'* @param Key Key to add or update.
+'* @param Value Value to add or update.
 Public Sub AddOrUpdate(ByVal Key As Variant, ByVal Value As Variant)
     If pKeyToIndex.Exists(Key) Then
         Call Update(Key, Value)
@@ -264,13 +264,13 @@ Public Sub AddOrUpdate(ByVal Key As Variant, ByVal Value As Variant)
     End If
 End Sub
 
-'* 指定されたキーに対応する要素を削除します。
+'* Removes the element corresponding to the specified key.
 '*
-'* @param Key 削除するキー。
-'* @return 削除された要素。
+'* @param Key Key to remove.
+'* @return Removed element.
 Public Function Remove(ByVal Key As Variant) As Variant
     If Not pKeyToIndex.Exists(Key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Remove", "指定されたキーは存在しません。(" & pKeyToDisplayString(Key) & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectDictionary.Remove", "The specified key does not exist. (" & pKeyToDisplayString(Key) & ")"
     End If
 
     Dim item_idx As Long
@@ -309,10 +309,10 @@ Private Sub pRebuildIndexesFrom(ByVal StartIndex As Long)
     Next key_idx
 End Sub
 
-'* すべての key-value pair を削除します。
+'* Removes all key-value pairs.
 '*
 '* @details
-'* value の要素型契約と CompareMode は維持します。
+'* Preserves the value element type contract and CompareMode.
 Public Sub RemoveAll()
     Call pKeyToIndex.RemoveAll
     Set pKeys = New Collection
@@ -320,9 +320,9 @@ Public Sub RemoveAll()
     Call pIncrementEnumerationVersion
 End Sub
 
-'* key を追加順の 0-based 配列として返します。
+'* Returns keys as a 0-based array in addition order.
 '*
-'* @return key の配列。
+'* @return Array of keys.
 Public Function Keys() As Variant()
     If pKeys.Count = 0 Then
         Keys = EmptyVariantArray()
@@ -344,16 +344,16 @@ Public Function Keys() As Variant()
     Keys = result_value
 End Function
 
-'* value を key 順の 0-based 配列として返します。
+'* Returns values as a 0-based array in key order.
 '*
-'* @return value の配列。
+'* @return Array of values.
 Public Function ConvertToArray() As Variant()
     ConvertToArray = pValues.ConvertToArray()
 End Function
 
-'* value を key 順の 0-based 文字列配列として返します。
+'* Returns values as a 0-based string array in key order.
 '*
-'* @return value の文字列配列。
+'* @return String array of values.
 Public Function ConvertToStringArray() As String()
     ConvertToStringArray = pValues.ConvertToStringArray()
 End Function

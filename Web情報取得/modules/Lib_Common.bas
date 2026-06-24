@@ -6,64 +6,64 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! 基本的な関数などをまとめた標準モジュールです。
-'! 他のツールとも共用されるため、このツールで使用しないものも含まれます。
+'! Standard module that groups basic functions and related helpers.
+'! It also contains members not used by this tool because they are shared with other tools.
 '!
 ' #############################################################################
 
-'* WorkbookService。ユニットテキスト時にはテスト ダブルに置き換えてください。
+'* WorkbookService. Replace with a test double during unit tests.
 Public WbSrv As IWorkbookService
 
-'* WorksheetService。ユニットテキスト時にはテスト ダブルに置き換えてください。
+'* WorksheetService. Replace with a test double during unit tests.
 Public WsSrv As IWorksheetService
 
-'* DebugInformation。GUI 実行中のデバッグ情報を保持する共通実行状態です。
+'* DebugInformation. Shared run state that holds debug information during GUI execution.
 Public DbgInfo As DebugInformation
 
-'* ProgressStatus。GUI 実行中の進捗状態を保持する共通実行状態です。
+'* ProgressStatus. Shared run state that holds progress state during GUI execution.
 Public ProgStat As ProgressStatus
 
 
-'* 未設定の日付を表す
+'* Represents an unset date.
 Public Const G_DATE_NULL As Date = #12/31/1899#
 
-'* 有効な日付の最小値
+'* Minimum valid date.
 Public Const G_DATE_MINIMUM As Date = #3/1/1900#
 
-'* 行番号の最大値
+'* Maximum row number.
 Public Const G_ROW_MAX As Long = 1048576
 
-'* 列番号の最大値
+'* Maximum column number.
 Public Const G_COL_MAX As Long = 16384
 
-'* 行番号および列番号の省略値
+'* Omitted value for row and column numbers.
 Public Const G_OMIT_CELL_INDEX As Long = -2147483648#
 
-'* WorksheetService.SetAlignment で設定を変更しないことを表す値
+'* Value indicating that WorksheetService.SetAlignment should not change the setting.
 Public Const G_ALIGNMENT_NO_CHANGE As Long = -2147483648#
 
-'* ファイルシステムのパス区切り文字
+'* File system path separator.
 Public Const G_FS_PATH_SEP As String = "\"
 
-'* GetTypedValueKey / GetValueKey でオブジェクト参照をキー化することを表す値
+'* Value indicating that GetTypedValueKey / GetValueKey should key object references.
 Public Const G_OBJECT_KEY_MODE_REFERENCE As Long = 0
 
-'* GetTypedValueKey / GetValueKey で IEquatable.GetIdentityString をキー化することを表す値
+'* Value indicating that GetTypedValueKey / GetValueKey should key IEquatable.GetIdentityString.
 Public Const G_OBJECT_KEY_MODE_I_EQUATABLE As Long = 1
 
-'* GetTypedValueKey / GetValueKey で IDuplicateCheckable.GetKey をキー化することを表す値
+'* Value indicating that GetTypedValueKey / GetValueKey should key IDuplicateCheckable.GetKey.
 Public Const G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE As Long = 2
 
-'* WorksheetRangeBounds を行単位で列挙することを表す値
+'* Value indicating that WorksheetRangeBounds should be enumerated by row.
 Public Const G_RANGE_ENUM_MODE_ROWS As Long = 0
 
-'* WorksheetRangeBounds を列単位で列挙することを表す値
+'* Value indicating that WorksheetRangeBounds should be enumerated by column.
 Public Const G_RANGE_ENUM_MODE_COLUMNS As Long = 1
 
-'* WorksheetRangeBounds を行方向のセル順で列挙することを表す値
+'* Value indicating that WorksheetRangeBounds should be enumerated by cells in row-major order.
 Public Const G_RANGE_ENUM_MODE_CELLS_HORIZONTAL As Long = 2
 
-'* WorksheetRangeBounds を列方向のセル順で列挙することを表す値
+'* Value indicating that WorksheetRangeBounds should be enumerated by cells in column-major order.
 Public Const G_RANGE_ENUM_MODE_CELLS_VERTICAL As Long = 3
 
 Private Const C_LONG_MAX As Long = 2147483647#
@@ -76,52 +76,52 @@ Private Const C_A1_TOKEN_COLUMN As Long = 3
 
 ' #############################################################################
 '
-' 共通サービス初期化
+' Common service initialization
 '
 ' #############################################################################
 
-'* WorkbookService を初期化します。
+'* Initializes WorkbookService.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* WbSrv が未設定の場合、または Force が True の場合に WorkbookService を生成します。テストで差し替え済みの場合は Force が False のときだけ維持します。
+'* Creates WorkbookService when WbSrv is unset or Force is True. If it has been replaced in tests, keeps it only when Force is False.
 Public Sub InitializeWorkbookService(Optional ByVal Force As Boolean = False)
     If Force Or (WbSrv Is Nothing) Then Set WbSrv = New WorkbookService
 End Sub
 
-'* WorksheetService を初期化します。
+'* Initializes WorksheetService.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* WsSrv が未設定の場合、または Force が True の場合に WorksheetService を生成します。テストで差し替え済みの場合は Force が False のときだけ維持します。
+'* Creates WorksheetService when WsSrv is unset or Force is True. If it has been replaced in tests, keeps it only when Force is False.
 Public Sub InitializeWorksheetService(Optional ByVal Force As Boolean = False)
     If Force Or (WsSrv Is Nothing) Then Set WsSrv = New WorksheetService
 End Sub
 
-'* UDF から安全に利用できる共通サービスを初期化します。
+'* Initializes shared services that can be used safely from UDFs.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* Excel ワークシート関数の再計算中に Application.Run へ到達しないよう、WorkbookService と WorksheetService だけを初期化します。FileSystemService と TextFileService は初期化しません。
+'* Initializes only WorkbookService and WorksheetService so Application.Run is not reached during recalculation of Excel worksheet functions. FileSystemService and TextFileService are not initialized.
 Public Sub InitializeUdfCommonService(Optional ByVal Force As Boolean = False)
     Call InitializeWorkbookService(Force)
     Call InitializeWorksheetService(Force)
 End Sub
 
-'* 共通的なサービスを初期化します。
+'* Initializes shared services.
 '*
-'* @param Force [省略可] True の場合は差し替え済みサービスを本番サービスへ再生成します。
+'* @param Force [Optional] When True, recreates a replaced service as the production service.
 '*
 '* @details
-'* 共通的なサービスを初期化します。初期化対象は以下の通りです。
+'* Initializes shared services. The initialization targets are as follows.
 '*
 '* * WorkbookService
 '* * WorksheetService
-'* * FileSystemService (インポート済みの場合)
-'* * TextFileService (インポート済みの場合)
+'* * FileSystemService (if imported).
+'* * TextFileService (if imported).
 Public Sub InitializeCommonService(Optional ByVal Force As Boolean = False)
     Call InitializeWorkbookService(Force)
     Call InitializeWorksheetService(Force)
@@ -148,16 +148,16 @@ Private Sub pTryInitializeOptionalCommonService(ByVal InitializerName As String,
     Err.Raise err_num, err_source, err_desc, err_help_file, err_help_context
 End Sub
 
-'* 複数の WorksheetRangeBounds を最大の範囲形状へ拡張します。
+'* Expands multiple WorksheetRangeBounds objects to the largest range shape.
 '*
-'* @param ExpandRows 行数を最大行数へ拡張するか否か。
-'* @param ExpandColumns 列数を最大列数へ拡張するか否か。
-'* @param RangeBoundsList 拡張対象の WorksheetRangeBounds 一覧。
-'* @return 入力順に対応する WorksheetRangeBounds を保持する ObjectList。
+'* @param ExpandRows Whether to expand row counts to the maximum row count.
+'* @param ExpandColumns Whether to expand column counts to the maximum column count.
+'* @param RangeBoundsList List of WorksheetRangeBounds objects to expand.
+'* @return ObjectList holding WorksheetRangeBounds objects corresponding to the input order.
 '*
 '* @details
-'* 入力された全範囲の最大 RowCount / ColumnCount を計算し、指定された方向だけ各範囲を最大寸法へ拡張します。
-'* workbook / worksheet はグループ分けせず、各返却範囲では入力元の workbook / worksheet を維持します。
+'* Calculates the maximum RowCount / ColumnCount across all input ranges and expands each range to the maximum dimensions only in the specified directions.
+'* workbook / worksheet are not grouped; each returned range preserves the source workbook / worksheet from its input.
 Public Function ExpandRangeBoundsToMax( _
         ByVal ExpandRows As Boolean, _
         ByVal ExpandColumns As Boolean, _
@@ -200,15 +200,15 @@ End Function
 
 Private Function pGetRangeBoundsArgument(ByVal RangeBoundsValue As Variant, ByVal ArgumentIndex As Long) As WorksheetRangeBounds
     If Not IsObject(RangeBoundsValue) Then
-        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList には WorksheetRangeBounds を指定してください。(" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList must contain WorksheetRangeBounds values. (" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
     End If
 
     If RangeBoundsValue Is Nothing Then
-        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList に Nothing は指定できません。(" & CStr(ArgumentIndex) & ")"
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList cannot contain Nothing. (" & CStr(ArgumentIndex) & ")"
     End If
 
     If TypeName(RangeBoundsValue) <> "WorksheetRangeBounds" Then
-        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList には WorksheetRangeBounds を指定してください。(" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
+        Err.Raise vbObjectError + 1, "Function ExpandRangeBoundsToMax", "RangeBoundsList must contain WorksheetRangeBounds values. (" & CStr(ArgumentIndex) & ": " & TypeName(RangeBoundsValue) & ")"
     End If
 
     Set pGetRangeBoundsArgument = RangeBoundsValue
@@ -216,29 +216,29 @@ End Function
 
 ' #############################################################################
 '
-' エラー ハンドリング
+' Error handling
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' エラー情報関連
+' Error information
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* エラー情報を処理し、必要に応じて情報を補完または蓄積するためのサブルーチン。
+'* Subroutine for processing error information and supplementing or accumulating information as needed.
 '*
-'* @param ErrNumber [出力] エラー番号を格納する変数。既定値は 0。Append を True にしても、ErrNumber は上書きされます。(省略可能)
-'* @param ErrSource [出力] エラーの発生源を格納する文字列変数。(省略可能)
-'* @param ErrDescription [出力] エラーの説明を格納する文字列変数。(省略可能)
-'* @param Supplementation エラーの説明に付加する補足情報。既定値は空文字列。
-'* @param ErrClear エラーをクリアするかどうか。True の場合、エラー情報はクリアされます。既定値は True。
-'* @param Append 複数のエラー情報を結合するかどうか。True の場合、既存の情報に追加されます。既定値は False。
+'* @param ErrNumber [Output] Variable that stores the error number. Default is 0. ErrNumber is overwritten even when Append is True. (Optional.)
+'* @param ErrSource [Output] String variable that stores the error source. (Optional.)
+'* @param ErrDescription [Output] String variable that stores the error description. (Optional.)
+'* @param Supplementation Supplemental information to append to the error description. Default is an empty string.
+'* @param ErrClear Whether to clear the error. When True, error information is cleared. Default is True.
+'* @param Append Whether to join multiple pieces of error information. When True, information is appended to the existing information. Default is False.
 '*
 '* @details
-'* このサブルーチンは、VBA の標準的なエラー情報をカスタマイズした形で処理します。
-'* 特に、エラー番号、発生源、説明を取得し、補足情報を付加する機能があります。
-'* 複数のエラーが発生した場合、Append パラメータを使用して情報を連結できます。
+'* This subroutine processes standard VBA error information in a customized form.
+'* In particular, it can get the error number, source, and description, and append supplemental information.
+'* When multiple errors occur, the Append parameter can be used to concatenate information.
 '*
-'* 使用例:
+'* Usage example:
 '* @code
 '* Dim ErrNum As Long
 '* Dim ErrSrc As String
@@ -246,15 +246,15 @@ End Function
 '*
 '* On Error Resume Next
 '*
-'* ''//故意にエラーを発生させる例 (ゼロ除算)
+'* '// Example that intentionally raises an error (division by zero).
 '* Debug.Print 1 / 0
 '*
-'* Call HandleError(ErrNum, ErrSrc, ErrDesc, "補足情報 1", Append:=True)
+'* Call HandleError(ErrNum, ErrSrc, ErrDesc, "Supplemental information 1", Append:=True)
 '*
-'* ''//故意にエラーを発生させる例 (未定義サブ プロシージャ呼び出し)
+'* '// Example that intentionally raises an error (undefined sub procedure call).
 '* Call NonExistentProcedure
 '*
-'* Call HandleError(ErrNum, ErrSrc, ErrDesc, "補足情報 2", Append:=True)
+'* Call HandleError(ErrNum, ErrSrc, ErrDesc, "Supplemental information 2", Append:=True)
 '*
 '* On Error GoTo 0
 '*
@@ -294,20 +294,20 @@ End Sub
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Excel エラー値関連
+' Excel error values
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Excel エラー値を Excel 表示文字列へ変換します。
+'* Converts an Excel error value to an Excel display string.
 '*
-'* @param ErrorValue Excel エラー値。
-'* @return Excel エラー表示文字列。
+'* @param ErrorValue Excel error value.
+'* @return Excel error display string.
 '*
 '* @details
-'* `CVErr(...)` で表される Excel エラー値を、セル表示や数式リテラルで使える文字列へ変換します。
-'* 未知のエラー値はエラー番号を含む `#ERRNO_xxx!` として返します。
+'* Converts an Excel error value represented by `CVErr(...)` to a string usable in cell display or formula literals.
+'* Unknown error values are returned as `#ERRNO_xxx!` including the error number.
 Public Function ExcelErrorToString(ByVal ErrorValue As Variant) As String
     If Not IsError(ErrorValue) Then
-        Err.Raise vbObjectError + 1, "Function ExcelErrorToString", "Excel エラー値ではありません。(" & TypeName(ErrorValue) & ")"
+        Err.Raise vbObjectError + 1, "Function ExcelErrorToString", "The value is not an Excel error value. (" & TypeName(ErrorValue) & ")"
     End If
 
     Dim result_value As String
@@ -347,15 +347,15 @@ Public Function ExcelErrorToString(ByVal ErrorValue As Variant) As String
     ExcelErrorToString = result_value
 End Function
 
-'* Excel エラー表示文字列を Excel エラー値へ変換します。
+'* Converts an Excel error display string to an Excel error value.
 '*
-'* @param Expression Excel エラー表示文字列。
-'* @param ErrorValue [出力] 変換できた場合の Excel エラー値。
-'* @return 変換できた場合は True、それ以外は False。
+'* @param Expression Excel error display string.
+'* @param ErrorValue [Output] Excel error value when conversion succeeds.
+'* @return True when conversion succeeds; otherwise, False.
 '*
 '* @details
-'* 既知の Excel エラー表示文字列だけを `CVErr(...)` へ変換します。大小文字は区別しません。
-'* 未知の文字列では `ErrorValue` に `Empty` を明示代入して False を返します。
+'* Converts only known Excel error display strings to `CVErr(...)`. Case-insensitive.
+'* For unknown strings, explicitly assigns `Empty` to `ErrorValue` and returns False.
 Public Function TryConvertExcelErrorStringToCVErr( _
         ByVal Expression As String, _
         ByRef ErrorValue As Variant) As Boolean
@@ -403,26 +403,26 @@ End Function
 
 ' #############################################################################
 '
-' GUI 関連
+' GUI
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' ボタン関連
+' Buttons
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* ワークシートへボタンを作成します。
+'* Creates a button on a worksheet.
 '*
-'* @param TargetSheet 対象のワークシート。
-'* @param RowIndex ボタンを追加する位置のセルの行番号。
-'* @param ColumnIndex ボタンを追加する位置のセルの列番号。
-'* @param Caption ボタンの表示文字列。
-'* @param OnAction クリック時に実行するサブ プロシージャ。
-'* @param OnAction [省略可]ボタンのコンポーネント名 (Name プロパティ)。
-'* @return 追加したボタン オブジェクト
+'* @param TargetSheet Target worksheet.
+'* @param RowIndex Row number of the cell where the button is added.
+'* @param ColumnIndex Column number of the cell where the button is added.
+'* @param Caption Display text of the button.
+'* @param OnAction Sub procedure to run when clicked.
+'* @param OnAction [Optional] Button component name (Name property).
+'* @return Added button object.
 '*
 '* @details
-'* ワークシートへボタンを作成します。
+'* Creates a button on a worksheet.
 Public Function AddButton( _
     ByVal TargetSheet As Worksheet, _
     ByVal RowIndex As Long, _
@@ -479,13 +479,13 @@ Public Function AddButton( _
     Set AddButton = shp_btn
 End Function
 
-'* ワークシートのボタンを削除します。
+'* Deletes a worksheet button.
 '*
-'* @param TargetSheet 対象のワークシート。
-'* @param Name ボタンのコンポーネント名 (Name プロパティ)。
+'* @param TargetSheet Target worksheet.
+'* @param Name Button component name (Name property).
 '*
 '* @details
-'* ワークシート上のボタンを、コンポーネント名を指定して削除します。
+'* Deletes a button on a worksheet by specifying its component name.
 Public Sub DeleteButton(ByVal TargetSheet As Worksheet, ByVal Name As String)
 
     Dim shape_obj As Shape
@@ -500,25 +500,25 @@ Public Sub DeleteButton(ByVal TargetSheet As Worksheet, ByVal Name As String)
     Next shape_obj
 
     If Not is_deleted Then
-        Err.Raise vbObjectError + 1, "Sub DeleteButton", "ボタンが見つかりませんでした。(" & Name & ")"
+        Err.Raise vbObjectError + 1, "Sub DeleteButton", "The button was not found. (" & Name & ")"
     End If
 
 End Sub
 
-'* ワークシートのすべてのボタンを削除します。
+'* Deletes all buttons on a worksheet.
 '*
-'* @param TargetSheet 対象のワークシート。
+'* @param TargetSheet Target worksheet.
 '*
 '* @details
-'* ワークシート上のボタンを、すべて削除します。
+'* Deletes all buttons on a worksheet.
 Public Sub ClearButton(ByVal TargetSheet As Worksheet)
     Dim item_idx As Long
-    ' 後ろから削除しないとループ中に変更が起きた際に不具合が出ることがあるので
-    ' For i = Shapes.Count To 1 Step -1 の形が安全です
+    ' Deleting from the end is safer because issues can occur if the collection changes during the loop.
+    ' The For i = Shapes.Count To 1 Step -1 form is safe.
     For item_idx = TargetSheet.Shapes.Count To 1 Step -1
 
         If TargetSheet.Shapes(item_idx).OnAction <> "" Then
-            ' OnActionが設定されている → 「図形ボタン」と判断して削除
+            ' If OnAction is set, treat it as a shape button and delete it.
             TargetSheet.Shapes(item_idx).Delete
         End If
 
@@ -529,20 +529,20 @@ End Sub
 
 ' #############################################################################
 '
-' クリップボード関連
+' Clipboard
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' クリップボード操作
+' Clipboard operations
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* クリップボードへ文字列を送信します。
+'* Sends a string to the clipboard.
 '*
-'* @param SourceText クリップボードにコピーする文字列。
+'* @param SourceText String to copy to the clipboard.
 '*
 '* @details
-'* VBA の `Forms.TextBox.1` オブジェクトを使用して、指定された文字列をクリップボードにコピーします。
+'* Copies the specified string to the clipboard using the VBA `Forms.TextBox.1` object.
 Public Sub SetClipboard(ByVal SourceText As String)
     With CreateObject("Forms.TextBox.1")
         .MultiLine = True
@@ -553,12 +553,12 @@ Public Sub SetClipboard(ByVal SourceText As String)
     End With
 End Sub
 
-'* クリップボードから文字列を取得します。
+'* Gets a string from the clipboard.
 '*
-'* @return クリップボードに格納されている文字列。クリップボードに文字列が含まれていない場合、空文字列を返します。
+'* @return String stored in the clipboard. Returns an empty string if the clipboard does not contain a string.
 '*
 '* @details
-'* VBA の `Forms.TextBox.1` オブジェクトを使用して、クリップボードの内容を取得します。
+'* Gets the clipboard contents using the VBA `Forms.TextBox.1` object.
 Public Function GetClipboard() As String
     With CreateObject("Forms.TextBox.1")
         .MultiLine = True
@@ -569,16 +569,16 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 数式貼り付け
+' Paste formulas
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 可能な限り書式を除いた貼り付けを実行します。
+'* Performs paste while removing formatting as much as possible.
 '*
 '* @details
-'* クリップボードの内容を、以下の順序で貼り付けを試みます:
-'* 1. 数式として貼り付け (`Paste:=xlPasteFormulas`)。
-'* 2. テキストのみを貼り付け (`NoHTMLFormatting:=True`)。
-'* 3. いずれも失敗した場合、標準の貼り付けを実行。
+'* Attempts to paste clipboard contents in the following order:
+'* 1. Paste as formulas (`Paste:=xlPasteFormulas`).
+'* 2. Paste text only (`NoHTMLFormatting:=True`).
+'* 3. If both fail, perform a standard paste.
 Public Sub PasteFormulas()
     On Error Resume Next
 
@@ -596,22 +596,22 @@ End Sub
 
 ' #############################################################################
 '
-' ファイル操作関連
+' File operations
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' ファイルシステム パス文字列関連
+' File-system path strings
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* パス内の特殊文字を全角文字に置換します。
+'* Replaces special characters in a path with full-width characters.
 '*
-'* @param Path 置換対象のパス文字列
-'* @return 特殊文字を全角文字に置換したパス文字列
+'* @param Path Path string to replace.
+'* @return Path string with special characters replaced by full-width characters.
 '*
 '* @details
-'* ファイルシステムで使用できない特殊文字を全角文字に置換します。
-'* 以下の文字が置換されます: `\`, `/`, `:`, `*`, `?`, `"`, `<`, `>`, `|`。
+'* Replaces special characters that cannot be used in the file system with full-width characters.
+'* The following characters are replaced: `\`, `/`, `:`, `*`, `?`, `"`, `<`, `>`, `|`.
 Public Function ReplaceSpecialCharacterOnFileSystemPath(ByVal Path As String) As String
     Dim result_value As String
 
@@ -632,24 +632,24 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' パス結合
+' Path combining
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* パスを結合します。
+'* Joins paths.
 '*
-'* @param Path1 最初のパス文字列
-'* @param Path2 結合する2番目のパス文字列
-'* @param Paths 可変長の追加パス文字列
-'* @return 結合されたパス文字列
+'* @param Path1 First path string.
+'* @param Path2 Second path string to join.
+'* @param Paths Additional variable-length path strings.
+'* @return Joined path string.
 '*
 '* @details
-'* 指定された複数の文字列をパス区切り文字で結合します。
-'* 追加のパス文字列を可変長引数として渡すことができます。
+'* Joins multiple specified strings with the path separator.
+'* Additional path strings can be passed as variable-length arguments.
 '*
 '* @note
-'* JoinPath は文字列結合 API です。Path2 以降に絶対パスまたは URL を渡しても、先行パスを置き換えず通常のパス要素として結合します。
-'* Path1 が URL の場合、Path2 以降は URL 用の区切り文字へ正規化しますが、Path1 側の query / fragment は移動しません。
-'* そのため Path1 に ? または # が含まれる場合、後続パスは URL サフィックスの後ろへ結合されます。
+'* JoinPath is a string-joining API. Even when an absolute path or URL is passed to Path2 or later, it does not replace the preceding path and is joined as a normal path element.
+'* When Path1 is a URL, Path2 and later are normalized to URL separators, but the query / fragment on the Path1 side is not moved.
+'* Therefore, if Path1 contains ? or #, subsequent paths are joined after the URL suffix.
 Public Function JoinPath(ByVal Path1 As String, ByVal Path2 As String, ParamArray Paths() As Variant) As String
     Dim result_value As String
 
@@ -734,29 +734,29 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 絶対パス化
+' Convert to absolute paths
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 基準ディレクトリを使ってパスを絶対パス化します。
+'* Converts a path to an absolute path using a base directory.
 '*
-'* @param ParentAbsolutePath 基準にする絶対ディレクトリ パス。
-'* @param PathLikeString 絶対パス化するパス文字列。
-'* @return 絶対パス。
+'* @param ParentAbsolutePath Absolute directory path to use as the base.
+'* @param PathLikeString Path string to convert to an absolute path.
+'* @return Absolute path.
 '*
 '* @details
-'* PathLikeString が相対パスの場合は ParentAbsolutePath を基準にして絶対パス化します。
-'* PathLikeString が絶対パスの場合は ParentAbsolutePath を使わず、正規化した絶対パスを返します。
-'* `\foo` のようなルート相対パスは ParentAbsolutePath のルートを基準にします。
-'* `C:foo` のようなドライブ相対パスはカレントディレクトリ依存になるためエラーにします。
-'* URL は FSO に渡さず、パス部分だけを `/` 区切りで正規化します。
+'* When PathLikeString is a relative path, converts it to an absolute path based on ParentAbsolutePath.
+'* When PathLikeString is an absolute path, does not use ParentAbsolutePath and returns a normalized absolute path.
+'* Root-relative paths such as `\foo` are based on the root of ParentAbsolutePath.
+'* Drive-relative paths such as `C:foo` are current-directory-dependent, so they are errors.
+'* URLs are not passed to FSO; only the path part is normalized with `/` separators.
 '*
 '* @note
-'* PathLikeString が絶対パスまたは URL の場合は ParentAbsolutePath を使わず、そのパスを正規化して返します。
-'* PathLikeString が相対パスの場合は JoinPath と同じ結合規則に従います。
-'* そのため ParentAbsolutePath が URL サフィックスを含む場合、後続相対パスはサフィックスの後ろへ結合されます。
+'* When PathLikeString is an absolute path or URL, does not use ParentAbsolutePath and returns the normalized path.
+'* When PathLikeString is a relative path, follows the same joining rules as JoinPath.
+'* Therefore, if ParentAbsolutePath contains a URL suffix, subsequent relative paths are joined after the suffix.
 Public Function GetAbsolutePathFromParent(ByVal ParentAbsolutePath As String, ByVal PathLikeString As String) As String
-    If IsDriveRelativePath(ParentAbsolutePath) Or Not IsAbsolutePath(ParentAbsolutePath) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "ParentAbsolutePath には絶対パスを指定してください。(" & ParentAbsolutePath & ")"
-    If IsDriveRelativePath(PathLikeString) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "ドライブ相対パスは指定できません。(" & PathLikeString & ")"
+    If IsDriveRelativePath(ParentAbsolutePath) Or Not IsAbsolutePath(ParentAbsolutePath) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "ParentAbsolutePath must be an absolute path. (" & ParentAbsolutePath & ")"
+    If IsDriveRelativePath(PathLikeString) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "Drive-relative paths are not allowed. (" & PathLikeString & ")"
 
     Dim parent_path As String
     parent_path = pNormalizeAbsolutePath(ParentAbsolutePath)
@@ -794,7 +794,7 @@ End Function
 Private Sub pSplitUrl(ByRef UrlPrefix As String, ByRef UrlPathPart As String, ByRef UrlSuffix As String, ByVal UrlPath As String)
     Dim scheme_sep_pos As Long
     scheme_sep_pos = InStr(1, UrlPath, "://", vbBinaryCompare)
-    If scheme_sep_pos = 0 Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "URL 形式ではありません。(" & UrlPath & ")"
+    If scheme_sep_pos = 0 Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "The value is not in URL format. (" & UrlPath & ")"
 
     Dim scan_start As Long
     scan_start = scheme_sep_pos + Len("://")
@@ -835,7 +835,7 @@ Private Function pNormalizeLocalAbsolutePath(ByVal PathLikeString As String) As 
     Dim slash_path As String
     slash_path = pNormalizePathSeparators(PathLikeString)
 
-    If IsDriveRelativePath(slash_path) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "ドライブ相対パスは指定できません。(" & PathLikeString & ")"
+    If IsDriveRelativePath(slash_path) Then Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "Drive-relative paths are not allowed. (" & PathLikeString & ")"
 
     If IsDriveAbsolutePath(slash_path) Then
         Dim drive_root As String
@@ -858,7 +858,7 @@ Private Function pNormalizeLocalAbsolutePath(ByVal PathLikeString As String) As 
         unc_normalized_path = pNormalizeSlashPath("/" & unc_rest, True)
         pNormalizeLocalAbsolutePath = pNormalizeWindowsPathSeparators(unc_root & Mid$(unc_normalized_path, 2))
     Else
-        Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "絶対パスを指定してください。(" & PathLikeString & ")"
+        Err.Raise vbObjectError + 1, "Function GetAbsolutePathFromParent", "Specify an absolute path. (" & PathLikeString & ")"
     End If
 End Function
 
@@ -942,19 +942,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' パス ルート取得
+' Get path roots
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* パスのルート部分を取得します。
+'* Gets the root part of a path.
 '*
-'* @param PathLikeString ルートを取得するパス文字列。
-'* @return ドライブパスでは `C:\`、UNC パスでは `\\server\share\`、URL では `scheme://authority/` 形式のルート。
+'* @param PathLikeString Path string whose root is retrieved.
+'* @return Root in the form `C:\` for drive paths, `\\server\share\` for UNC paths, or `scheme://authority/` for URLs.
 '*
 '* @details
-'* 先頭がアルファベット 1 文字、2 文字目が `:` の場合はドライブパスとして扱います。
-'* 先頭 2 文字が `\\` または `//` の場合は UNC パスとして扱います。
-'* `scheme://` 形式の URL も絶対パスとして扱います。
-'* それ以外のパス文字列ではエラーを発生させます。
+'* If the first character is one alphabetic character and the second character is `:`, the path is treated as a drive path.
+'* If the first two characters are `\` or `//`, the path is treated as a UNC path.
+'* URLs in `scheme://` format are also treated as absolute paths.
+'* Other path strings raise an error.
 Public Function GetPathRoot(ByVal PathLikeString As String) As String
     If IsUrlPath(PathLikeString) Then
         Dim url_prefix As String
@@ -963,13 +963,13 @@ Public Function GetPathRoot(ByVal PathLikeString As String) As String
         Call pSplitUrl(url_prefix, url_path, url_suffix, PathLikeString)
         GetPathRoot = url_prefix & "/"
     ElseIf IsDriveRelativePath(PathLikeString) Then
-        Err.Raise vbObjectError + 1, "Function GetPathRoot", "ドライブ相対パスのルートは解決できません。(" & PathLikeString & ")"
+        Err.Raise vbObjectError + 1, "Function GetPathRoot", "Cannot resolve the root of a drive-relative path. (" & PathLikeString & ")"
     ElseIf IsDriveAbsolutePath(PathLikeString) Then
         GetPathRoot = UCase$(Left$(PathLikeString, 1)) & ":" & G_FS_PATH_SEP
     ElseIf IsUncPath(PathLikeString) Then
         GetPathRoot = pNormalizeWindowsPathSeparators(pGetUncPathRootSlash(PathLikeString))
     Else
-        Err.Raise vbObjectError + 1, "Function GetPathRoot", "ドライブパス、UNC パス、または URL を指定してください。(" & PathLikeString & ")"
+        Err.Raise vbObjectError + 1, "Function GetPathRoot", "Specify a drive path, UNC path, or URL. (" & PathLikeString & ")"
     End If
 End Function
 
@@ -979,7 +979,7 @@ Private Function pGetUncPathRootSlash(ByVal UncPath As String) As String
 
     Dim server_sep As Long
     server_sep = InStr(3, slash_path, "/")
-    If server_sep <= 3 Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "UNC パスのルートを解決できません。(" & UncPath & ")"
+    If server_sep <= 3 Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "Cannot resolve the UNC path root. (" & UncPath & ")"
 
     Dim share_sep As Long
     share_sep = InStr(server_sep + 1, slash_path, "/")
@@ -987,13 +987,13 @@ Private Function pGetUncPathRootSlash(ByVal UncPath As String) As String
     Dim share_name As String
     If share_sep = 0 Then
         share_name = Mid$(slash_path, server_sep + 1)
-        If share_name = "" Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "UNC パスのルートを解決できません。(" & UncPath & ")"
+        If share_name = "" Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "Cannot resolve the UNC path root. (" & UncPath & ")"
 
         pGetUncPathRootSlash = slash_path
         If Not EndsWith(pGetUncPathRootSlash, "/") Then pGetUncPathRootSlash = pGetUncPathRootSlash & "/"
     Else
         share_name = Mid$(slash_path, server_sep + 1, share_sep - server_sep - 1)
-        If share_name = "" Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "UNC パスのルートを解決できません。(" & UncPath & ")"
+        If share_name = "" Then Err.Raise vbObjectError + 1, "Function GetPathRoot", "Cannot resolve the UNC path root. (" & UncPath & ")"
 
         pGetUncPathRootSlash = Left$(slash_path, share_sep)
     End If
@@ -1001,16 +1001,16 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' パス種別判定
+' Path type checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* ドライブ指定を持つパスか判定します。
+'* Determines whether a path has a drive specifier.
 '*
-'* @param TestPath 判定対象のパス文字列。
-'* @return ドライブ指定を持つパスの場合は True、それ以外は False。
+'* @param TestPath Path string to test.
+'* @return True if the path has a drive specifier; otherwise, False.
 '*
 '* @details
-'* `C:\foo`、`C:/foo`、`C:foo`、`C:` のように先頭がドライブ指定の場合は True とします。
+'* Returns True when the path starts with a drive specifier, such as `C:\foo`, `C:/foo`, `C:foo`, or `C:`.
 Public Function IsDrivePath(ByVal TestPath As String) As Boolean
     If Len(TestPath) < 2 Then Exit Function
     If Mid$(TestPath, 2, 1) <> ":" Then Exit Function
@@ -1022,38 +1022,38 @@ Private Function pIsAsciiAlphabet(ByVal TestChar As String) As Boolean
     pIsAsciiAlphabet = ("A" <= UCase$(TestChar) And UCase$(TestChar) <= "Z")
 End Function
 
-'* ドライブ絶対パスか判定します。
+'* Determines whether a path is a drive-absolute path.
 '*
-'* @param TestPath 判定対象のパス文字列。
-'* @return ドライブ絶対パスの場合は True、それ以外は False。
+'* @param TestPath Path string to test.
+'* @return True if the path is a drive-absolute path; otherwise, False.
 '*
 '* @details
-'* `C:\foo` または `C:/foo` のようなドライブ絶対パスを True とします。`C:foo` のようなドライブ相対パスは False です。
+'* Returns True for drive-absolute paths such as `C:\foo` or `C:/foo`. Drive-relative paths such as `C:foo` are False.
 Public Function IsDriveAbsolutePath(ByVal TestPath As String) As Boolean
     If Not IsDrivePath(TestPath) Then Exit Function
     If Len(TestPath) < 3 Then Exit Function
     IsDriveAbsolutePath = (Mid$(TestPath, 3, 1) = G_FS_PATH_SEP Or Mid$(TestPath, 3, 1) = "/")
 End Function
 
-'* ドライブ相対パスか判定します。
+'* Determines whether a path is a drive-relative path.
 '*
-'* @param TestPath 判定対象のパス文字列。
-'* @return ドライブ相対パスの場合は True、それ以外は False。
+'* @param TestPath Path string to test.
+'* @return True if the path is a drive-relative path; otherwise, False.
 '*
 '* @details
-'* `C:foo` または `C:` のようにドライブ指定を持ち、区切り文字で始まらないパスを True とします。
+'* Returns True for paths that have a drive specifier and do not start with a separator, such as `C:foo` or `C:`.
 Public Function IsDriveRelativePath(ByVal TestPath As String) As Boolean
     If Not IsDrivePath(TestPath) Then Exit Function
     IsDriveRelativePath = Not IsDriveAbsolutePath(TestPath)
 End Function
 
-'* UNC パスか判定します。
+'* Determines whether a path is a UNC path.
 '*
-'* @param TestPath 判定対象のパス文字列。
-'* @return UNC パスの場合は True、それ以外は False。
+'* @param TestPath Path string to test.
+'* @return True if the path is a UNC path; otherwise, False.
 '*
 '* @details
-'* `\\server\share` または `//server/share` のような UNC パスを True とします。
+'* Returns True for UNC paths such as `\\server\share` or `//server/share`.
 Public Function IsUncPath(ByVal TestPath As String) As Boolean
     If Not (Left$(TestPath, 2) = "\\" Or Left$(TestPath, 2) = "//") Then Exit Function
 
@@ -1066,13 +1066,13 @@ Public Function IsUncPath(ByVal TestPath As String) As Boolean
     On Error GoTo 0
 End Function
 
-'* URL 形式のパスか判定します。
+'* Determines whether a path is in URL format.
 '*
-'* @param TestPath 判定対象のパス文字列。
-'* @return URL 形式の場合は True、それ以外は False。
+'* @param TestPath Path string to test.
+'* @return True if the path is in URL format; otherwise, False.
 '*
 '* @details
-'* `scheme://` の形式を URL として扱います。スキーム名は英字で始まり、英数字、`+`、`.`、`-` を含めることができます。
+'* Treats `scheme://` format as a URL. Scheme names start with a letter and can contain letters, digits, `+`, `.`, and `-`.
 Public Function IsUrlPath(ByVal TestPath As String) As Boolean
     Dim scheme_sep_pos As Long
     scheme_sep_pos = InStr(1, TestPath, "://", vbBinaryCompare)
@@ -1097,14 +1097,14 @@ Private Function pIsAsciiDigit(ByVal TestChar As String) As Boolean
     pIsAsciiDigit = ("0" <= TestChar And TestChar <= "9")
 End Function
 
-'* あるパス文字列が絶対パスかを判定します。
+'* Determines whether a path string is an absolute path.
 '*
-'* @param TestPath 判定対象のパス文字列
-'* @return 絶対パスの場合は True、それ以外は False
+'* @param TestPath Path string to test.
+'* @return True if the path is an absolute path; otherwise, False.
 '*
 '* @details
-'* 入力されたパス文字列が絶対パスかどうかを判定します。
-'* URL 形式の文字列も絶対パスとして扱います。
+'* Determines whether the input path string is an absolute path.
+'* URL-format strings are also treated as absolute paths.
 Public Function IsAbsolutePath(ByVal TestPath As String) As Boolean
     If IsDriveRelativePath(TestPath) Then Exit Function
 
@@ -1118,19 +1118,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' パス分割
+' Path splitting
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* パスを親パスと末端パスに分割します。
+'* Splits a path into parent path and leaf path.
 '*
-'* @param ParentPath [出力] 親パス。
-'* @param LeafPath [出力] 末端パス。
-'* @param Path 入力パス文字列。
-'* @param IgnoreEndSep [省略可] 入力パス文字列の末尾の区切り文字を無視するか否か。
+'* @param ParentPath [Output] Parent path.
+'* @param LeafPath [Output] Leaf path.
+'* @param Path Input path string.
+'* @param IgnoreEndSep [Optional] Whether to ignore the trailing separator in the input path string.
 '*
 '* @details
-'* Path を最後のパス区切り文字で親パスと末端パスに分割します。
-'* URL では query / fragment 内の区切り文字を分割対象から除外し、PathSuffix は LeafPath に含めて返します。
+'* Splits Path into parent path and leaf path at the last path separator.
+'* For URLs, excludes separators in query / fragment from split targets and returns PathSuffix as part of LeafPath.
 Public Sub SplitPath( _
         ByRef ParentPath As String, _
         ByRef LeafPath As String, _
@@ -1233,17 +1233,17 @@ Private Function pGetWindowsPathRootForSplit(ByVal WindowsPath As String) As Str
     End If
 End Function
 
-'* 末端パスをベース名、拡張子、パスサフィックスに分解します。
+'* Parses a leaf path into base name, extension, and path suffix.
 '*
-'* @param BaseName [出力] 拡張子とパスサフィックスを除いた末端名。
-'* @param Extension [出力] `.` を含む拡張子。拡張子がない場合は空文字列。
-'* @param PathSuffix [出力] query / fragment を含むパスサフィックス。
-'* @param LeafPath 入力末端パス文字列。
-'* @param AsUrl [省略可] LeafPath を URL の末端パスとして扱い、query / fragment を分離するか。既定値は False。
+'* @param BaseName [Output] Leaf name excluding extension and path suffix.
+'* @param Extension [Output] Extension including `.`. Empty string when there is no extension.
+'* @param PathSuffix [Output] Path suffix including query / fragment.
+'* @param LeafPath Input leaf path string.
+'* @param AsUrl [Optional] Whether to treat LeafPath as a URL leaf path and separate query / fragment. Default is False.
 '*
 '* @details
-'* 既定では `?` や `#` を末端名の一部として扱い、最後の `.` で分割します。
-'* AsUrl が True の場合だけ、`?` または `#` 以降を PathSuffix とし、それより前の文字列を最後の `.` で分割します。
+'* By default, treats `?` and `#` as part of the leaf name and splits at the last `.`.
+'* Only when AsUrl is True, treats `?` or `#` and later as PathSuffix and splits the preceding string at the last `.`.
 Public Sub ParseLeafPath( _
         ByRef BaseName As String, _
         ByRef Extension As String, _
@@ -1271,15 +1271,15 @@ Public Sub ParseLeafPath( _
     End If
 End Sub
 
-'* パスの最後の部分を除いたパスを取得します。
+'* Gets the path excluding the last part of the path.
 '*
-'* @param Path 入力パス文字列
-'* @param IgnoreEndSep [省略可] 入力パス文字列の末尾の区切り文字を無視するか否か
-'* @return 最後の部分を除いたパス文字列
+'* @param Path Input path string.
+'* @param IgnoreEndSep [Optional] Whether to ignore the trailing separator in the input path string.
+'* @return Path string excluding the last part.
 '*
 '* @details
-'* 入力されたパス文字列の最後のパス区切り文字より前の部分を返します。
-'* 例えば、`Path\to\File` の場合は `Path\to` を返します。
+'* Returns the portion before the last path separator in the input path string.
+'* For example, for `Path\to\File`, returns `Path\to`.
 Public Function GetParentPath(ByVal Path As String, Optional ByVal IgnoreEndSep As Boolean = False) As String
     Dim parent_path As String
     Dim leaf_path As String
@@ -1288,19 +1288,19 @@ Public Function GetParentPath(ByVal Path As String, Optional ByVal IgnoreEndSep 
     GetParentPath = parent_path
 End Function
 
-'* パスの最後の部分を取得します。
+'* Gets the last part of a path.
 '*
-'* @param Path 入力パス文字列
-'* @param BaseName [省略可] ベース名を含めるか。規定値は True
-'* @param Extension [省略可] 拡張子を含めるか。規定値は True
-'* @param IgnoreEndSep [省略可] 入力パス文字列の末尾の区切り文字を無視するか否か
-'* @return 最後の部分 (ファイル名またはフォルダ名)
+'* @param Path Input path string.
+'* @param BaseName [Optional] Whether to include the base name. Default is True.
+'* @param Extension [Optional] Whether to include the extension. Default is True.
+'* @param IgnoreEndSep [Optional] Whether to ignore the trailing separator in the input path string.
+'* @return Last part (file name or folder name).
 '*
 '* @details
-'* 入力されたパス文字列の最後のパス区切り文字より後の部分を返します。
-'* オプション引数 `Extension` を False にすると、拡張子を除去した結果を返します。
-'* URL の PathSuffix は返却に含めません。PathSuffix が必要な場合は SplitPath と ParseLeafPath を使用します。
-'* 例えば、`Path\to\File.txt` の場合は `File` を返します。
+'* Returns the portion after the last path separator in the input path string.
+'* When the optional argument `Extension` is False, returns the result with the extension removed.
+'* URL PathSuffix is not included in the return value. If PathSuffix is needed, use SplitPath and ParseLeafPath.
+'* For example, for `Path\to\File.txt`, returns `File`.
 Public Function GetLeafFromPath(ByVal Path As String, Optional ByVal BaseName As Boolean = True, Optional ByVal Extension As Boolean = True, Optional ByVal IgnoreEndSep As Boolean = False) As String
     If Not BaseName And Not Extension Then Exit Function
 
@@ -1320,22 +1320,22 @@ End Function
 
 ' #############################################################################
 '
-' 日付操作関連
+' Date operations
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 日付判定
+' Date checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* ある日付が、未設定かどうかを判定します。
+'* Determines whether a date is unset.
 '*
-'* @param TestDate 判定対象の日付
-'* @return 未設定の日付の場合は True、それ以外は False
+'* @param TestDate Date to test.
+'* @return True if the date is unset; otherwise, False.
 '*
 '* @details
-'* 指定された日付が `G_DATE_MINIMUM` 未満、または `G_DATE_NULL` と等しい場合に未設定とみなして True を返します。
-'* `G_DATE_NULL` は未設定の日付を表し、`G_DATE_MINIMUM` は有効な日付の最小値を表します。
+'* Returns True when the specified date is less than `G_DATE_MINIMUM` or equal to `G_DATE_NULL`.
+'* `G_DATE_NULL` represents an unset date, and `G_DATE_MINIMUM` represents the minimum valid date.
 Public Function IsNullDate(ByVal TestDate As Date) As Boolean
     If TestDate < G_DATE_MINIMUM Then
         IsNullDate = True
@@ -1347,21 +1347,21 @@ End Function
 
 ' #############################################################################
 '
-' 各種変換
+' Conversions
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 文字列・配列変換
+' String/array conversions
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 文字列を文字の配列に変換します。
+'* Converts a string to an array of characters.
 '*
-'* @param Expression 文字列。
-'* @return 文字の配列。
+'* @param Expression String.
+'* @return Array of characters.
 '*
 '* @details
-'* 文字列を文字の配列に変換します。
+'* Converts a string to an array of characters.
 Public Function ConvertStringToCharArray(ByVal Expression As String) As String()
     Dim result_ubound As Long
     result_ubound = Len(Expression) - 1
@@ -1382,14 +1382,14 @@ Public Function ConvertStringToCharArray(ByVal Expression As String) As String()
     ConvertStringToCharArray = result_value
 End Function
 
-'* String() 型の配列を Variant() 型の配列に変換します。
+'* Converts a String() array to a Variant() array.
 '*
-'* @param StringArray 変換対象の String 型の配列
-'* @return Variant 型の配列
+'* @param StringArray String array to convert.
+'* @return Variant array.
 '*
 '* @details
-'* String 型の配列を Variant 型に変換します。各要素の内容はそのまま維持されます。
-'* 0 要素配列は 0 要素の Variant 配列として返します。
+'* Converts a String array to Variant. The contents of each element are preserved.
+'* A 0-element array is returned as a 0-element Variant array.
 Public Function ConvertArrayStringToVariant(ByRef StringArray() As String) As Variant()
     If IsEmptyArray(StringArray) Then
         ConvertArrayStringToVariant = EmptyVariantArray()
@@ -1408,14 +1408,14 @@ Public Function ConvertArrayStringToVariant(ByRef StringArray() As String) As Va
     ConvertArrayStringToVariant = result_value
 End Function
 
-'* Variant() 型の配列を String() 型の配列に変換します。
+'* Converts a Variant() array to a String() array.
 '*
-'* @param VariantArray 変換対象の Variant 型の配列
-'* @return String 型の配列
+'* @param VariantArray Variant array to convert.
+'* @return String array.
 '*
 '* @details
-'* Variant 型の配列を String 型に変換します。各要素の内容はそのまま維持されます。
-'* 0 要素配列は 0 要素の String 配列として返します。
+'* Converts a Variant array to String. The contents of each element are preserved.
+'* A 0-element array is returned as a 0-element String array.
 Public Function ConvertArrayVariantToString(ByRef VariantArray() As Variant) As String()
     If IsEmptyArray(VariantArray) Then
         ConvertArrayVariantToString = EmptyStringArray()
@@ -1436,19 +1436,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Boolean 変換
+' Boolean conversions
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Boolean 型の値を文字列に変換します。
+'* Converts a Boolean value to a string.
 '*
-'* @param BooleanValue 変換対象の Boolean 値
-'* @param FlagOnString True の場合に返す文字列 (既定値は "■")
-'* @param FlagOffString False の場合に返す文字列 (既定値は空文字列)
-'* @return 変換後の文字列
+'* @param BooleanValue Boolean value to convert.
+'* @param FlagOnString String returned for True (default is "■").
+'* @param FlagOffString String returned for False (default is an empty string).
+'* @return Converted string.
 '*
 '* @details
-'* Boolean 値を指定された文字列に変換します。
-'* True の場合は `FlagOnString`、False の場合は `FlagOffString` を返します。
+'* Converts a Boolean value to the specified string.
+'* Returns `FlagOnString` for True and `FlagOffString` for False.
 Public Function ConvertBooleanToString( _
         ByVal BooleanValue As Boolean, _
         Optional ByVal FlagOnString As String = "■", _
@@ -1461,17 +1461,17 @@ Public Function ConvertBooleanToString( _
     End If
 End Function
 
-'* 文字列を Boolean 型の値に変換します。
+'* Converts a string to a Boolean value.
 '*
-'* @param FlagValue 変換対象の文字列
-'* @param FlagOnString True とみなす文字列 (既定値は "■")
-'* @param FlagOffString False とみなす文字列 (既定値は空文字列)
-'* @return 変換後の Boolean 値
+'* @param FlagValue String to convert.
+'* @param FlagOnString String treated as True (default is "■").
+'* @param FlagOffString String treated as False (default is an empty string).
+'* @return Converted Boolean value.
 '*
 '* @details
-'* 指定された文字列を基に Boolean 値を判定します。
-'* `FlagOnString` の場合は True、`FlagOffString` の場合は False を返します。
-'* それ以外の値の場合はエラーを発生させます。
+'* Determines a Boolean value based on the specified string.
+'* Returns True for `FlagOnString` and False for `FlagOffString`.
+'* Raises an error for any other value.
 Public Function ConvertStringToBoolean( _
         ByVal FlagValue As String, _
         Optional ByVal FlagOnString As String = "■", _
@@ -1482,35 +1482,35 @@ Public Function ConvertStringToBoolean( _
     ElseIf FlagValue = FlagOffString Then
         ConvertStringToBoolean = False
     Else
-        Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="許容される FlagValue は「" & FlagOnString & "」か「" & FlagOffString & "」です。(" & FlagValue & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Sub CreateBackupFile", Description:="Allowed FlagValue values are """ & FlagOnString & """ or """ & FlagOffString & """. (" & FlagValue & ")"
     End If
 End Function
 
 
 ' #############################################################################
 '
-' 配列関連
+' Arrays
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 配列次元変換
+' Array dimension conversion
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 2 次元配列を 1 次元配列に変換します。
+'* Converts a two-dimensional array to a one-dimensional array.
 '*
-'* @param OriginalArray 2 次元配列。
-'* @param ColumnDirection [省略可] 列方向 (縦方向、1 次元目) に読み取っていくか。デフォルトは False で行列方向 (横方向、2 次元目) に読み取っていきます。
-'* @return 1 次元配列。
+'* @param OriginalArray Two-dimensional array.
+'* @param ColumnDirection [Optional] Whether to read in the column direction (vertical direction, first dimension). Default is False, which reads in the row direction (horizontal direction, second dimension).
+'* @return One-dimensional array.
 '*
 '* @details
-'* 2 次元配列を 0 ベースの 1 次元配列に変換します。
+'* Converts a two-dimensional array to a 0-based one-dimensional array.
 Public Function ConvertArray2dTo1d( _
         ByVal OriginalArray As Variant, _
         Optional ByVal ColumnDirection As Boolean = False) As Variant()
 
     If Not IsArray(OriginalArray) Then
-        Err.Raise vbObjectError + 1, Source:="Function ConvertArray2dTo1d", Description:="引数が配列ではありません。(" & TypeName(OriginalArray) & ")"
+        Err.Raise vbObjectError + 1, Source:="Function ConvertArray2dTo1d", Description:="The argument is not an array. (" & TypeName(OriginalArray) & ")"
     End If
 
     Dim row_low_bnd As Long
@@ -1551,19 +1551,19 @@ Public Function ConvertArray2dTo1d( _
     ConvertArray2dTo1d = res_arr
 End Function
 
-'* 1 次元配列を 2 次元配列に変換します。
+'* Converts a one-dimensional array to a two-dimensional array.
 '*
-'* @param OriginalArray 1 次元配列。
-'* @param RowLBound [省略可] 行インデックス (1 次元目) の下限。デフォルトは 1 です。
-'* @param ColumnLBound [省略可] 列インデックス (2 次元目) の下限。デフォルトは 1 です。
-'* @param RowCount [省略可] 行 (1 次元目) の要素数。デフォルトは無制限です。
-'* @param ColCount [省略可] 列 (2 次元目) の要素数。デフォルトは 1 です。
-'* @param ColumnDirection [省略可] 列方向 (縦方向、1 次元目) に埋めていくか。デフォルトは False で行列方向 (横方向、2 次元目) に埋めていきます。
-'* @return 2 次元配列。
+'* @param OriginalArray One-dimensional array.
+'* @param RowLBound [Optional] Lower bound of the row index (first dimension). Default is 1.
+'* @param ColumnLBound [Optional] Lower bound of the column index (second dimension). Default is 1.
+'* @param RowCount [Optional] Number of row elements (first dimension). Default is unlimited.
+'* @param ColCount [Optional] Number of column elements (second dimension). Default is 1.
+'* @param ColumnDirection [Optional] Whether to fill in the column direction (vertical direction, first dimension). Default is False, which fills in the row direction (horizontal direction, second dimension).
+'* @return Two-dimensional array.
 '*
 '* @details
-'* 1 次元配列を 2 次元配列に変換します。
-'* 0 要素配列は対象外です。呼び出し側で空配列を分岐してください。
+'* Converts a one-dimensional array to a two-dimensional array.
+'* 0-element arrays are not supported. Branch on empty arrays in the caller.
 Public Function ConvertArray1dTo2d( _
         ByVal OriginalArray As Variant, _
         Optional ByVal RowLBound As Long = 1, _
@@ -1573,15 +1573,15 @@ Public Function ConvertArray1dTo2d( _
         Optional ByVal ColumnDirection As Boolean = False) As Variant()
 
     If Not IsArray(OriginalArray) Then
-        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="引数が配列ではありません。(" & TypeName(OriginalArray) & ")"
+        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="The argument is not an array. (" & TypeName(OriginalArray) & ")"
     End If
 
     If RowCount <= 0 And ColCount <= 0 Then
-        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="行数と列数の両方が無制限として指定 (0 以下を指定) されました。"
+        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="Both the row count and column count were specified as unlimited values (0 or less)."
     End If
 
     If 0 < RowCount And 0 < ColCount Then
-        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="行数と列数の両方の要素数が指定されました。"
+        Err.Raise vbObjectError + 1, Source:="Function ConvertArray1dTo2d", Description:="Both the row count and column count were specified as fixed element counts."
     End If
 
     Dim orig_count As Long
@@ -1636,40 +1636,40 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 配列境界・状態
+' Array bounds and state
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 要素を持たない Variant 配列を生成します。
+'* Creates a Variant array with no elements.
 '*
-'* @return 0 ベースで要素数 0 の Variant 配列。
+'* @return 0-based Variant array with 0 elements.
 '*
 '* @details
-'* 未初期化配列ではなく、`LBound = 0` / `UBound = -1` の空配列を返します。
+'* Returns an empty array with `LBound = 0` / `UBound = -1`, not an uninitialized array.
 Public Function EmptyVariantArray() As Variant()
     EmptyVariantArray = Array()
 End Function
 
-'* 要素を持たない String 配列を生成します。
+'* Creates a String array with no elements.
 '*
-'* @return 0 ベースで要素数 0 の String 配列。
+'* @return 0-based String array with 0 elements.
 '*
 '* @details
-'* 未初期化配列ではなく、`LBound = 0` / `UBound = -1` の空配列を返します。
+'* Returns an empty array with `LBound = 0` / `UBound = -1`, not an uninitialized array.
 Public Function EmptyStringArray() As String()
     EmptyStringArray = Filter(Split(vbNullString, vbNullChar), vbNullChar)
 End Function
 
-'* 配列の添字の最大および最小を得ます。
+'* Gets the maximum and minimum subscripts of an array.
 '*
-'* @param LBoundArray [出力] 各次元の最小の添字
-'* @param UBoundArray [出力] 各次元の最大の添字
-'* @param TargetArray 調査対象の配列
+'* @param LBoundArray [Output] Minimum subscript for each dimension.
+'* @param UBoundArray [Output] Maximum subscript for each dimension.
+'* @param TargetArray Array to inspect.
 '*
 '* @details
-'* 配列の添字の最大および最小を得ます。未初期化配列の場合はエラーを発生させます。
+'* Gets the maximum and minimum subscripts of an array. Raises an error for uninitialized arrays.
 Public Sub GetArrayBounds(ByRef LBoundArray() As Long, ByRef UBoundArray() As Long, ByVal TargetArray As Variant)
     If Not IsArray(TargetArray) Then
-        Err.Raise vbObjectError + 1, "Sub GetArrayBounds", "配列ではありません。(" & TypeName(TargetArray) & ")"
+        Err.Raise vbObjectError + 1, "Sub GetArrayBounds", "The value is not an array. (" & TypeName(TargetArray) & ")"
     End If
 
     Dim result_l() As Long
@@ -1678,22 +1678,22 @@ Public Sub GetArrayBounds(ByRef LBoundArray() As Long, ByRef UBoundArray() As Lo
     Dim dim_count As Long
     dim_count = pGetArrayBoundsCore(result_l, result_u, TargetArray)
     If dim_count = 0 Then
-        Err.Raise vbObjectError + 1, "Sub GetArrayBounds", "未初期化配列です。"
+        Err.Raise vbObjectError + 1, "Sub GetArrayBounds", "The array is not initialized."
     End If
 
     LBoundArray = result_l
     UBoundArray = result_u
 End Sub
 
-'* 引数が空の配列かを判定します。
+'* Determines whether an argument is an empty array.
 '*
-'* @param TargetArray 判定対象の配列
-'* @return 空の配列の場合は True、それ以外は False
+'* @param TargetArray Array to test.
+'* @return True if the array is empty; otherwise, False.
 '*
 '* @details
-'* 指定された引数が配列であり、要素が存在しない場合に True を返します。
-'* 配列でない場合は False を返します。
-'* 配列の境界値取得 (`UBound` / `LBound`) が失敗する場合は空の配列とみなします。
+'* Returns True when the specified argument is an array and has no elements.
+'* Returns False when the argument is not an array.
+'* Treats the array as empty when getting array bounds (`UBound` / `LBound`) fails.
 Public Function IsEmptyArray(ByVal TargetArray As Variant) As Boolean
     If Not IsArray(TargetArray) Then
         IsEmptyArray = False
@@ -1715,21 +1715,21 @@ Public Function IsEmptyArray(ByVal TargetArray As Variant) As Boolean
     IsEmptyArray = result_value
 End Function
 
-'* 配列の列挙子を取得します。
+'* Gets an array enumerator.
 '*
-'* @param TargetArray 列挙対象の配列
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @param IsReadOnly [省略可] 読み取り専用にするか否か。
-'* @return 配列の列挙子 (IEnumerator オブジェクト)
+'* @param TargetArray Array to enumerate.
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @param IsReadOnly [Optional] Whether to make the enumerator read-only.
+'* @return Array enumerator (`IEnumerator` object).
 '*
 '* @details
-'* 指定された 1 次元配列を列挙するための `IEnumerator` オブジェクトを返します。
-'* 空の 1 次元配列は有効入力として扱い、MoveNext は False を返します。
-'* 未初期化配列および多次元配列はエラーを発生させます。
-'* 配列列挙子では Update / Remove は使用できません。
-'* 配列がオブジェクトの場合はそのまま参照を設定し、それ以外の場合は値を設定します。
+'* Returns an `IEnumerator` object for enumerating the specified one-dimensional array.
+'* Empty one-dimensional arrays are treated as valid input, and MoveNext returns False.
+'* Uninitialized arrays and multidimensional arrays raise an error.
+'* Update / Remove cannot be used with array enumerators.
+'* If an array element is an object, it is set as a reference; otherwise, it is set as a value.
 '*
-'* 使用例:
+'* Usage example:
 '* @code
 '* Dim enum_obj As IEnumerator
 '* Set enum_obj = GetArrayEnumerator(some_arr)
@@ -1748,17 +1748,17 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 配列検索
+' Array search
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 配列に指定された値が含まれるかを判定します。
+'* Determines whether an array contains the specified value.
 '*
-'* @param CheckItem 判定対象の値
-'* @param TargetArray 判定対象の配列
-'* @return 配列に値が含まれる場合は True、それ以外は False
+'* @param CheckItem Value to test.
+'* @param TargetArray Array to test.
+'* @return True if the array contains the value; otherwise, False.
 '*
 '* @details
-'* 配列に指定された値が含まれるかを判定します。
+'* Determines whether an array contains the specified value.
 Public Function ContainsInArray(ByVal CheckItem As Variant, ByRef TargetArray As Variant) As Boolean
     Dim arr_item As Variant
 
@@ -1815,19 +1815,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 配列ソート
+' Array sorting
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 配列をソートします。
+'* Sorts an array.
 '*
-'* @param TargetArray ソート対象の配列
-'* @param Descending 降順ソートを行う場合は True。既定値は False (昇順ソート)
+'* @param TargetArray Array to sort.
+'* @param Descending True to sort in descending order. Default is False (ascending order).
 '*
 '* @details
-'* 配列をソートします。
+'* Sorts an array.
 '*
 '* @note
-'* 配列の各要素が不等号演算で比較可能であることが前提です。
+'* Assumes each array element can be compared with inequality operators.
 Public Sub SortArray(ByRef TargetArray As Variant, Optional ByVal Descending As Boolean = False)
     If Not IsArray(TargetArray) Then
         Err.Raise vbObjectError + 1, Source:="Sub SortArray", Description:="Argument is not an array. (" & TypeName(TargetArray) & ")"
@@ -1882,19 +1882,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 配列結合
+' Array joining
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 配列を連結します。
+'* Concatenates arrays.
 '*
-'* @param Array1 最初の配列
-'* @param Array2 2 番目の配列
-'* @param OtherArrays 可変長の追加配列
-'* @return 連結された配列
+'* @param Array1 First array.
+'* @param Array2 Second array.
+'* @param OtherArrays Additional variable-length arrays.
+'* @return Concatenated array.
 '*
 '* @details
-'* 複数の配列を結合して 1 つの配列を返します。
-'* 引数が配列でない場合は長さ 1 の配列として扱われます。
+'* Joins multiple arrays and returns a single array.
+'* If an argument is not an array, it is treated as an array of length 1.
 Public Function ConcatArray(ByVal Array1 As Variant, ByVal Array2 As Variant, ParamArray OtherArrays() As Variant) As Variant()
     Dim result_value() As Variant
     Dim arr_length As Long
@@ -1980,24 +1980,24 @@ End Sub
 
 ' #############################################################################
 '
-' String 関連
+' Strings
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' ID 表記関連
+' ID notation
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* ID 番号と名前を連結した表示名を返します。
+'* Returns a display name that joins an ID number and name.
 '*
-'* @param IDNumber ID 番号。
-'* @param Name 名前。
-'* @param NumFormat ID 番号に適用する書式。省略時は 2 桁ゼロ埋めです。
-'* @param Separator ID 番号と名前の区切り文字。
-'* @return 整形した ID 表示名。
+'* @param IDNumber ID number.
+'* @param Name Name.
+'* @param NumFormat Format applied to the ID number. When omitted, two-digit zero padding is used.
+'* @param Separator Separator between the ID number and name.
+'* @return Formatted ID display name.
 '*
 '* @details
-'* Format 関数で IDNumber を文字列化し、Separator と Name を連結します。
+'* Converts IDNumber to a string with the Format function and joins it with Separator and Name.
 Public Function FormatIDName( _
         ByVal IDNumber As Integer, _
         ByVal Name As String, _
@@ -2009,16 +2009,16 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 型文字列関連
+' Type strings
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 要素型契約名として使用できる文字列かどうかを返します。
+'* Returns whether a string can be used as an element type contract name.
 '*
-'* @param ElementTypeKey 確認対象の要素型契約名。
-'* @return 要素型契約名として使用できる場合は True。
+'* @param ElementTypeKey Element type contract name to check.
+'* @return True if it can be used as an element type contract name.
 '*
 '* @details
-'* クラス モジュール名として扱えるように、1 文字目は英字、2 文字目以降は英字、数字、アンダースコア、全体は 31 文字以内に制限します。
+'* To make it usable as a class module name, the first character is limited to a letter, the second and later characters to letters, digits, and underscores, and the whole name to 31 characters or fewer.
 Public Function IsValidElementTypeKey(ByVal ElementTypeKey As String) As Boolean
     Dim result_value As Boolean
     result_value = False
@@ -2047,18 +2047,18 @@ Public Function IsValidElementTypeKey(ByVal ElementTypeKey As String) As Boolean
     IsValidElementTypeKey = result_value
 End Function
 
-'* 値の型文字列を返します。
+'* Returns the type string of a value.
 '*
-'* @param Value 型文字列を取得する値。
-'* @param ObjectKeyMode オブジェクトのキー化方法。
-'* @param IncludeArrayBounds 配列の境界情報を含めるか否か。True の場合は IncludeArrayRank より優先します。
-'* @param IncludeArrayRank 配列の次元数を含めるか否か。
-'* @return 値の型文字列。
+'* @param Value Value whose type string is retrieved.
+'* @param ObjectKeyMode Object keying method.
+'* @param IncludeArrayBounds Whether to include array bound information. When True, takes precedence over IncludeArrayRank.
+'* @param IncludeArrayRank Whether to include the number of array dimensions.
+'* @return Type string of the value.
 '*
 '* @details
-'* スカラー値は VBA の TypeName と同じ型名を返します。
-'* オブジェクトは ObjectKeyMode に応じて Object@ClassName、IEquatable@ClassName、IDuplicateCheckable@ClassName の形式で返します。
-'* 配列は末尾に []、[,]、[1:2,1:3] のいずれかを付けます。
+'* Scalar values return the same type name as VBA TypeName.
+'* Objects are returned in Object@ClassName, IEquatable@ClassName, or IDuplicateCheckable@ClassName format according to ObjectKeyMode.
+'* Arrays have [], [,], or [1:2,1:3] appended to the end.
 Public Function GetTypeString( _
         ByVal Value As Variant, _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE, _
@@ -2235,7 +2235,7 @@ Private Function pGetElementTypeName( _
 
         result_value = element_type_provider.ElementTypeKey
         If Not IsValidElementTypeKey(result_value) Then
-            Err.Raise vbObjectError + 1, ErrorSource, "ElementTypeKey はクラス モジュール名に使用可能な文字で指定してください。(" & result_value & ")"
+            Err.Raise vbObjectError + 1, ErrorSource, "ElementTypeKey must contain only characters allowed in class module names. (" & result_value & ")"
         End If
     Else
         result_value = TypeName(Value)
@@ -2277,7 +2277,7 @@ Private Function pGetObjectKeyModeName(ByVal ObjectKeyMode As Long, ByVal ErrorS
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             result_value = "IDuplicateCheckable"
         Case Else
-            Err.Raise vbObjectError + 1, ErrorSource, "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, ErrorSource, "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 
     pGetObjectKeyModeName = result_value
@@ -2297,19 +2297,19 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 値キー関連
+' Value keys
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 値を型情報付きのキー文字列へ変換します。
+'* Converts a value to a key string with type information.
 '*
-'* @param Value キー化する値。
-'* @param ObjectKeyMode オブジェクトのキー化方法。
-'* @return 型情報付きのキー文字列。
+'* @param Value Value to key.
+'* @param ObjectKeyMode Object keying method.
+'* @return Key string with type information.
 '*
 '* @details
-'* Dictionary などのキーとして使用するための内部表現を返します。
-'* スカラー値、特殊値、配列の次元/境界/要素、オブジェクトの識別方法を含めて文字列化します。
-'* スカラー値も型名で区別します。
+'* Returns an internal representation for use as a key in Dictionary and similar structures.
+'* Converts to a string including scalar values, special values, array dimensions / bounds / elements, and object identification method.
+'* Scalar values are also distinguished by type name.
 Public Function GetTypedValueKey( _
         ByVal Value As Variant, _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE, _
@@ -2321,14 +2321,14 @@ Public Function GetTypedValueKey( _
     GetTypedValueKey = result_value
 End Function
 
-'* 値をキー文字列へ変換します。
+'* Converts a value to a key string.
 '*
-'* @param Value キー化する値。
-'* @param ObjectKeyMode オブジェクトのキー化方法。
-'* @return キー文字列。
+'* @param Value Value to key.
+'* @param ObjectKeyMode Object keying method.
+'* @return Key string.
 '*
 '* @details
-'* `GetTypedValueKey` と同じ規則でキー化しますが、Error / Currency / Variant / Null / Empty / オブジェクト型を除くプリミティブ値は Primitive として同一視します。
+'* Keys using the same rules as `GetTypedValueKey`, but primitive values except Error / Currency / Variant / Null / Empty / object types are treated as the same Primitive.
 Public Function GetValueKey( _
         ByVal Value As Variant, _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE, _
@@ -2531,7 +2531,7 @@ Private Function pGetObjectValueKeyString( _
 
             Case G_OBJECT_KEY_MODE_I_EQUATABLE
                 If Not TypeOf Value Is IEquatable Then
-                    Err.Raise vbObjectError + 1, ErrorSource, "IEquatable ではないオブジェクトを IEquatable モードでキー化しようとしました。(" & object_type_name & ")"
+                    Err.Raise vbObjectError + 1, ErrorSource, "Attempted to key an object that does not implement IEquatable in IEquatable mode. (" & object_type_name & ")"
                 End If
 
                 Dim eq_item As IEquatable
@@ -2540,7 +2540,7 @@ Private Function pGetObjectValueKeyString( _
 
             Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
                 If Not TypeOf Value Is IDuplicateCheckable Then
-                    Err.Raise vbObjectError + 1, ErrorSource, "IDuplicateCheckable ではないオブジェクトを IDuplicateCheckable モードでキー化しようとしました。(" & object_type_name & ")"
+                    Err.Raise vbObjectError + 1, ErrorSource, "Attempted to key an object that does not implement IDuplicateCheckable in IDuplicateCheckable mode. (" & object_type_name & ")"
                 End If
 
                 Dim dup_item As IDuplicateCheckable
@@ -2548,7 +2548,7 @@ Private Function pGetObjectValueKeyString( _
                 result_value = object_type_name & "(" & pEscapeValueKeyString(dup_item.GetKey()) & ")"
 
             Case Else
-                Err.Raise vbObjectError + 1, ErrorSource, "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+                Err.Raise vbObjectError + 1, ErrorSource, "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
         End Select
     End If
 
@@ -2590,18 +2590,18 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 複合キー関連
+' Composite keys
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 複数キーを型情報付きの文字列として連結して返します。
+'* Concatenates multiple keys and returns them as a string with type information.
 '*
-'* @param DictionaryKeys キー (可変長引数)。0 件を指定した場合は空文字列を返します。
-'* @return 連結されたキー文字列。
+'* @param DictionaryKeys Keys (variable-length arguments). Returns an empty string when 0 keys are specified.
+'* @return Concatenated key string.
 '*
 '* @details
-'* 指定された複数のキーを `GetTypedValueKey` と同じ基本規則でキー化し、1 つの文字列として返します。
-'* キーに使用される区切り文字はタブ文字 (`vbTab`) です。
-'* 各キー内のタブ文字は `GetTypedValueKey` でエスケープされます。
+'* Keys the specified multiple keys using the same basic rules as `GetTypedValueKey` and returns them as one string.
+'* The separator used for keys is the tab character (`vbTab`).
+'* Tab characters inside each key are escaped by `GetTypedValueKey`.
 Public Function GetTypedMultiKey(ParamArray DictionaryKeys() As Variant) As String
     Dim key_arr As Variant
     key_arr = DictionaryKeys
@@ -2609,15 +2609,15 @@ Public Function GetTypedMultiKey(ParamArray DictionaryKeys() As Variant) As Stri
     GetTypedMultiKey = GetTypedMultiKeyByModeFromArray(G_OBJECT_KEY_MODE_REFERENCE, key_arr)
 End Function
 
-'* オブジェクト キー化モードを指定して、複数キーを型情報付きの文字列として連結して返します。
+'* Concatenates multiple keys as a string with type information, using the specified object keying mode.
 '*
-'* @param ObjectKeyMode トップレベルのオブジェクト キー化方法。
-'* @param DictionaryKeys キー (可変長引数)。0 件を指定した場合は空文字列を返します。
-'* @return 連結されたキー文字列。
+'* @param ObjectKeyMode Top-level object keying method.
+'* @param DictionaryKeys Keys (variable-length arguments). Returns an empty string when 0 keys are specified.
+'* @return Concatenated key string.
 '*
 '* @details
-'* トップレベルのオブジェクト値は ObjectKeyMode を優先してキー化し、指定モードに対応していないオブジェクトは参照キーへフォールバックします。
-'* 配列引数は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
+'* Top-level object values are keyed with ObjectKeyMode taking precedence, and objects that do not support the specified mode fall back to reference keys.
+'* Array arguments are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
 Public Function GetTypedMultiKeyByMode(ByVal ObjectKeyMode As Long, ParamArray DictionaryKeys() As Variant) As String
     Dim key_arr As Variant
     key_arr = DictionaryKeys
@@ -2625,17 +2625,17 @@ Public Function GetTypedMultiKeyByMode(ByVal ObjectKeyMode As Long, ParamArray D
     GetTypedMultiKeyByMode = GetTypedMultiKeyByModeFromArray(ObjectKeyMode, key_arr)
 End Function
 
-'* オブジェクト キー化モードを指定して、配列から複数キーを型情報付きの文字列として連結して返します。
+'* Concatenates multiple keys from an array as a string with type information, using the specified object keying mode.
 '*
-'* @param ObjectKeyMode トップレベルのオブジェクト キー化方法。
-'* @param DictionaryKeys ParamArray と同じ形式の 1 次元配列。
-'* @return 連結されたキー文字列。
+'* @param ObjectKeyMode Top-level object keying method.
+'* @param DictionaryKeys One-dimensional array in the same format as ParamArray.
+'* @return Concatenated key string.
 '*
 '* @details
-'* VBA では配列を ParamArray へ展開できないため、その回避用に用意した関数です。
-'* 通常の呼び出しでは `GetTypedMultiKeyByMode` を使用してください。
-'* トップレベルのオブジェクト値は ObjectKeyMode を優先してキー化し、指定モードに対応していないオブジェクトは参照キーへフォールバックします。
-'* 配列引数は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
+'* This function exists as a workaround because VBA cannot expand an array into a ParamArray.
+'* Use `GetTypedMultiKeyByMode` for normal calls.
+'* Top-level object values are keyed with ObjectKeyMode taking precedence, and objects that do not support the specified mode fall back to reference keys.
+'* Array arguments are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
 Public Function GetTypedMultiKeyByModeFromArray( _
         ByVal ObjectKeyMode As Long, _
         ByVal DictionaryKeys As Variant, _
@@ -2649,14 +2649,14 @@ Public Function GetTypedMultiKeyByModeFromArray( _
             "Function GetTypedMultiKeyByModeFromArray")
 End Function
 
-'* 複数キーを連結して返します。
+'* Concatenates multiple keys and returns the result.
 '*
-'* @param DictionaryKeys キー (可変長引数)。0 件を指定した場合は空文字列を返します。
-'* @return 連結されたキー文字列。
+'* @param DictionaryKeys Keys (variable-length arguments). Returns an empty string when 0 keys are specified.
+'* @return Concatenated key string.
 '*
 '* @details
-'* 指定された複数のキーを `GetValueKey` と同じ基本規則でキー化し、1 つの文字列として返します。
-'* Error / Currency / Variant / Null / Empty / オブジェクト型を除くプリミティブ値は Primitive として同一視します。
+'* Keys the specified multiple keys using the same basic rules as `GetValueKey` and returns them as one string.
+'* Primitive values except Error / Currency / Variant / Null / Empty / object types are treated as the same Primitive.
 Public Function GetMultiKey(ParamArray DictionaryKeys() As Variant) As String
     Dim key_arr As Variant
     key_arr = DictionaryKeys
@@ -2664,16 +2664,16 @@ Public Function GetMultiKey(ParamArray DictionaryKeys() As Variant) As String
     GetMultiKey = GetMultiKeyByModeFromArray(G_OBJECT_KEY_MODE_REFERENCE, key_arr)
 End Function
 
-'* オブジェクト キー化モードを指定して、複数キーを連結して返します。
+'* Concatenates multiple keys using the specified object keying mode.
 '*
-'* @param ObjectKeyMode トップレベルのオブジェクト キー化方法。
-'* @param DictionaryKeys キー (可変長引数)。0 件を指定した場合は空文字列を返します。
-'* @return 連結されたキー文字列。
+'* @param ObjectKeyMode Top-level object keying method.
+'* @param DictionaryKeys Keys (variable-length arguments). Returns an empty string when 0 keys are specified.
+'* @return Concatenated key string.
 '*
 '* @details
-'* トップレベルのオブジェクト値は ObjectKeyMode を優先してキー化し、指定モードに対応していないオブジェクトは参照キーへフォールバックします。
-'* 配列引数は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
-'* Error / Currency / Variant / Null / Empty / オブジェクト型を除くプリミティブ値は Primitive として同一視します。
+'* Top-level object values are keyed with ObjectKeyMode taking precedence, and objects that do not support the specified mode fall back to reference keys.
+'* Array arguments are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
+'* Primitive values except Error / Currency / Variant / Null / Empty / object types are treated as the same Primitive.
 Public Function GetMultiKeyByMode(ByVal ObjectKeyMode As Long, ParamArray DictionaryKeys() As Variant) As String
     Dim key_arr As Variant
     key_arr = DictionaryKeys
@@ -2681,18 +2681,18 @@ Public Function GetMultiKeyByMode(ByVal ObjectKeyMode As Long, ParamArray Dictio
     GetMultiKeyByMode = GetMultiKeyByModeFromArray(ObjectKeyMode, key_arr)
 End Function
 
-'* オブジェクト キー化モードを指定して、配列から複数キーを連結して返します。
+'* Concatenates multiple keys from an array using the specified object keying mode.
 '*
-'* @param ObjectKeyMode トップレベルのオブジェクト キー化方法。
-'* @param DictionaryKeys ParamArray と同じ形式の 1 次元配列。
-'* @return 連結されたキー文字列。
+'* @param ObjectKeyMode Top-level object keying method.
+'* @param DictionaryKeys One-dimensional array in the same format as ParamArray.
+'* @return Concatenated key string.
 '*
 '* @details
-'* VBA では配列を ParamArray へ展開できないため、その回避用に用意した関数です。
-'* 通常の呼び出しでは `GetMultiKeyByMode` を使用してください。
-'* トップレベルのオブジェクト値は ObjectKeyMode を優先してキー化し、指定モードに対応していないオブジェクトは参照キーへフォールバックします。
-'* 配列引数は `G_OBJECT_KEY_MODE_REFERENCE` でキー化するため、配列要素内のオブジェクトには ObjectKeyMode を適用しません。
-'* Error / Currency / Variant / Null / Empty / オブジェクト型を除くプリミティブ値は Primitive として同一視します。
+'* This function exists as a workaround because VBA cannot expand an array into a ParamArray.
+'* Use `GetMultiKeyByMode` for normal calls.
+'* Top-level object values are keyed with ObjectKeyMode taking precedence, and objects that do not support the specified mode fall back to reference keys.
+'* Array arguments are keyed with `G_OBJECT_KEY_MODE_REFERENCE`, so ObjectKeyMode is not applied to objects inside array elements.
+'* Primitive values except Error / Currency / Variant / Null / Empty / object types are treated as the same Primitive.
 Public Function GetMultiKeyByModeFromArray( _
         ByVal ObjectKeyMode As Long, _
         ByVal DictionaryKeys As Variant, _
@@ -2741,7 +2741,7 @@ Private Sub pGetArgumentArrayBounds( _
         ByVal ErrorSource As String)
 
     If Not IsArray(TargetArray) Then
-        Err.Raise vbObjectError + 1, ErrorSource, "ParamArray と同じ形式の 1 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, ErrorSource, "Specify a one-dimensional array in the same format as ParamArray."
     End If
 
     On Error GoTo INVALID_ARRAY
@@ -2754,7 +2754,7 @@ Private Sub pGetArgumentArrayBounds( _
     second_dim_lower_bound = LBound(TargetArray, 2)
     If Err.Number = 0 Then
         On Error GoTo 0
-        Err.Raise vbObjectError + 1, ErrorSource, "ParamArray と同じ形式の 1 次元配列を指定してください。"
+        Err.Raise vbObjectError + 1, ErrorSource, "Specify a one-dimensional array in the same format as ParamArray."
     End If
     Err.Clear
     On Error GoTo 0
@@ -2762,7 +2762,7 @@ Private Sub pGetArgumentArrayBounds( _
 
 INVALID_ARRAY:
     On Error GoTo 0
-    Err.Raise vbObjectError + 1, ErrorSource, "初期化済みの 1 次元配列を指定してください。"
+    Err.Raise vbObjectError + 1, ErrorSource, "Specify an initialized one-dimensional array."
 End Sub
 
 Private Function pGetFallbackValueKeyCore( _
@@ -2814,7 +2814,7 @@ Private Function pGetFallbackObjectValueKeyString( _
             End If
 
         Case Else
-            Err.Raise vbObjectError + 1, ErrorSource, "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, ErrorSource, "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 
     pGetFallbackObjectValueKeyString = pGetObjectValueKeyString(Value, effective_object_key_mode, UseElementTypeKey, ErrorSource)
@@ -2822,28 +2822,28 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 文字列配列関連
+' String arrays
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 文字列の配列の diff を取ります。
+'* Diffs arrays of strings.
 '*
-'* @param OldArray [入出力] 古い文字列の配列。ReDim 可能である必要があります。
-'* @param NewArray [入出力] 新しい文字列の配列。ReDim 可能である必要があります。
-'* @param ChangeTypeArray [出力] 変更種別の配列。ReDim 可能である必要があります。渡される配列は、未初期化状態でも構いません。結果が 1 件以上の場合、下限は常に 0 です。結果が 0 件の場合は空配列になります。
-'* @param EnableReplaceType [省略可] 削除と追加が連続する部分を置換として扱うか否か。デフォルトは True で、置換として扱います。
-'* @param ReplaceCost [省略可] 削除と追加のコストを 1 としたとき、置換のコストをどうするか (0～2)。デフォルトは 1.5。
+'* @param OldArray [Input/Output] Old string array. Must be ReDim-capable.
+'* @param NewArray [Input/Output] New string array. Must be ReDim-capable.
+'* @param ChangeTypeArray [Output] Array of change types. Must be ReDim-capable. The passed array may be uninitialized. If the result has one or more items, the lower bound is always 0. If the result has 0 items, it becomes an empty array.
+'* @param EnableReplaceType [Optional] Whether consecutive deletion and addition parts are treated as replacement. Default is True, treating them as replacement.
+'* @param ReplaceCost [Optional] Replacement cost when deletion and addition each cost 1 (0 to 2). Default is 1.5.
 '*
 '* @details
-'* 配列 OldArray, NewArray の最小編集距離を算出し、
-'* (Old行, New行, 変更種別) の並びをそれぞれの配列に上書きします。
-'* 結果配列は入力配列の下限に関わらず、0 ベースに正規化されます。
-'* OldArray / NewArray は未初期化状態または空配列でも入力できます。両方が空の場合、出力配列も空配列になります。
+'* Calculates the minimum edit distance for arrays OldArray and NewArray,
+'* and overwrites each array with sequences of (Old row, New row, change type).
+'* Result arrays are normalized to 0-based regardless of the lower bounds of the input arrays.
+'* OldArray / NewArray can be uninitialized or empty arrays. If both are empty, the output arrays also become empty arrays.
 '*
-'* 変更種別は "" (一致), "DEL" (削除), "ADD" (追加), "MOD" (置換) のいずれかとなります。
-'* 種別が一致の場合は OldArray、NewArray の両方の当該インデックスは元の文字列になります。
-'* 削除の場合は、OldArray の当該インデックスは元の文字列が入り、NewArray の当該インデックスは空文字列となります。
-'* 追加の場合は、NewArray の当該インデックスは新しい文字列が入り、OldArray の当該インデックスは空文字列となります。
-'* 置換の場合は、OldArray の当該インデックスは元の文字列が、NewArray の当該インデックスは新しい文字列が入ります。
+'* The change type is one of "" (match), "DEL" (delete), "ADD" (add), or "MOD" (replace).
+'* For a matching type, both the OldArray and NewArray index contain the original string.
+'* For a deletion, the OldArray index contains the original string and the NewArray index contains an empty string.
+'* For an addition, the NewArray index contains the new string and the OldArray index contains an empty string.
+'* For a replacement, the OldArray index contains the original string and the NewArray index contains the new string.
 Public Sub DiffStringArray( _
         ByRef OldArray() As String, _
         ByRef NewArray() As String, _
@@ -2878,7 +2878,7 @@ Public Sub DiffStringArray( _
         new_end_idx = UBound(NewArray)
     End If
 
-    ' 再帰的に差分計算（Hirschberg アルゴリズム）
+    ' Recursively calculate the differences (Hirschberg algorithm).
     Call pHirschbergDiffRecursive(OldArray, old_start_idx, old_end_idx, _
                               NewArray, new_start_idx, new_end_idx, _
                               diff_old_coll, diff_new_coll, diff_op_coll, ReplaceCost)
@@ -3143,61 +3143,61 @@ Private Sub pDiffSmall(ByRef OldArr() As String, ByVal StartIdxOld As Long, ByVa
     Next loop_idx_final_val
 End Sub
 
-'* String の配列が空かどうかを判定します。
+'* Determines whether a String array is empty.
 '*
-'* @param StringArray 判定対象の String 型配列
-'* @param BlankAsEmpty [省略可] 要素数 1 で中身が空文字列の配列を空扱いするか否か。既定値は True。
-'* @return 空の場合は True、それ以外は False
+'* @param StringArray String array to test.
+'* @param BlankAsEmpty [Optional] Whether to treat an array with one element whose content is an empty string as empty. Default is True.
+'* @return True if empty; otherwise, False.
 '*
 '* @details
-'* 配列が初期化されていない場合、または要素が 1 未満の場合に True を返します。
-'* BlankAsEmpty が True の場合は、要素数 1 で唯一の要素が空文字列の場合も True を返します。
+'* Returns True when the array is uninitialized or has fewer than 1 element.
+'* When BlankAsEmpty is True, also returns True when there is one element and that only element is an empty string.
 Public Function IsEmptyStringArray( _
         ByRef StringArray() As String, _
         Optional ByVal BlankAsEmpty As Boolean = True) As Boolean
     If (Not StringArray) = -1 Then
-        ' 未初期化
+        ' Uninitialized.
         IsEmptyStringArray = True
     ElseIf UBound(StringArray) < LBound(StringArray) Then
-        ' 長さが 1 未満
+        ' Length is less than 1.
         IsEmptyStringArray = True
     ElseIf LBound(StringArray) < UBound(StringArray) Then
-        ' 長さが 2 以上
+        ' Length is 2 or more.
         IsEmptyStringArray = False
     ElseIf BlankAsEmpty And StringArray(LBound(StringArray)) = "" Then
-        ' 長さが 1 で、内容が空文字列
+        ' Length is 1 and the content is an empty string.
         IsEmptyStringArray = True
     Else
-        ' それ以外
+        ' Otherwise.
         IsEmptyStringArray = False
     End If
 End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 文字列置換関連
+' String replacement
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 文字列に対して複数条件で置換を実行します。
+'* Performs replacements on a string using multiple conditions.
 '*
-'* @param Expression 対象の文字列
-'* @param Find1 最初の置換対象文字列
-'* @param Replace1 最初の置換後文字列 (文字列または配列)
-'* @param FindReplacePairs 可変長の置換対象文字列と置換後文字列のペア
-'* @return 置換後の文字列配列
+'* @param Expression Target string.
+'* @param Find1 First string to replace.
+'* @param Replace1 First replacement string (string or array).
+'* @param FindReplacePairs Variable-length pairs of strings to replace and replacement strings.
+'* @return Array of strings after replacement.
 '*
 '* @details
-'* 指定された条件で文字列を置換し、すべての結果を配列で返します。
-'* 置換後文字列が配列の場合、それぞれの組み合わせを結果に含めます。
-'* 置換対象文字列に空文字列は指定できません。
-'* 置換後文字列が空配列の場合はエラーを発生させます。
+'* Replaces strings under the specified conditions and returns all results as an array.
+'* If a replacement string is an array, each combination is included in the result.
+'* Empty strings cannot be specified as strings to replace.
+'* Raises an error when a replacement string is an empty array.
 Public Function ReplaceMulti(ByVal Expression As String, ByVal Find1 As String, ByVal Replace1 As Variant, ParamArray FindReplacePairs() As Variant) As String()
     Dim result_list As ObjectList
     Set result_list = New ObjectList
 
     If LBound(FindReplacePairs) <= UBound(FindReplacePairs) Then
         If (UBound(FindReplacePairs) - LBound(FindReplacePairs) + 1) Mod 2 <> 0 Then
-            Err.Raise vbObjectError + 1, "Function ReplaceMulti", "可変長文字列が奇数個です。置換対象と置換後文字列の対応が取れていません。"
+            Err.Raise vbObjectError + 1, "Function ReplaceMulti", "An odd number of variable-length strings was supplied. Replacement targets and replacement strings do not match."
             Exit Function
         End If
     End If
@@ -3217,12 +3217,12 @@ End Function
 
 Private Sub pReplaceMultiCore(ByRef ResultList As ObjectList, ByVal FindString As String, ByVal Replaces As Variant)
     If FindString = "" Then
-        Err.Raise vbObjectError + 1, "Function ReplaceMulti", "置換対象文字列に空文字列は指定できません。"
+        Err.Raise vbObjectError + 1, "Function ReplaceMulti", "The replacement target string cannot be an empty string."
     End If
 
     If IsArray(Replaces) Then
         If IsEmptyArray(Replaces) Then
-            Err.Raise vbObjectError + 1, "Function ReplaceMulti", "置換後文字列の候補配列が空です。"
+            Err.Raise vbObjectError + 1, "Function ReplaceMulti", "The replacement string candidate array is empty."
         End If
     End If
 
@@ -3249,25 +3249,25 @@ End Sub
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 改行文字関連
+' Newline characters
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 Private Sub pValidateLineSeparatorEscSeqChar(ByVal EscSeqChar As String, ByVal ErrorSource As String)
     If Len(EscSeqChar) <> 1 Then
-        Err.Raise vbObjectError + 1, ErrorSource, "EscSeqChar は 1 文字を指定してください。"
+        Err.Raise vbObjectError + 1, ErrorSource, "EscSeqChar must be one character."
     End If
 End Sub
 
-'* 改行記号をエスケープします。
+'* Escapes newline characters.
 '*
-'* @param Expression 対象の文字列
-'* @param EscSeqChar エスケープ記号 (既定値は `\`)
-'* @return 改行記号をエスケープした文字列
+'* @param Expression Target string.
+'* @param EscSeqChar Escape character (default is `\`).
+'* @return String with newline characters escaped.
 '*
 '* @details
-'* 改行記号 (`vbCr`, `vbLf`) を指定されたエスケープ記号で置換します。
-'* EscSeqChar が空文字列の場合は省略扱いとし、`\` を使用します。
-'* EscSeqChar は空文字列を除き 1 文字だけ指定できます。
+'* Replaces newline characters (`vbCr`, `vbLf`) with the specified escape character.
+'* If EscSeqChar is an empty string, it is treated as omitted and `\` is used.
+'* EscSeqChar can specify only one character, except for an empty string.
 Public Function EscapeLineSeparator(ByVal Expression As String, Optional ByVal EscSeqChar As String = "") As String
     If EscSeqChar = "" Then EscSeqChar = "\"
     Call pValidateLineSeparatorEscSeqChar(EscSeqChar, "Function EscapeLineSeparator")
@@ -3279,18 +3279,18 @@ Public Function EscapeLineSeparator(ByVal Expression As String, Optional ByVal E
     EscapeLineSeparator = result_value
 End Function
 
-'* 改行記号のエスケープを解除します。
+'* Unescapes newline characters.
 '*
-'* @param Expression 対象の文字列
-'* @param EscSeqChar エスケープ記号 (既定値は `\`)
-'* @return エスケープ解除後の文字列
+'* @param Expression Target string.
+'* @param EscSeqChar Escape character (default is `\`).
+'* @return Unescaped string.
 '*
 '* @details
-'* エスケープされた改行記号 (`\n`, `\r`) を元の改行記号 (`vbCr`, `vbLf`) に戻します。
-'* EscSeqChar が空文字列の場合は省略扱いとし、`\` を使用します。
-'* EscSeqChar は空文字列を除き 1 文字だけ指定できます。
-'* 未知のエスケープ列はエスケープ文字を捨て、後続文字だけを残します。
-'* 文字列末尾のエスケープ文字はエラーとします。
+'* Restores escaped newline sequences (`\n`, `\r`) to the original newline characters (`vbCr`, `vbLf`).
+'* If EscSeqChar is an empty string, it is treated as omitted and `\` is used.
+'* EscSeqChar can specify only one character, except for an empty string.
+'* Unknown escape sequences drop the escape character and keep only the following character.
+'* An escape character at the end of the string is an error.
 Public Function UnescapeLineSeparator(ByVal Expression As String, Optional ByVal EscSeqChar As String = "\") As String
     If EscSeqChar = "" Then EscSeqChar = "\"
     Call pValidateLineSeparatorEscSeqChar(EscSeqChar, "Function UnescapeLineSeparator")
@@ -3308,7 +3308,7 @@ Public Function UnescapeLineSeparator(ByVal Expression As String, Optional ByVal
         cur_char = Mid$(Expression, item_idx, 1)
 
         If cur_char = EscSeqChar Then
-            ' エスケープシーケンスの開始
+            ' Start of an escape sequence.
             If item_idx < str_len Then
                 Dim next_char As String
                 next_char = Mid$(Expression, item_idx + 1, 1)
@@ -3325,11 +3325,11 @@ Public Function UnescapeLineSeparator(ByVal Expression As String, Optional ByVal
                         item_idx = item_idx + 2
                 End Select
             Else
-                ' 文字列の最後にエスケープ文字がある場合
-                Err.Raise vbObjectError + 512, "Function UnescapeLineSeparator", "文字列の最後にエスケープ文字があります。"
+                ' Escape character at the end of the string.
+                Err.Raise vbObjectError + 512, "Function UnescapeLineSeparator", "The string ends with an escape character."
             End If
         Else
-            ' エスケープ文字でない場合はそのまま追加
+            ' If it is not an escape character, append it as-is.
             result_value = result_value & cur_char
             item_idx = item_idx + 1
         End If
@@ -3338,28 +3338,28 @@ Public Function UnescapeLineSeparator(ByVal Expression As String, Optional ByVal
     UnescapeLineSeparator = result_value
 End Function
 
-'* 改行記号で文字列を分割して配列を返します。'* 改行記号で文字列を分割して配列を返します。
+'* Splits a string by newline characters and returns an array.
 '*
-'* @param StringList 対象の文字列
-'* @return 改行記号で分割された文字列配列
+'* @param StringList Target string.
+'* @return String array split by newline characters.
 '*
 '* @details
-'* 改行記号に基づいて文字列を分割し、配列で返します。
+'* Splits a string based on newline characters and returns it as an array.
 Public Function SplitByLineSeparator(ByVal StringList As String) As String()
     SplitByLineSeparator = Split(pUnifyLineSeparatorCore(StringList), vbLf)
 End Function
 
-'* 改行記号を統一します。
+'* Normalizes newline characters.
 '*
-'* @param Expression 対象の文字列
-'* @param LineSep 統一後の改行記号 (既定値は `vbLf`)
-'* @return 統一後の文字列
+'* @param Expression Target string.
+'* @param LineSep Newline character after normalization (default is `vbLf`).
+'* @return Normalized string.
 '*
 '* @details
-'* 改行記号を指定された記号 (`vbLf`, `vbCr`, `vbCrLf`) に置換します。
+'* Replaces newline characters with the specified sequence (`vbLf`, `vbCr`, `vbCrLf`).
 Public Function UnifyLineSeparator(ByVal Expression As String, Optional ByVal LineSep As String = vbLf) As String
     If LineSep <> vbLf And LineSep <> vbCr And LineSep <> vbCrLf Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function UnifyLineSeparator", Description:="改行記号ではありません。(" & LineSep & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function UnifyLineSeparator", Description:="The value is not a newline character. (" & LineSep & ")"
     End If
 
     UnifyLineSeparator = Replace(pUnifyLineSeparatorCore(Expression), vbLf, LineSep)
@@ -3371,17 +3371,17 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 文字列結合関連
+' String joining
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* String が格納された ObjectList を、Delimiter で区切って一つの String にします。
+'* Joins an ObjectList containing strings into one String separated by Delimiter.
 '*
-'* @param SourceList 文字列を格納した ObjectList
-'* @param Delimiter 区切り文字 (既定値は半角スペース)
-'* @return 区切り文字で連結された文字列
+'* @param SourceList ObjectList containing strings.
+'* @param Delimiter Delimiter (default is a half-width space).
+'* @return String joined with the delimiter.
 '*
 '* @details
-'* 指定された文字列リストを区切り文字で連結し、単一の文字列として返します。
+'* Joins the specified string list with the delimiter and returns it as a single string.
 Public Function JoinStringList(ByVal SourceList As ObjectList, Optional ByVal Delimiter As String = " ") As String
     Dim result_value As String
 
@@ -3397,14 +3397,14 @@ Public Function JoinStringList(ByVal SourceList As ObjectList, Optional ByVal De
     JoinStringList = result_value
 End Function
 
-'* String が格納された ObjectSet を、Delimiter で区切って一つの String にします。
+'* Joins an ObjectSet containing strings into one String separated by Delimiter.
 '*
-'* @param SourceSet 文字列を格納した ObjectSet
-'* @param Delimiter 区切り文字 (既定値は半角スペース)
-'* @return 区切り文字で連結された文字列
+'* @param SourceSet ObjectSet containing strings.
+'* @param Delimiter Delimiter (default is a half-width space).
+'* @return String joined with the delimiter.
 '*
 '* @details
-'* 指定された文字列セットを区切り文字で連結し、単一の文字列として返します。
+'* Joins the specified string set with the delimiter and returns it as a single string.
 Public Function JoinStringSet(ByVal SourceSet As ObjectSet, Optional ByVal Delimiter As String = " ") As String
     Dim result_value As String
 
@@ -3422,16 +3422,16 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' メッセージ分割関連
+' Message splitting
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* メッセージ文字列をページに分割して表示する MsgBox です。
+'* MsgBox that splits a message string into pages and displays them.
 '*
-'* @param MessageString 表示するメッセージ文字列
-'* @param Title MsgBox のタイトル (オプション)
+'* @param MessageString Message string to display.
+'* @param Title MsgBox title (optional).
 '*
 '* @details
-'* 指定されたメッセージをページに分割し、ページごとに MsgBox で表示します。
+'* Splits the specified message into pages and displays each page with MsgBox.
 Public Sub MsgBoxPage(ByVal MessageString As String, Optional ByVal Title As String = "")
     Dim msg_pages() As String
     Dim msg_page As Variant 'String
@@ -3449,16 +3449,16 @@ Public Sub MsgBoxPage(ByVal MessageString As String, Optional ByVal Title As Str
     Next msg_page
 End Sub
 
-'* メッセージ文字列をページに分割します。
+'* Splits a message string into pages.
 '*
-'* @param MessageString 対象の文字列
-'* @param PageSize ページの最大サイズ (バイト数) (既定値は 1023)
-'* @return ページに分割された文字列の配列
+'* @param MessageString Target string.
+'* @param PageSize Maximum page size in bytes (default is 1023).
+'* @return Array of strings split into pages.
 '*
 '* @details
-'* 指定されたメッセージ文字列を改行単位で分割し、指定されたバイト数の範囲でページ化します。
+'* Splits the specified message string by newline and paginates it within the specified byte count.
 Public Function SplitMessage(ByVal MessageString As String, Optional ByVal PageSize As Long = 1023) As Variant
-    If PageSize < 4 Then Err.Raise vbObjectError + 1, "Function SplitMessage", "PageSize は 4 以上を指定してください。(" & PageSize & ")"
+    If PageSize < 4 Then Err.Raise vbObjectError + 1, "Function SplitMessage", "PageSize must be 4 or greater. (" & PageSize & ")"
 
     Dim msgs_list As ObjectList
     Dim msg_str As String
@@ -3544,19 +3544,19 @@ End Sub
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' トリム関連
+' Trimming
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 文字列の前後の半角空白、タブ、改行記号を削除します。
+'* Removes leading and trailing half-width spaces, tabs, and newline characters from a string.
 '*
-'* @param Expression 対象の文字列
-'* @param IgnoreHead 先頭の空白を無視する場合は True (既定値は False)
-'* @param IgnoreTail 末尾の空白を無視する場合は True (既定値は False)
-'* @param RemoveFullWidthSpace 全角空白も削除する場合は True (既定値は False)
-'* @return 前後の空白を削除した文字列
+'* @param Expression Target string.
+'* @param IgnoreHead True to ignore leading spaces (default is False).
+'* @param IgnoreTail True to ignore trailing spaces (default is False).
+'* @param RemoveFullWidthSpace True to also remove full-width spaces (default is False).
+'* @return String with leading and trailing spaces removed.
 '*
 '* @details
-'* 指定された条件に基づいて、文字列の前後から空白文字を削除します。
+'* Removes whitespace from the beginning and end of a string based on the specified conditions.
 Public Function Strip( _
         ByVal Expression As String, _
         Optional ByVal IgnoreHead As Boolean = False, _
@@ -3576,7 +3576,7 @@ Public Function Strip( _
     End If
 
     If Not IgnoreHead Then
-        ' 先頭の空白、タブ、改行を削除
+        ' Remove leading spaces, tabs, and newlines.
         Do While head_pos <= tail_pos
             test_char = Mid(Expression, head_pos, 1)
             If Not pIsWhitespace(test_char, RemoveFullWidthSpace) Then
@@ -3588,7 +3588,7 @@ Public Function Strip( _
     End If
 
     If Not IgnoreTail Then
-        ' 末尾の空白、タブ、改行を削除
+        ' Remove trailing spaces, tabs, and newlines.
         Do While tail_pos >= head_pos
             test_char = Mid(Expression, tail_pos, 1)
             If Not pIsWhitespace(test_char, RemoveFullWidthSpace) Then
@@ -3599,7 +3599,7 @@ Public Function Strip( _
         Loop
     End If
 
-    ' 最終的な文字列を返す
+    ' Return the final string.
     Strip = Mid(Expression, head_pos, tail_pos - head_pos + 1)
 End Function
 
@@ -3627,17 +3627,17 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 文字列判定関連
+' String checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 文字列が指定の文字列で始まるかを判定します。
+'* Determines whether a string starts with the specified string.
 '*
-'* @param Expression 判定対象の文字列
-'* @param SearchString 検索対象の文字列
-'* @return 指定の文字列で始まる場合は True、それ以外は False
+'* @param Expression String to test.
+'* @param SearchString String to search for.
+'* @return True if the string starts with the specified string; otherwise, False.
 '*
 '* @details
-'* 判定対象の文字列が指定の文字列で始まるかを判定します。SearchString が空文字列の場合は True を返します。
+'* Determines whether the string to test starts with the specified string. Returns True when SearchString is an empty string.
 Public Function StartsWith(ByVal Expression As String, ByVal SearchString As String) As Boolean
     If SearchString = "" Then
         StartsWith = True
@@ -3656,14 +3656,14 @@ Public Function StartsWith(ByVal Expression As String, ByVal SearchString As Str
     End If
 End Function
 
-'* 文字列が指定の文字列で終わるかを判定します。
+'* Determines whether a string ends with the specified string.
 '*
-'* @param Expression 判定対象の文字列
-'* @param SearchString 検索対象の文字列
-'* @return 指定の文字列で終わる場合は True、それ以外は False
+'* @param Expression String to test.
+'* @param SearchString String to search for.
+'* @return True if the string ends with the specified string; otherwise, False.
 '*
 '* @details
-'* 判定対象の文字列が指定の文字列で終わるかを判定します。SearchString が空文字列の場合は True を返します。
+'* Determines whether the string to test ends with the specified string. Returns True when SearchString is an empty string.
 Public Function EndsWith(ByVal Expression As String, ByVal SearchString As String) As Boolean
     If SearchString = "" Then
         EndsWith = True
@@ -3682,15 +3682,15 @@ Public Function EndsWith(ByVal Expression As String, ByVal SearchString As Strin
     End If
 End Function
 
-'* 文字列が指定の文字列で括られているかを判定します。
+'* Determines whether a string is enclosed by the specified strings.
 '*
-'* @param Expression 判定対象の文字列
-'* @param QuoteString 開始文字列
-'* @param EndString 終了文字列 (既定値は `QuoteString`) 終了文字列が省略された場合、開始文字列と同じものを使用します。
-'* @return 指定の文字列で括られている場合は True、それ以外は False
+'* @param Expression String to test.
+'* @param QuoteString Start string.
+'* @param EndString End string (default is `QuoteString`). If the end string is omitted, the same value as the start string is used.
+'* @return True if enclosed by the specified strings; otherwise, False.
 '*
 '* @details
-'* 判定対象の文字列が指定の文字列で括られているかを判定します。
+'* Determines whether the string to test is enclosed by the specified strings.
 Public Function IsQuotedWith(ByVal Expression As String, ByVal QuoteString As String, Optional ByVal EndString As String = "") As Boolean
     If QuoteString = "" Then
         IsQuotedWith = False
@@ -3716,23 +3716,23 @@ End Function
 
 ' #############################################################################
 '
-' 数値関連
+' Numbers
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 最大値・最小値
+' Maximum and minimum values
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 引数として渡された Long 型の値のうち、最大のものを返します。
+'* Returns the largest Long value among the arguments passed.
 '*
-'* @param Number1 最初の数値
-'* @param Number2 2 番目の数値
-'* @param Numbers その他の数値 (可変長引数)
-'* @return 最大の数値
+'* @param Number1 First number.
+'* @param Number2 Second number.
+'* @param Numbers Other numbers (variable-length arguments).
+'* @return Largest number.
 '*
 '* @details
-'* 最低 2 つの引数を指定し、それに加えて可変長引数として任意の個数の数値を指定できます。
+'* Specify at least two arguments, plus any number of additional numbers as variable-length arguments.
 Public Function MaxLng(ByVal Number1 As Long, ByVal Number2 As Long, ParamArray Numbers() As Variant) As Long
     Dim result_value As Long
 
@@ -3749,15 +3749,15 @@ Public Function MaxLng(ByVal Number1 As Long, ByVal Number2 As Long, ParamArray 
     MaxLng = result_value
 End Function
 
-'* 引数として渡された Double 型の値のうち、最大のものを返します。
+'* Returns the largest Double value among the arguments passed.
 '*
-'* @param Number1 最初の数値
-'* @param Number2 2 番目の数値
-'* @param Numbers その他の数値 (可変長引数)
-'* @return 最大の数値
+'* @param Number1 First number.
+'* @param Number2 Second number.
+'* @param Numbers Other numbers (variable-length arguments).
+'* @return Largest number.
 '*
 '* @details
-'* 最低 2 つの引数を指定し、それに加えて可変長引数として任意の個数の数値を指定できます。
+'* Specify at least two arguments, plus any number of additional numbers as variable-length arguments.
 Public Function MaxDbl(ByVal Number1 As Double, ByVal Number2 As Double, ParamArray Numbers() As Variant) As Double
     Dim result_value As Double
 
@@ -3774,15 +3774,15 @@ Public Function MaxDbl(ByVal Number1 As Double, ByVal Number2 As Double, ParamAr
     MaxDbl = result_value
 End Function
 
-'* 引数として渡された Long 型の値のうち、最小のものを返します。
+'* Returns the smallest Long value among the arguments passed.
 '*
-'* @param Number1 最初の数値
-'* @param Number2 2 番目の数値
-'* @param Numbers その他の数値 (可変長引数)
-'* @return 最小の数値
+'* @param Number1 First number.
+'* @param Number2 Second number.
+'* @param Numbers Other numbers (variable-length arguments).
+'* @return Smallest number.
 '*
 '* @details
-'* 最低 2 つの引数を指定し、それに加えて可変長引数として任意の個数の数値を指定できます。
+'* Specify at least two arguments, plus any number of additional numbers as variable-length arguments.
 Public Function MinLng(ByVal Number1 As Long, ByVal Number2 As Long, ParamArray Numbers() As Variant) As Long
     Dim result_value As Long
 
@@ -3799,15 +3799,15 @@ Public Function MinLng(ByVal Number1 As Long, ByVal Number2 As Long, ParamArray 
     MinLng = result_value
 End Function
 
-'* 引数として渡された Double 型の値のうち、最小のものを返します。
+'* Returns the smallest Double value among the arguments passed.
 '*
-'* @param Number1 最初の数値
-'* @param Number2 2 番目の数値
-'* @param Numbers その他の数値 (可変長引数)
-'* @return 最小の数値
+'* @param Number1 First number.
+'* @param Number2 Second number.
+'* @param Numbers Other numbers (variable-length arguments).
+'* @return Smallest number.
 '*
 '* @details
-'* 最低 2 つの引数を指定し、それに加えて可変長引数として任意の個数の数値を指定できます。
+'* Specify at least two arguments, plus any number of additional numbers as variable-length arguments.
 Public Function MinDbl(ByVal Number1 As Double, ByVal Number2 As Double, ParamArray Numbers() As Variant) As Double
     Dim result_value As Double
 
@@ -3827,21 +3827,21 @@ End Function
 
 ' #############################################################################
 '
-' Integer, Long 関連
+' Integer and Long
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Long ビット文字列関連
+' Long bit strings
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Long 型の値を 2 進数表記の文字列に変換します。
+'* Converts a Long value to a binary notation string.
 '*
-'* @param LongValue 変換対象の Long 型の値
-'* @return 2 進数表記の文字列
+'* @param LongValue Long value to convert.
+'* @return Binary notation string.
 '*
 '* @details
-'* 指定された Long 型の値を 2 進数表記の文字列に変換します。
+'* Converts the specified Long value to a binary notation string.
 Public Function LongToBin(ByVal LongValue As Long) As String
     Dim high_bit As String
     Dim long_value As Long
@@ -3868,7 +3868,7 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' ビット シフト関連
+' Bit shifting
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 'Sub Test_BitShift()
@@ -3889,7 +3889,7 @@ End Function
 '    test_values(6) = &H70010003
 '    test_values(7) = &H70010002
 '
-'    arr_idx = 0 ' 0 ～ 7 の範囲で変更
+'    arr_idx = 0 ' Change within the range 0 to 7.
 '
 '    Dim test_value As Long
 '    test_value = test_values(arr_idx)
@@ -3908,77 +3908,77 @@ End Function
 '    Next
 'End Sub
 
-'* ビット左シフト演算を行う関数。
+'* Function that performs a bit left shift operation.
 '*
-'* @param TargetValue 左シフトする対象の値。
-'* @param ShiftCount シフトするビット数。
-'* @return 左シフトされた結果の値。
+'* @param TargetValue Value to shift left.
+'* @param ShiftCount Number of bits to shift.
+'* @return Result value after left shift.
 '*
 '* @details
-'* 引数として指定された Long 値に対して、左ビットシフト演算を行います。
-'* 負のシフト数が指定された場合は、論理右シフトとして処理します。
-'* ShiftCount が 32 以上、または -32 以下の場合は 0 を返します。
+'* Performs a left bit shift operation on the Long value specified as an argument.
+'* If a negative shift count is specified, it is processed as a logical right shift.
+'* Returns 0 when ShiftCount is 32 or greater, or -32 or less.
 Public Function BitLeft(ByVal TargetValue As Long, ByVal ShiftCount As Long) As Long
-    ' シフト数 0 の場合は、そのまま返す
+    ' If the shift count is 0, return as-is.
     If ShiftCount = 0 Then
         BitLeft = TargetValue
         Exit Function
     End If
 
-    ' シフト数が 32 以上の場合は、すべて消える
+    ' If the shift count is 32 or greater, everything disappears.
     If 31 < ShiftCount Then
         BitLeft = &H0&
         Exit Function
     End If
 
-    ' シフト数が -32 以下の場合は、逆方向の論理右シフトですべて消える
+    ' If the shift count is -32 or less, everything disappears due to a logical right shift in the opposite direction.
     If ShiftCount < -31 Then
         BitLeft = &H0&
         Exit Function
     End If
 
-    ' シフト数が負の場合は、論理右シフトとして処理
+    ' If the shift count is negative, process it as a logical right shift.
     If ShiftCount < 0 Then
         BitLeft = BitRight(TargetValue, -ShiftCount)
         Exit Function
     End If
 
-    ' ShiftCount が 31 のときは桁あふれするので先に処理
+    ' If ShiftCount is 31, handle it first because it would overflow.
     If ShiftCount = 31 Then
-        ' ShiftCount が 31 のときは、TargetValue の最も右のビットが符合ビット (最も左) になる。
-        ' その他は 0 になる。
+        ' When ShiftCount is 31, the rightmost bit of TargetValue becomes the sign bit (leftmost).
+        ' The others become 0.
         If TargetValue Mod 2 = 0 Then
-            ' 偶数のときは最も右のビットは 0 なので、符号ビットは 0
+            ' If even, the rightmost bit is 0, so the sign bit is 0.
             BitLeft = &H0&
         Else
-            ' 奇数のときは最も右のビットは 1 なので、符号ビットは 1
+            ' If odd, the rightmost bit is 1, so the sign bit is 1.
             BitLeft = &H80000000
         End If
         Exit Function
     End If
 
-    ' 以降、シフト数が 1 ～ 30 の計算
+    ' Calculate the subsequent shift counts from 1 to 30.
 
     Dim result_value As Long
 
-   ' 桁あふれ対策のマスクを準備
-   ' 他言語でいう「&HFFFFFFFF >> (ShiftCount + 1)」と同じ値を得るための処理
-   ' 消えるはずの上位ビットと、処理後に符合ビットになるビットを 0 にするために使用する。
+   ' Prepare a mask to prevent overflow.
+   ' Processing to get the same value as &HFFFFFFFF >> (ShiftCount + 1) in other languages.
+   ' Used to zero out the upper bits that should disappear and the bit that becomes the sign bit after processing.
     Dim mask_value As Long
     mask_value = (2& ^ (31 - ShiftCount)) - 1
 
-    ' シフト処理
-    ' 他言語でいう「TargetValue << ShiftCount」を 2 の累乗を掛けることで模擬
+    ' Shift processing.
+    ' Simulate TargetValue << ShiftCount in other languages by multiplying by a power of 2.
     result_value = (TargetValue And mask_value) * (2 ^ ShiftCount)
 
-    ' 最上位ビット取得用マスクを準備
-    ' 他言語でいう「&H1& << (32 - ShiftCount)」と同じ値を得るための処理
-    ' 処理後に符号ビットになるはずのビットを得るために使用する。
+    ' Prepare a mask for getting the most significant bit.
+    ' Processing to get the same value as &H1& << (32 - ShiftCount) in other languages.
+    ' Used to get the bit that should become the sign bit after processing.
     Dim high_bit_mask As Long
     high_bit_mask = &H1& * (2& ^ (31 - ShiftCount))
 
-    ' 符号ビット (最上位ビット) の処理
-    ' 0 でないなら符号ビットを立てる。
+    ' Process the sign bit (most significant bit).
+    ' If nonzero, set the sign bit.
     If (TargetValue And high_bit_mask) <> 0 Then
         result_value = result_value Or &H80000000
     End If
@@ -3986,96 +3986,96 @@ Public Function BitLeft(ByVal TargetValue As Long, ByVal ShiftCount As Long) As 
     BitLeft = result_value
 End Function
 
-'* ビット右シフト演算を行う関数。
+'* Function that performs a bit right shift operation.
 '*
-'* @param TargetValue 右シフトする対象の値。
-'* @param ShiftCount シフトするビット数。
-'* @param Arithmetic 算術シフトを行う場合はTrue。デフォルトはFalse。
-'* @return 右シフトされた結果の値。
+'* @param TargetValue Value to shift right.
+'* @param ShiftCount Number of bits to shift.
+'* @param Arithmetic True to perform an arithmetic shift. Default is False.
+'* @return Result value after right shift.
 '*
 '* @details
-'* 引数として指定された Long 値に対して、右ビットシフト演算を行います。
-'* 負のシフト数が指定された場合は、左シフトとして処理します。
-'* 算術シフトが要求された場合、左側が符号ビットで埋められます。
-'* ShiftCount が -32 以下の場合は 0 を返します。
-'* ShiftCount が 32 以上の場合、論理シフトでは 0、算術シフトでは符号ビットで埋めた値を返します。
+'* Performs a right bit shift operation on the Long value specified as an argument.
+'* If a negative shift count is specified, it is processed as a left shift.
+'* If an arithmetic shift is requested, the left side is filled with the sign bit.
+'* Returns 0 when ShiftCount is -32 or less.
+'* When ShiftCount is 32 or greater, logical shift returns 0 and arithmetic shift returns a value filled with the sign bit.
 Public Function BitRight(ByVal TargetValue As Long, ByVal ShiftCount As Long, Optional ByVal Arithmetic As Boolean = False) As Long
-    ' シフト数 0 の場合は、そのまま返す
+    ' If the shift count is 0, return as-is.
     If ShiftCount = 0 Then
         BitRight = TargetValue
         Exit Function
     End If
 
-    ' シフト数が 32 以上の場合
+    ' If the shift count is 32 or greater.
     If 31 < ShiftCount Then
         If Arithmetic And TargetValue < 0 Then
-            ' すべて符号ビットで埋められる
+            ' Everything is filled with the sign bit.
             BitRight = &HFFFFFFFF
         Else
-            ' すべて消える
+            ' Everything disappears.
             BitRight = 0
         End If
         Exit Function
     End If
 
-    ' シフト数が -32 以下の場合は、逆方向の左シフトですべて消える
+    ' If the shift count is -32 or less, everything disappears due to a left shift in the opposite direction.
     If ShiftCount < -31 Then
         BitRight = &H0&
         Exit Function
     End If
 
-    ' シフト数が負の場合は、左シフトとして処理
+    ' If the shift count is negative, process it as a left shift.
     If ShiftCount < 0 Then
         BitRight = BitLeft(TargetValue, -ShiftCount)
         Exit Function
     End If
 
-    ' ShiftCount が 31 のときは桁あふれするので先に処理
+    ' If ShiftCount is 31, handle it first because it would overflow.
     If ShiftCount = 31 Then
         If TargetValue < 0 Then
             If Arithmetic Then
-                ' 31 桁は符号ビット (1) で埋められ、32 桁目は符号ビットそのもの (1)
+                ' 31 bits are filled with the sign bit (1), and the 32nd bit is the sign bit itself (1).
                 BitRight = &HFFFFFFFF
             Else
-                ' 31 桁は 0 で埋められ、32 桁目は符号ビットそのもの (1)
+                ' 31 bits are filled with 0, and the 32nd bit is the sign bit itself (1).
                 BitRight = &H1&
             End If
         Else
-            ' 31 桁は符号ビット (0) で埋められ、32 桁目は符号ビットそのもの (0)
-            ' 31 桁は 0 で埋められ、32 桁目は符号ビットそのもの (0)
-            ' いずれにせよ、すべて 0
+            ' 31 bits are filled with the sign bit (0), and the 32nd bit is the sign bit itself (0).
+            ' 31 bits are filled with 0, and the 32nd bit is the sign bit itself (0).
+            ' In any case, all bits are 0.
             BitRight = &H0&
         End If
         Exit Function
     End If
 
-    ' 以降、シフト数が 1 ～ 30 の計算
+    ' Calculate the subsequent shift counts from 1 to 30.
 
     Dim result_value As Long
-    ' まずは符号ビットを倒す
+    ' First, clear the sign bit.
     result_value = TargetValue And &H7FFFFFFF
 
-    ' 1 個シフト
-    ' 整数の範囲内で 2 で 1 回割ることで、右シフトを模擬
+    ' Shift once.
+    ' Simulate a right shift by dividing by 2 once within the integer range.
     result_value = result_value \ 2
 
-    ' 符号ビットを 1 個シフト
-    ' 符号ビットが 1 (つまり負) のときに、第 2 ビット目を立てることで模擬
+    ' Shift the sign bit once.
+    ' When the sign bit is 1 (that is, negative), simulate it by setting the second bit.
     If TargetValue < 0 Then
         result_value = result_value Or &H40000000
     End If
 
-    ' 残りのシフト
-    ' 整数の範囲内で、2 の (ShiftCount - 1) 乗 で割ることで、右シフトを模擬
-    ' (シフト数が 1 のときは無駄な処理になるが、1 以外の時に不要な比較をするのとどちらが良いか…)
+    ' Remaining shifts.
+    ' Simulate by dividing by 2 raised to the power of (ShiftCount - 1) within the integer range.
+    ' When the shift count is 1 this work is wasted, but it avoids adding a comparison that is unnecessary for other counts.
     result_value = result_value \ (2 ^ (ShiftCount - 1))
 
     If Arithmetic And TargetValue < 0 Then
-        ' 他言語でいう「&HFFFFFFFF << (32 - ShiftCount - 1)」と同じ値を得るための処理
+        ' Processing to get the same value as &HFFFFFFFF << (32 - ShiftCount - 1) in other languages.
         Dim sign_mask As Long
         sign_mask = Not ((2& ^ (32 - ShiftCount)) - 1)
 
-        ' 論理シフトのせいで 0 になっている部分を 1 で埋める
+        ' Fill with 1s the area that became 0 because of the logical shift.
         result_value = result_value Or sign_mask
     End If
 
@@ -4084,39 +4084,39 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 符号なし Long 比較関連
+' Unsigned Long comparison
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Long 型の値を符号なし整数として比較する関数。
+'* Function that compares Long values as unsigned integers.
 '*
-'* @param ValueA 比較する最初の値。
-'* @param ValueB 比較する2番目の値。
-'* @return 値の比較結果。A = B の場合は 0、A < B の場合は -1、A > B の場合は 1。
+'* @param ValueA First value to compare.
+'* @param ValueB Second value to compare.
+'* @return Comparison result. 0 when A = B, -1 when A < B, and 1 when A > B.
 '*
 '* @details
-'* 値 A と値 B を符号なし整数として比較します。
+'* Compares value A and value B as unsigned integers.
 Public Function CompareAsUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long) As Integer
     If ValueA = ValueB Then
         CompareAsUnsignedLong = 0
     Else
         If 0 <= ValueA Then
             If 0 <= ValueB Then
-                ' 両方正の時は普通に比較する。
+                ' When both are positive, compare normally.
                 If ValueA < ValueB Then
                     CompareAsUnsignedLong = -1
                 Else
                     CompareAsUnsignedLong = 1
                 End If
             Else
-                ' A が正、B が負のときは A < B
+                ' When A is positive and B is negative, A < B.
                 CompareAsUnsignedLong = -1
             End If
         Else
             If 0 <= ValueB Then
-                ' A が負、B が正のときは A > B
+                ' When A is negative and B is positive, A > B.
                 CompareAsUnsignedLong = 1
             Else
-                ' 両方負の時は普通に比較する。
+                ' When both are negative, compare normally.
                 If ValueA < ValueB Then
                     CompareAsUnsignedLong = -1
                 Else
@@ -4127,15 +4127,15 @@ Public Function CompareAsUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long
     End If
 End Function
 
-'* 符号なし整数として A < B の関係を判定します。
+'* Determines the A < B relationship as unsigned integers.
 '*
-'* @param ValueA 比較する最初の値
-'* @param ValueB 比較する 2 番目の値
-'* @return A が B より小さい場合は True、それ以外は False
+'* @param ValueA First value to compare.
+'* @param ValueB Second value to compare.
+'* @return True when A is less than B; otherwise, False.
 '*
 '* @details
-'* 2 つの Long 型の値を符号なし整数として比較し、A < B の場合に True を返します。
-'* この関数の判定結果は、`CompareAsUnsignedLong` 関数が負の値を返す場合と一致します。
+'* Compares two Long values as unsigned integers and returns True when A < B.
+'* The result of this function matches when the `CompareAsUnsignedLong` function returns a negative value.
 Public Function IsLessThanUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long) As Boolean
     If CompareAsUnsignedLong(ValueA, ValueB) < 0 Then
         IsLessThanUnsignedLong = True
@@ -4146,18 +4146,18 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 符号なし Long 加減算関連
+' Unsigned Long addition and subtraction
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 2 個の Long 型の値を符号なし整数として加算します。
+'* Adds two Long values as unsigned integers.
 '*
-'* @param ValueA 加算対象の最初の値
-'* @param ValueB 加算対象の 2 番目の値
-'* @return 符号なしとして扱った加算結果
+'* @param ValueA First value to add.
+'* @param ValueB Second value to add.
+'* @return Addition result treated as unsigned.
 '*
 '* @details
-'* 2 個の Long 型の値を符号なし整数として扱い、加算を行います。
-'* 加算結果が `FFFFFFFF` を超える場合はエラーとなります。
+'* Treats two Long values as unsigned integers and adds them.
+'* Raises an error if the addition result exceeds `FFFFFFFF`.
 Public Function AddUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long) As Long
     Dim a_high As Long
     Dim a_low As Long
@@ -4175,12 +4175,12 @@ Public Function AddUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long) As L
     Dim add_result_ha As Long
     Call pAddUnsignedLongCore(add_result_ha, carry_bit_ha, a_high, carry_bit_l)
 
-    If 0 < carry_bit_ha Then Err.Raise vbObjectError + 1, "Function AddUnsignedLong", "加算の結果が FFFFFFFF を超えます(" & Hex(ValueA) & " + " & Hex(ValueB) & ")"
+    If 0 < carry_bit_ha Then Err.Raise vbObjectError + 1, "Function AddUnsignedLong", "The addition result exceeds FFFFFFFF. (" & Hex(ValueA) & " + " & Hex(ValueB) & ")"
 
     Dim carry_bit_h As Long
     Dim add_result_h As Long
     Call pAddUnsignedLongCore(add_result_h, carry_bit_h, add_result_ha, b_high)
-    If 0 < carry_bit_h Then Err.Raise vbObjectError + 1, "Function AddUnsignedLong", "加算の結果が FFFFFFFF を超えます(" & Hex(ValueA) & " + " & Hex(ValueB) & ")"
+    If 0 < carry_bit_h Then Err.Raise vbObjectError + 1, "Function AddUnsignedLong", "The addition result exceeds FFFFFFFF. (" & Hex(ValueA) & " + " & Hex(ValueB) & ")"
 
     Dim high_bit As Boolean
     If 32767 < add_result_h Then
@@ -4252,15 +4252,15 @@ Private Sub pAddUnsignedLongCore(ByRef ResultValue As Long, ByRef CarryBit As Lo
     End If
 End Sub
 
-'* 2 個の Long 型の値を符号なし整数として減算します。
+'* Subtracts two Long values as unsigned integers.
 '*
-'* @param ValueA 減算される値
-'* @param ValueB 減算する値
-'* @return 符号なしとして扱った減算結果
+'* @param ValueA Value to subtract from.
+'* @param ValueB Value to subtract.
+'* @return Subtraction result treated as unsigned.
 '*
 '* @details
-'* 2 個の Long 型の値を符号なし整数として扱い、減算を行います。
-'* 減算結果が負になる場合 (`A < B`) はエラーとなります。
+'* Treats two Long values as unsigned integers and subtracts them.
+'* Raises an error when the subtraction result is negative (`A < B`).
 Public Function SubtractUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long) As Long
     If ValueA = ValueB Then
         SubtractUnsignedLong = 0
@@ -4268,7 +4268,7 @@ Public Function SubtractUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long)
     End If
 
     If IsLessThanUnsignedLong(ValueA, ValueB) Then
-        Err.Raise vbObjectError + 1, "Function SubtractUnsignedLong", "第 1 引数より第 2 引数のほうが大きく、計算結果が負になります。(a: " & Hex(ValueA) & ", b: " & Hex(ValueB) & ")"
+        Err.Raise vbObjectError + 1, "Function SubtractUnsignedLong", "The second argument is greater than the first argument, so the result would be negative. (a: " & Hex(ValueA) & ", b: " & Hex(ValueB) & ")"
         Exit Function
     End If
 
@@ -4293,7 +4293,7 @@ Public Function SubtractUnsignedLong(ByVal ValueA As Long, ByVal ValueB As Long)
     Dim subtract_result_h As Long
     subtract_result_h = a_high - b_high - borrow_bit_l
     If subtract_result_h < 0 Then
-        Err.Raise vbObjectError + 1, "Function SubtractUnsignedLong", "第 1 引数より第 2 引数のほうが大きく、計算結果が負になります。(a: " & Hex(ValueA) & ", b: " & Hex(ValueB) & ")"
+        Err.Raise vbObjectError + 1, "Function SubtractUnsignedLong", "The second argument is greater than the first argument, so the result would be negative. (a: " & Hex(ValueA) & ", b: " & Hex(ValueB) & ")"
     End If
 
     SubtractUnsignedLong = pCombineUnsignedLong(subtract_result_h, subtract_result_l)
@@ -4301,17 +4301,17 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' 整数型判定
+' Integer type checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* 指定された値が整数 (Integer 型) に変換可能かを判定します。
+'* Determines whether the specified value can be converted to an integer (`Integer` type).
 '*
-'* @param Value 判定対象の値
-'* @return 整数に変換可能な場合は True、それ以外は False
+'* @param Value Value to test.
+'* @return True if the value can be converted to an integer; otherwise, False.
 '*
 '* @details
-'* 指定された値が数値であり、`Integer` 型に変換可能な範囲内である場合に True を返します。
-'* 値が数値でない場合や範囲外の場合は False を返します。
+'* Returns True when the specified value is numeric and within the range convertible to the `Integer` type.
+'* Returns False when the value is not numeric or is out of range.
 Public Function IsInteger(ByVal Value As Variant) As Boolean
     Dim numeric_value As Double
     If Not pTryConvertToDouble(numeric_value, Value) Then
@@ -4327,14 +4327,14 @@ Public Function IsInteger(ByVal Value As Variant) As Boolean
     IsInteger = (numeric_value = Fix(numeric_value))
 End Function
 
-'* 指定された値が長整数 (Long 型) に変換可能かを判定します。
+'* Determines whether the specified value can be converted to a long integer (`Long` type).
 '*
-'* @param Value 判定対象の値
-'* @return 長整数に変換可能な場合は True、それ以外は False
+'* @param Value Value to test.
+'* @return True if the value can be converted to a long integer; otherwise, False.
 '*
 '* @details
-'* 指定された値が数値であり、`Long` 型に変換可能な範囲内である場合に True を返します。
-'* 値が数値でない場合や範囲外の場合は False を返します。
+'* Returns True when the specified value is numeric and within the range convertible to the `Long` type.
+'* Returns False when the value is not numeric or is out of range.
 Public Function IsLong(ByVal Value As Variant) As Boolean
     Dim numeric_value As Double
     If Not pTryConvertToDouble(numeric_value, Value) Then
@@ -4371,22 +4371,22 @@ End Function
 
 ' #############################################################################
 '
-' Excel 関連
+' Excel
 '
 ' #############################################################################
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Excel ファイル フォーマット判定
+' Excel file format checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* ファイル パスの拡張子から、ファイルフォーマットを得ます。
+'* Gets the file format from the extension of a file path.
 '*
-'* @param FileNameOrPath ファイルのパス文字列。
-'* @return ファイル フォーマット。判定できなかった場合は、xlOpenXMLWorkbook となります。
+'* @param FileNameOrPath File path string.
+'* @return File format. If it cannot be determined, returns xlOpenXMLWorkbook.
 '*
 '* @details
-'* ファイル パスの拡張子から、ファイルフォーマットを得ます。
-'* 拡張子の大小文字は区別しません。
+'* Gets the file format from the extension of a file path.
+'* Extension case is ignored.
 Public Function GetExcelFileFormat(ByVal FileNameOrPath As String) As Long
     Select Case LCase$(GetLeafFromPath(FileNameOrPath, BaseName:=False, Extension:=True))
      Case ".xlsm"
@@ -4430,16 +4430,16 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Excel アドレス種別判定
+' Excel address type checks
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Range アドレスが複数選択 (例: A1, B2:C3, D4) かどうかをチェックします。
+'* Checks whether a Range address is a multiple selection (for example, A1, B2:C3, D4).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 複数選択されている場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True when multiple ranges are selected; otherwise, False.
 '*
 '* @details
-'* Range アドレスが複数選択 (例: A1, B2:C3, D4) かどうかをチェックします。
+'* Checks whether a Range address is a multiple selection (for example, A1, B2:C3, D4).
 Public Function IsMultiRange(ByVal AddressString As String) As Boolean
     Dim folder_path As String
     Dim book_name As String
@@ -4450,14 +4450,14 @@ Public Function IsMultiRange(ByVal AddressString As String) As Boolean
     IsMultiRange = 0 < InStr(cell_address, ",")
 End Function
 
-'* Range アドレスが Area (単一セルを除く連続した複数セル範囲) かどうかをチェックします。
+'* Checks whether a Range address is an Area (a contiguous multi-cell range excluding a single cell).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return Area の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True if it is an Area; otherwise, False.
 '*
 '* @details
-'* この共通モジュールでは Area を「単一セルを除く、連続した複数セル範囲」として扱います。
-'* 非矩形の複数選択範囲は False を返します。
+'* In this common module, Area means a contiguous multi-cell range excluding a single cell.
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsArea(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsArea = False
@@ -4470,14 +4470,14 @@ Public Function IsArea(ByVal AddressString As String) As Boolean
     IsArea = range_bounds.IsArea
 End Function
 
-'* Range アドレスが Cell (単一セル範囲) かどうかをチェックします。
+'* Checks whether a Range address is a Cell (single-cell range).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 単一セル範囲の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True for a single-cell range; otherwise, False.
 '*
 '* @details
-'* Range アドレスが Cell (例: A1) かどうかをチェックします。
-'* 非矩形の複数選択範囲は False を返します。
+'* Checks whether a Range address is a Cell (for example, A1).
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsCell(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsCell = False
@@ -4490,14 +4490,14 @@ Public Function IsCell(ByVal AddressString As String) As Boolean
     IsCell = range_bounds.IsCell
 End Function
 
-'* Range アドレスが行全体 (例: 1:2) かどうかをチェックします。
+'* Checks whether a Range address is an entire row (for example, 1:2).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 行全体である場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True when it is an entire row; otherwise, False.
 '*
 '* @details
-'* Range アドレスが行全体 (例: 1:2) かどうかをチェックします。
-'* 非矩形の複数選択範囲は False を返します。
+'* Checks whether a Range address is an entire row (for example, 1:2).
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsEntireRow(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsEntireRow = False
@@ -4510,14 +4510,14 @@ Public Function IsEntireRow(ByVal AddressString As String) As Boolean
     IsEntireRow = range_bounds.IsEntireRow
 End Function
 
-'* Range アドレスが列全体 (例: A:B) かどうかをチェックします。
+'* Checks whether a Range address is an entire column (for example, A:B).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 列全体である場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True when it is an entire column; otherwise, False.
 '*
 '* @details
-'* Range アドレスが列全体 (例: A:B) かどうかをチェックします。
-'* 非矩形の複数選択範囲は False を返します。
+'* Checks whether a Range address is an entire column (for example, A:B).
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsEntireColumn(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsEntireColumn = False
@@ -4530,14 +4530,14 @@ Public Function IsEntireColumn(ByVal AddressString As String) As Boolean
     IsEntireColumn = range_bounds.IsEntireColumn
 End Function
 
-'* Range アドレスが 1 行形状 (例: A1 や A1:B1 や 1:1) かどうかをチェックします。
+'* Checks whether a Range address has a one-row shape (for example, A1, A1:B1, or 1:1).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 1 行形状の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True for a one-row shape; otherwise, False.
 '*
 '* @details
-'* 単一セルも 1 行形状として True になります。
-'* 非矩形の複数選択範囲は False を返します。
+'* A single cell is also True as a one-row shape.
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsOneRow(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsOneRow = False
@@ -4550,14 +4550,14 @@ Public Function IsOneRow(ByVal AddressString As String) As Boolean
     IsOneRow = range_bounds.IsOneRow
 End Function
 
-'* Range アドレスが 1 列形状 (例: A1 や A1:A2 や A:A) かどうかをチェックします。
+'* Checks whether a Range address has a one-column shape (for example, A1, A1:A2, or A:A).
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 1 列形状の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True for a one-column shape; otherwise, False.
 '*
 '* @details
-'* 単一セルも 1 列形状として True になります。
-'* 非矩形の複数選択範囲は False を返します。
+'* A single cell is also True as a one-column shape.
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsOneColumn(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsOneColumn = False
@@ -4570,14 +4570,14 @@ Public Function IsOneColumn(ByVal AddressString As String) As Boolean
     IsOneColumn = range_bounds.IsOneColumn
 End Function
 
-'* Range アドレスが 1 行だけで構成される Area かどうかをチェックします。
+'* Checks whether a Range address is an Area consisting of only one row.
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 1 行だけで構成される Area の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True for an Area consisting of only one row; otherwise, False.
 '*
 '* @details
-'* A1:B1 や 1:1 は True、A1 は Cell のため False になります。
-'* 非矩形の複数選択範囲は False を返します。
+'* A1:B1 and 1:1 are True; A1 is False because it is a Cell.
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsOneRowArea(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsOneRowArea = False
@@ -4590,14 +4590,14 @@ Public Function IsOneRowArea(ByVal AddressString As String) As Boolean
     IsOneRowArea = range_bounds.IsOneRowArea
 End Function
 
-'* Range アドレスが 1 列だけで構成される Area かどうかをチェックします。
+'* Checks whether a Range address is an Area consisting of only one column.
 '*
-'* @param AddressString 判定対象の Excel アドレス文字列
-'* @return 1 列だけで構成される Area の場合は True、それ以外は False
+'* @param AddressString Excel address string to test.
+'* @return True for an Area consisting of only one column; otherwise, False.
 '*
 '* @details
-'* A1:A2 や A:A は True、A1 は Cell のため False になります。
-'* 非矩形の複数選択範囲は False を返します。
+'* A1:A2 and A:A are True; A1 is False because it is a Cell.
+'* Non-rectangular multiple-selection ranges return False.
 Public Function IsOneColumnArea(ByVal AddressString As String) As Boolean
     If IsMultiRange(AddressString) Then
         IsOneColumnArea = False
@@ -4612,32 +4612,32 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Excel アドレス生成
+' Excel address generation
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* パラメータを指定して範囲のアドレス表記文字列を得ます。
+'* Gets a range address string with specified parameters.
 '*
-'* @param StartRow 開始行番号 (省略時は未指定)
-'* @param StartColumn 開始列番号 (省略時は未指定)
-'* @param FinishRow 終了行番号 (省略時は未指定)
-'* @param FinishColumn 終了列番号 (省略時は未指定)
-'* @param IsAbsoluteStartRow 開始行を絶対参照で指定する場合は True (既定値は False)
-'* @param IsAbsoluteStartColumn 開始列を絶対参照で指定する場合は True (既定値は False)
-'* @param IsAbsoluteFinishRow 終了行を絶対参照で指定する場合は True (既定値は False)
-'* @param IsAbsoluteFinishColumn 終了列を絶対参照で指定する場合は True (既定値は False)
-'* @param ReferenceRow 相対参照の基準行番号 (既定値は 1)
-'* @param ReferenceColumn 相対参照の基準列番号 (既定値は 1)
-'* @param AddressType アドレス形式 ("A1" または "R1C1") (既定値は "A1")
-'* @param SheetName シート名 (省略時は未指定)
-'* @param BookName ブック名 (省略時は未指定)
-'* @return 指定された条件に基づいて生成された範囲のアドレス文字列
+'* @param StartRow Start row number (unspecified when omitted).
+'* @param StartColumn Start column number (unspecified when omitted).
+'* @param FinishRow Finish row number (unspecified when omitted).
+'* @param FinishColumn Finish column number (unspecified when omitted).
+'* @param IsAbsoluteStartRow True to specify the start row as an absolute reference (default is False).
+'* @param IsAbsoluteStartColumn True to specify the start column as an absolute reference (default is False).
+'* @param IsAbsoluteFinishRow True to specify the finish row as an absolute reference (default is False).
+'* @param IsAbsoluteFinishColumn True to specify the finish column as an absolute reference (default is False).
+'* @param ReferenceRow Reference row number for relative references (default is 1).
+'* @param ReferenceColumn Reference column number for relative references (default is 1).
+'* @param AddressType Address format ("A1" or "R1C1") (default is "A1").
+'* @param SheetName Sheet name (unspecified when omitted).
+'* @param BookName Workbook name (unspecified when omitted).
+'* @return Range address string generated based on the specified conditions.
 '*
 '* @details
-'* 行、列、絶対参照・相対参照などのパラメータを指定して、Excel の範囲アドレスを文字列で生成します。
+'* Generates an Excel range address as a string by specifying parameters such as row, column, and absolute / relative references.
 '*
-'* 行指定が省略された場合、列範囲として扱われます。列指定が省略された場合、行範囲として扱われます。
-'* 行指定と列指定の両方を省略することはできません。
-'* BookName を指定する場合、SheetName も指定する必要があります。
+'* If row specification is omitted, it is treated as a column range. If column specification is omitted, it is treated as a row range.
+'* Row specification and column specification cannot both be omitted.
+'* When BookName is specified, SheetName must also be specified.
 Public Function RangeAddress( _
         Optional ByVal StartRow As Long = G_OMIT_CELL_INDEX, _
         Optional ByVal StartColumn As Long = G_OMIT_CELL_INDEX, _
@@ -4655,42 +4655,42 @@ Public Function RangeAddress( _
 
     Call pValidateBookAndSheetAddress(BookName, SheetName, "Function RangeAddress")
 
-    ' 行指定および列指定の確認
+    ' Check row and column specifications.
     If StartRow = G_OMIT_CELL_INDEX And StartColumn = G_OMIT_CELL_INDEX Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="開始行と開始列の両方を省略することはできません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Start row and start column cannot both be omitted."
         Exit Function
     End If
 
     If StartRow = G_OMIT_CELL_INDEX And FinishRow <> G_OMIT_CELL_INDEX Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="開始行のみを省略することはできません。(finish_row: " & FinishRow & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Start row cannot be omitted by itself. (finish_row: " & FinishRow & ")"
         Exit Function
     ElseIf StartRow <> G_OMIT_CELL_INDEX And FinishRow = G_OMIT_CELL_INDEX Then
         If IsAbsoluteStartRow = IsAbsoluteFinishRow Then
-            ' 絶対アドレス指定が一致していたら、FinishRow を補完する。
+            ' If absolute address settings match, fill in FinishRow.
             FinishRow = StartRow
         ElseIf Not IsAbsoluteFinishRow Then
-            ' IsAbsoluteFinishRow が初期値 (False) のままなら、FinishRow と IsAbsoluteFinishRow を補完する。
+            ' If IsAbsoluteFinishRow remains at its initial value (False), fill in FinishRow and IsAbsoluteFinishRow.
             FinishRow = StartRow
             IsAbsoluteFinishRow = IsAbsoluteStartRow
         Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="終了行を省略することはできません。(start_row: " & StartRow & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Finish row cannot be omitted. (start_row: " & StartRow & ")"
             Exit Function
         End If
     End If
 
     If StartColumn = G_OMIT_CELL_INDEX And FinishColumn <> G_OMIT_CELL_INDEX Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="開始列のみを省略することはできません。(finish_col: " & FinishColumn & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Start column cannot be omitted by itself. (finish_col: " & FinishColumn & ")"
         Exit Function
     ElseIf StartColumn <> G_OMIT_CELL_INDEX And FinishColumn = G_OMIT_CELL_INDEX Then
         If IsAbsoluteStartColumn = IsAbsoluteFinishColumn Then
-            ' 絶対アドレス指定が一致していたら、FinishColumn を補完する。
+            ' If absolute address settings match, fill in FinishColumn.
             FinishColumn = StartColumn
         ElseIf Not IsAbsoluteFinishColumn Then
-            ' IsAbsoluteFinishColumn が初期値 (False) のままなら、FinishColumn と IsAbsoluteFinishColumn を補完する。
+            ' If IsAbsoluteFinishColumn remains at its initial value (False), fill in FinishColumn and IsAbsoluteFinishColumn.
             FinishColumn = StartColumn
             IsAbsoluteFinishColumn = IsAbsoluteStartColumn
         Else
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="終了列を省略することはできません。(start_col: " & StartColumn & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Finish column cannot be omitted. (start_col: " & StartColumn & ")"
             Exit Function
         End If
     End If
@@ -4748,7 +4748,7 @@ Public Function RangeAddress( _
             End If
         End If
      Case Else
-        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="AddressType は A1 か R1C1 です。(" & AddressType & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="AddressType must be A1 or R1C1. (" & AddressType & ")"
         Exit Function
     End Select
 
@@ -4760,14 +4760,14 @@ Private Function pA1columnAddressCore(ByVal ColumnIndex As Long, ByVal IsAbsolut
     If IsAbsolute Then
         actual_column = ColumnIndex
         If actual_column < 1 Or G_COL_MAX < actual_column Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="列インデックスが範囲外です。(" & ColumnIndex & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Column index is out of range. (" & ColumnIndex & ")"
         End If
 
         pA1columnAddressCore = "$" & ExcelA1ColumnAddress(CLng(actual_column))
     Else
         actual_column = CDbl(ReferenceColumn) + CDbl(ColumnIndex)
         If actual_column < 1 Or G_COL_MAX < actual_column Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="列インデックスが範囲外です。(" & ReferenceColumn & " + " & ColumnIndex & " = " & CStr(actual_column) & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Column index is out of range. (" & ReferenceColumn & " + " & ColumnIndex & " = " & CStr(actual_column) & ")"
         End If
 
         pA1columnAddressCore = ExcelA1ColumnAddress(CLng(actual_column))
@@ -4779,14 +4779,14 @@ Private Function pA1RowAddressCore(ByVal RowIndex As Long, ByVal IsAbsolute As B
     If IsAbsolute Then
         actual_row = RowIndex
         If actual_row < 1 Or G_ROW_MAX < actual_row Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="行インデックスが範囲外です。(" & RowIndex & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Row index is out of range. (" & RowIndex & ")"
         End If
 
         pA1RowAddressCore = "$" & CStr(CLng(actual_row))
     Else
         actual_row = CDbl(ReferenceRow) + CDbl(RowIndex)
         If actual_row < 1 Or G_ROW_MAX < actual_row Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="行インデックスが範囲外です。(" & ReferenceRow & " + " & RowIndex & " = " & CStr(actual_row) & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Row index is out of range. (" & ReferenceRow & " + " & RowIndex & " = " & CStr(actual_row) & ")"
         End If
 
         pA1RowAddressCore = CStr(CLng(actual_row))
@@ -4796,7 +4796,7 @@ End Function
 Private Function pR1C1RowAddressCore(ByVal RowIndex As Long, ByVal IsAbsolute As Boolean) As String
     If IsAbsolute Then
         If RowIndex < 1 Or G_ROW_MAX < RowIndex Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="行インデックスが範囲外です。(" & RowIndex & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Row index is out of range. (" & RowIndex & ")"
         End If
 
         pR1C1RowAddressCore = CStr(RowIndex)
@@ -4812,7 +4812,7 @@ End Function
 Private Function pR1C1ColumnAddressCore(ByVal ColumnIndex As Long, ByVal IsAbsolute As Boolean) As String
     If IsAbsolute Then
         If ColumnIndex < 1 Or G_COL_MAX < ColumnIndex Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="列インデックスが範囲外です。(" & ColumnIndex & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Function RangeAddress", Description:="Column index is out of range. (" & ColumnIndex & ")"
         End If
 
         pR1C1ColumnAddressCore = CStr(ColumnIndex)
@@ -4825,15 +4825,15 @@ Private Function pR1C1ColumnAddressCore(ByVal ColumnIndex As Long, ByVal IsAbsol
     End If
 End Function
 
-'* ブック名とシート名を Excel アドレス形式にした文字列を得ます。
+'* Gets a string with workbook name and sheet name in Excel address format.
 '*
-'* @param BookName ブック名 (省略時は空文字列)
-'* @param SheetName シート名 (省略時は空文字列)
-'* @return 指定されたブック名およびシート名を含む Excel アドレス形式の文字列
+'* @param BookName Workbook name (empty string when omitted).
+'* @param SheetName Sheet name (empty string when omitted).
+'* @return Excel address-format string containing the specified workbook name and sheet name.
 '*
 '* @details
-'* ブック名とシート名を組み合わせて、Excel で使用可能なアドレス形式の文字列を生成します。
-'* BookName を指定する場合、SheetName も指定する必要があります。
+'* Combines workbook name and sheet name to generate a string in an address format usable by Excel.
+'* When BookName is specified, SheetName must also be specified.
 Public Function ExcelBookAndSheetAddress(Optional ByVal BookName As String = "", Optional ByVal SheetName As String = "") As String
     Call pValidateBookAndSheetAddress(BookName, SheetName, "Function ExcelBookAndSheetAddress")
 
@@ -4843,7 +4843,7 @@ Public Function ExcelBookAndSheetAddress(Optional ByVal BookName As String = "",
         ElseIf SheetName <> "" Then
             ExcelBookAndSheetAddress = "'" & pEscapeBookAndSheetAddressCore(SheetName) & "'!"
         Else
-            'Debug.Print "Function ExcelBookAndSheetAddress: 想定外"
+            'Debug.Print "Function ExcelBookAndSheetAddress: unexpected"
         End If
     Else
         If BookName <> "" Then
@@ -4858,7 +4858,7 @@ End Function
 
 Private Sub pValidateBookAndSheetAddress(ByVal BookName As String, ByVal SheetName As String, ByVal ErrorSource As String)
     If BookName <> "" And SheetName = "" Then
-        Err.Raise vbObjectError + 1, ErrorSource, "ブック名を指定する場合はシート名も指定してください。(" & BookName & ")"
+        Err.Raise vbObjectError + 1, ErrorSource, "If BookName is specified, SheetName must also be specified. (" & BookName & ")"
     End If
 End Sub
 
@@ -4973,17 +4973,17 @@ Private Function pEscapeBookAndSheetAddressCore(ByVal BookOrSheetName As String)
     pEscapeBookAndSheetAddressCore = Replace(Replace(Replace(BookOrSheetName, "'", "''"), "[", "("), "]", ")")
 End Function
 
-'* 列番号を A1 形式の列名 (例: A, B, ... Z, AA, AB...) に変換します。
+'* Converts a column number to an A1-format column name (for example, A, B, ... Z, AA, AB...).
 '*
-'* @param ColumnIndex 列番号 (1 以上 G_COL_MAX 以下の値)
-'* @return 列番号に対応する A1 形式の列名
+'* @param ColumnIndex Column number (value from 1 through G_COL_MAX).
+'* @return A1-format column name corresponding to the column number.
 '*
 '* @details
-'* 指定された列番号を基に、Excel の A1 形式の列名を生成します。
-'* 列番号が 1 未満または G_COL_MAX を超える場合、エラーになります。
+'* Generates an Excel A1-format column name based on the specified column number.
+'* Raises an error if the column number is less than 1 or greater than G_COL_MAX.
 Public Function ExcelA1ColumnAddress(ByVal ColumnIndex As Long) As String
     If ColumnIndex < 1 Or G_COL_MAX < ColumnIndex Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function ExcelA1ColumnAddress", Description:="列インデックスが範囲外です。(" & ColumnIndex & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function ExcelA1ColumnAddress", Description:="Column index is out of range. (" & ColumnIndex & ")"
     End If
 
     Dim result_value As String
@@ -5000,20 +5000,20 @@ End Function
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Excel アドレス分割
+' Excel address splitting
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Excel のアドレス表記から各情報を取り出します。
+'* Extracts each piece of information from Excel address notation.
 '*
-'* @param FolderPath [出力] 結果として取得されるフォルダパス
-'* @param BookName [出力] 結果として取得されるブック名
-'* @param SheetName [出力] 結果として取得されるシート名
-'* @param CellAddress [出力] 結果として取得されるセルアドレス
-'* @param AddressString 分解対象となる Excel アドレス文字列
+'* @param FolderPath [Output] Folder path obtained as the result.
+'* @param BookName [Output] Workbook name obtained as the result.
+'* @param SheetName [Output] Sheet name obtained as the result.
+'* @param CellAddress [Output] Cell address obtained as the result.
+'* @param AddressString Excel address string to decompose.
 '*
 '* @details
-'* 指定された Excel アドレス文字列を分解し、フォルダパス、ブック名、シート名、セルアドレスに分けて出力します。
-'* 形式が正しくない場合はエラーにします。
+'* Decomposes the specified Excel address string and outputs folder path, workbook name, sheet name, and cell address separately.
+'* Raises an error if the format is invalid.
 Public Sub SplitExcelAddress(ByRef FolderPath As String, ByRef BookName As String, ByRef SheetName As String, ByRef CellAddress As String, ByVal AddressString As String)
     FolderPath = ""
     BookName = ""
@@ -5115,20 +5115,20 @@ Private Function pFindExcelAddressDelimiter(ByVal AddressString As String) As Lo
 End Function
 
 Private Sub pRaiseInvalidExcelAddress(ByVal AddressString As String)
-    Err.Raise Number:=vbObjectError + 1, Source:="Sub SplitExcelAddress", Description:="Excel アドレス文字列の形式が正しくありません。(" & AddressString & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Sub SplitExcelAddress", Description:="The Excel address string is not in a valid format. (" & AddressString & ")"
 End Sub
 
-'* A1 形式の単一矩形範囲アドレスを、開始・終了インデックスへ分解します。
+'* Parses an A1-format single rectangular range address into start and finish indexes.
 '*
-'* @param StartRow [出力] 開始行番号。列範囲の場合は G_OMIT_CELL_INDEX。
-'* @param StartColumn [出力] 開始列番号。行範囲の場合は G_OMIT_CELL_INDEX。
-'* @param FinishRow [出力] 終了行番号。列範囲の場合は G_OMIT_CELL_INDEX。
-'* @param FinishColumn [出力] 終了列番号。行範囲の場合は G_OMIT_CELL_INDEX。
-'* @param AddressString 分解対象の A1 形式アドレス。ブック名・シート名は含めない。
+'* @param StartRow [Output] Start row number. G_OMIT_CELL_INDEX for column ranges.
+'* @param StartColumn [Output] Start column number. G_OMIT_CELL_INDEX for row ranges.
+'* @param FinishRow [Output] Finish row number. G_OMIT_CELL_INDEX for column ranges.
+'* @param FinishColumn [Output] Finish column number. G_OMIT_CELL_INDEX for row ranges.
+'* @param AddressString A1-format address to parse. Does not include workbook name or sheet name.
 '*
 '* @details
-'* A1、A1:B2、1:3、A:C、$A$1:$B$2 を扱います。
-'* 複数範囲、R1C1 形式、ブック名・シート名付きアドレス、不完全なアドレスはエラーにします。
+'* Handles A1, A1:B2, 1:3, A:C, and $A$1:$B$2.
+'* Multiple ranges, R1C1 format, addresses with workbook name or sheet name, and incomplete addresses are errors.
 Public Sub SplitA1RangeAddress( _
         ByRef StartRow As Long, _
         ByRef StartColumn As Long, _
@@ -5304,24 +5304,24 @@ Private Function pA1RowIndex(ByVal RowAddress As String, ByVal OriginalAddressSt
 End Function
 
 Private Sub pRaiseInvalidA1RangeAddress(ByVal AddressString As String)
-    Err.Raise Number:=vbObjectError + 1, Source:="Sub SplitA1RangeAddress", Description:="A1 形式の単一矩形範囲アドレスではありません。(" & AddressString & ")"
+    Err.Raise Number:=vbObjectError + 1, Source:="Sub SplitA1RangeAddress", Description:="The value is not a single-rectangle A1 range address. (" & AddressString & ")"
 End Sub
 
 
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-' Range 値変換
+' Range value conversion
 ' - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-'* Range の値を格納した ObjectList を返します。
+'* Returns an ObjectList storing Range values.
 '*
-'* @param TargetRange 対象となる範囲
-'* @param IgnoreEmpty 空のセルを無視する場合は True (既定値は False)
-'* @param GetText Text プロパティを取得する場合は True (既定値は False)
-'* @return 対象範囲内のセルを文字列化して格納した ObjectList
+'* @param TargetRange Target range.
+'* @param IgnoreEmpty True to ignore empty cells (default is False).
+'* @param GetText True to get the Text property (default is False).
+'* @return ObjectList storing cells in the target range converted to strings.
 '*
 '* @details
-'* 指定された範囲の各セルを Value または Text として文字列化し、ObjectList に格納して返します。
-'* IgnoreEmpty が True の場合、空のセルはリストに含まれません。
+'* Converts each cell in the specified range to a string as Value or Text, stores them in an ObjectList, and returns it.
+'* When IgnoreEmpty is True, empty cells are not included in the list.
 Public Function ConvertRangeToStringList(ByVal TargetRange As WorksheetRangeBounds, Optional ByVal IgnoreEmpty As Boolean = False, Optional ByVal GetText As Boolean = False) As ObjectList
     Dim result_value As ObjectList
     Set result_value = New ObjectList

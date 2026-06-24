@@ -15,36 +15,36 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! このオブジェクトと他のオブジェクトが同一であるかを確認できることを示すインターフェイスです。
+'! Interface indicating that an object can check whether it is identical to another object.
 '!
-'! すべてのプロパティが一致しているような同一性ではなく、付帯的な情報を除く重要な性質は一致しているというような同等性を確認する場合は、このインターフェイスを実装するのではなく、IsEquivalentTo というメンバ関数を持たせるようにしてください。
-'! 集合の要素のような重複確認は IDuplicateCheckable を実装してください。
+'! To check equivalence, where essential characteristics match while incidental information may differ, rather than identity where all properties match, provide a member function named IsEquivalentTo instead of implementing this interface.
+'! Implement IDuplicateCheckable for duplicate checks such as elements in a set.
 '!
-'! 同等性に関しては、多態性を利用した場面が想定されていない (基本、同じコンクリート クラス同士での比較となる) ため、現状ではインターフェイスは用意していません。
-'! 同一性も同等性も重複確認も、すべて同じ判断基準であれば、IsEquivalentTo() および IsDuplicateOf() から Equals() を呼び出すような実装にしてかまいません。
+'! For equivalence, no interface is currently provided because polymorphic use is not expected; comparisons are generally between objects of the same concrete class.
+'! If identity, equivalence, and duplicate checks all use the same criteria, IsEquivalentTo() and IsDuplicateOf() may be implemented by calling Equals().
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IEquatable", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IEquatable", Description:="This class is intended for interfaces."
 End Sub
 
-'* このオブジェクトと他のオブジェクトが同一であるかを返します。
+'* Returns whether this object and another object are identical.
 '*
-'* @param OtherObject 他のオブジェクト。
+'* @param OtherObject Other object.
 '*
 '* @details
-'* このオブジェクトと他のオブジェクトが同一であるかを返します。
-'* 特に理由がなければ、他のオブジェクトの型がこのオブジェクトと同じかチェックしたのち、
-'* このオブジェクトと他のオブジェクトの GetIdentityString() を = で比較した結果を返します。
+'* Returns whether this object and another object are identical.
+'* Unless there is a specific reason not to, first check that the other object has the same type as this object,
+'* then return the result of comparing GetIdentityString() on this object and the other object with =.
 Public Function Equals(ByVal OtherObject As Object) As Boolean
 End Function
 
-'* 同一性をチェックするための文字列を返します。
+'* Returns a string used to check identity.
 '*
 '* @details
-'* 同一性をチェックするための文字列を返します。等しいと判断するオブジェクト間では同じ文字列を、異なると判断するオブジェクト間では異なる文字列を返すようにしてください。
-'* 例えば、すべてのメンバ変数を連結した文字列を返すような実装をすることになります。
+'* Returns a string used to check identity. Return the same string for objects judged equal and different strings for objects judged different.
+'* For example, an implementation may return a string made by joining all member variables.
 Public Function GetIdentityString() As String
 End Function
 

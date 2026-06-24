@@ -5,7 +5,7 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! ユニット テストのエントリ ポイントです。
+'! Entry point for unit tests.
 '!
 ' #############################################################################
 
@@ -32,13 +32,13 @@ Private Const C_COLOR_RESET_FG As Long = &HC0C0C0
 
 Private pRuntimeRunnerModuleName As String
 
-'* ユニット テストのエントリ ポイントです。
+'* Entry point for unit tests.
 '*
 '* @details
-'* ユニット テストのエントリ ポイントです。
-'* このプロジェクト内の全モジュールを走査し、Test_ で始まる UnitTestAssert 型を引数とするサブ プロシージャを見つけて実行します。
+'* Entry point for unit tests.
+'* Scans all modules in this project, finds sub procedures whose names start with Test_ and whose argument is UnitTestAssert, and runs them.
 '*
-'* ユニット テスト例:
+'* Unit test example:
 '* @code
 '* Sub Test_SomeFunction(Assert As UnitTestAssert)
 '*     ' Arrange
@@ -63,7 +63,7 @@ Public Sub UnitTestMain()
     Call pInitializeRuntimeRunnerModuleName
     Call pEnsureRuntimeRunnerModule
 
-    ' テスト番号の取得
+    ' Get the test number.
     Dim test_idx As Long: test_idx = 0
 
     Dim caller_str As String
@@ -82,11 +82,11 @@ Public Sub UnitTestMain()
         test_idx = 0
     End If
 
-    ' テスト結果の出力先を準備
+    ' Prepare the output destination for test results.
     Dim result_sheet As Worksheet
     Set result_sheet = pPrepareResultSheet(test_idx)
 
-    ' テスト実行
+    ' Run tests.
     If test_idx = 0 Then
         Call pRunAllTest(result_sheet)
     Else
@@ -117,21 +117,21 @@ ON_ERROR:
 End Sub
 
 Private Sub pRunAllTest(ByVal ResultSheet As Worksheet)
-    ' VBIDE のプロジェクト オブジェクトを取得
+    ' Get the VBIDE project object.
     Dim vb_proj As Variant 'VBIDE.VBProject
     Set vb_proj = ThisWorkbook.VBProject
 
-    ' テスト サブ プロシージャを抽出するための正規表現の準備
+    ' Prepare the regular expression used to extract test Sub procedures.
     Dim sub_re As RegExp
     Set sub_re = New RegExp
     sub_re.Pattern = "^\s*(?:Public\s+)?Sub\s+(Test_[^\s(]+)\s*\(\s*(?:ByVal\s+|ByRef\s+)?[^\s,()]+\s+As\s+UnitTestAssert\s*(?:,\s*Optional\s+[^,)]+)*\).*$"
 
-    ' プロジェクト オブジェクトのコンポーネントすべてについて処理
+    ' Process all components in the project object.
     Dim row_idx As Long: row_idx = 2
     Dim vb_comp As Variant 'VBIDE.VBComponent
     For Each vb_comp In vb_proj.VBComponents
         If vb_comp.Type = C_VBEXT_CT_STDMODULE Then
-            ' モジュール名の取得
+            ' Get the module name.
             Dim mod_name As String
             On Error Resume Next
             mod_name = vb_comp.Name
@@ -144,18 +144,18 @@ Private Sub pRunAllTest(ByVal ResultSheet As Worksheet)
 
                 'Debug.Print "Search " & mod_name
 
-                ' コンポーネントのコード モジュールを得る
+                ' Get the component's code module.
                 Dim vb_comp_code As Variant 'VBIDE.CodeModule
                 Set vb_comp_code = vb_comp.CodeModule
 
-                ' コード モジュールのすべての行を処理する
+                ' Process all lines in the code module.
                 Dim line_idx As Long
                 line_idx = 1
                 Do While line_idx <= vb_comp_code.CountOfLines
                     Dim code_line As String
                     code_line = pReadLogicalLine(vb_comp_code, line_idx)
 
-                    ' 行が正規表現にマッチするかチェック
+                    ' Check whether the line matches the regular expression.
                     Dim match_result As MatchCollection
                     Set match_result = sub_re.Execute(code_line)
 
@@ -165,13 +165,13 @@ Private Sub pRunAllTest(ByVal ResultSheet As Worksheet)
                         Dim sub_name As String
                         sub_name = match_result.Item(0).SubMatches(0)
 
-                        ' テストを実行する
+                        ' Run the test.
                         Call pRunTestCore(ResultSheet, mod_name, sub_name, row_idx)
 
-                        ' ボタンを追加する
-                        Call AddButton(ResultSheet, row_idx, C_COL_BTN, "再実行", pBuildWorkbookMacroName(C_SUB_MAIN), row_idx)
+                        ' Add a button.
+                        Call AddButton(ResultSheet, row_idx, C_COL_BTN, "Run Again", pBuildWorkbookMacroName(C_SUB_MAIN), row_idx)
 
-                        ' 行を進める
+                        ' Advance the row.
                         row_idx = row_idx + 1
                     End If
                     line_idx = line_idx + 1
@@ -256,18 +256,18 @@ End Function
 Private Function pPrepareResultSheet(ByVal TestIndex As Long) As Worksheet
     Dim result_sheet As Worksheet
     If C_NEW_BOOK Then
-        ' 新しいブックに出力
+        ' Output to a new workbook.
         Dim result_book As Workbook
         Set result_book = Workbooks.Add
 
         Set result_sheet = result_book.Worksheets(1)
-        Call AddButton(result_sheet, 1, C_COL_MBTN, "すべて実行", pBuildWorkbookMacroName(C_SUB_MAIN), "Button_UnitTestMain")
+        Call AddButton(result_sheet, 1, C_COL_MBTN, "Run All", pBuildWorkbookMacroName(C_SUB_MAIN), "Button_UnitTestMain")
     Else
-        ' ThisWorkbook に出力
+        ' Output to ThisWorkbook.
         If TestIndex = 0 Then
-            ' 全テスト実行の場合
+            ' For all-test execution.
 
-            ' シート作成を試行
+            ' Try to create the sheet.
             On Error Resume Next
             Set result_sheet = ThisWorkbook.Worksheets(C_SHEET_NAME)
             If Err.Number <> 0 Then
@@ -275,17 +275,17 @@ Private Function pPrepareResultSheet(ByVal TestIndex As Long) As Worksheet
             End If
             On Error GoTo 0
             If result_sheet Is Nothing Then
-                ' 新規シート
+                ' New sheet.
                 Set result_sheet = ThisWorkbook.Worksheets.Add()
                 result_sheet.Name = C_SHEET_NAME
             Else
-                ' 既存シート
+                ' Existing sheet.
                 result_sheet.Columns(C_COL_OKNG).Interior.Color = C_COLOR_RESET_BG
                 result_sheet.Columns(C_COL_OKNG).Font.Color = C_COLOR_RESET_FG
                 Call result_sheet.Cells.ClearContents
                 Call ClearButton(result_sheet)
             End If
-            Call AddButton(result_sheet, 1, C_COL_MBTN, "すべて実行", pBuildWorkbookMacroName(C_SUB_MAIN), "Button_UnitTestMain")
+            Call AddButton(result_sheet, 1, C_COL_MBTN, "Run All", pBuildWorkbookMacroName(C_SUB_MAIN), "Button_UnitTestMain")
         Else
             Set result_sheet = ThisWorkbook.Worksheets(C_SHEET_NAME)
             result_sheet.Cells(TestIndex, C_COL_OKNG).Interior.Color = C_COLOR_RESET_BG
@@ -425,7 +425,7 @@ Private Function pCreateRuntimeRunnerModuleName() As String
         End If
     Next attempt_idx
 
-    Err.Raise vbObjectError + 1, "Module Lib_UnitTest", "実行用一時モジュール名の生成に失敗しました。"
+    Err.Raise vbObjectError + 1, "Module Lib_UnitTest", "Failed to generate the temporary module name for execution."
 End Function
 
 Private Function pRandomUppercaseString(ByVal Length As Long) As String

@@ -14,26 +14,26 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! 入力シートにアクセスするためのインターフェイスです。
+'! Interface for accessing an input sheet.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface IUserInputSheet", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface IUserInputSheet", Description:="This class is intended for interfaces."
 End Sub
 
-'* 入力シート内で項目名と値を読み取る対象範囲。
+'* Target range from which item names and values are read in the input sheet.
 Public Property Get InputArea() As WorksheetRangeBounds
 End Property
 
-'* 指定された項目名に対応する項目値の範囲を取得します。
+'* Gets the range of the item value that corresponds to the specified item name.
 '*
-'* @param FirstItemName 第一項目名。
-'* @param SecondItemName 第二項目名。省略時は第一項目名の値範囲を取得します。
-'* @return 対応する項目値の範囲。見つからない場合は Nothing。
+'* @param FirstItemName First item name.
+'* @param SecondItemName Second item name. When omitted, gets the value range for the first item name.
+'* @return Corresponding item value range. Nothing if not found.
 '*
 '* @details
-'* 入力領域上の項目見出しに対応する値範囲を返します。
+'* Returns the value range that corresponds to the item header in the input area.
 Public Function GetItemRange( _
         ByVal FirstItemName As String, _
         Optional ByVal SecondItemName As String = "") As WorksheetRangeBounds

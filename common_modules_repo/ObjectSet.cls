@@ -13,8 +13,8 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! 任意のオブジェクトまたは値を格納し、効率的にアクセスできるようにするための集合を提供します。
-'! 各要素はユニークなキーによって管理されます。
+'! Provides a set for storing arbitrary objects or values and accessing them efficiently.
+'! Each element is managed by a unique key.
 '!
 ' #############################################################################
 
@@ -33,69 +33,69 @@ Private pNewEnumSnapshot As Collection
 Private pNewEnumSnapshotVersion As Long
 Private pEnumerationVersion As Long
 
-'* 集合内の要素の総数。
+'* Total number of elements in the set.
 Public Property Get Count() As Long
     Count = pDict.Count
 End Property
 
-'* 集合内の要素の型。
+'* Type of elements in the set.
 Public Property Get ItemTypeName() As String
     ItemTypeName = pTypeName
 End Property
 
-'* 集合に要素型契約が設定されているか否か。
+'* Whether an element type contract is set on the set.
 Public Property Get HasItemTypeContract() As Boolean
     HasItemTypeContract = pHasItemTypeContract
 End Property
 
-'* Initialize で指定できる要素型契約名。
+'* Element type contract name that can be specified in Initialize.
 Public Property Get ElementTypeName() As String
     ElementTypeName = pElementTypeName
 End Property
 
-'* 要素に IComparable 実装を要求するか否か。
+'* Whether elements must implement IComparable.
 Public Property Get RequireComparable() As Boolean
     RequireComparable = pRequireComparable
 End Property
 
-'* オブジェクトの同一性/重複判定モード。
+'* Object identity / duplicate check mode.
 Public Property Get ObjectKeyMode() As Long
     ObjectKeyMode = pObjectKeyMode
 End Property
 
-'* 要素型がオブジェクト型か否か。
+'* Whether the element type is an object type.
 Public Property Get IsObjectItemType() As Boolean
     IsObjectItemType = pIsObject
 End Property
 
-'* 要素型が IComparable として扱われるか否か。
+'* Whether the element type is treated as IComparable.
 Public Property Get IsComparableItemType() As Boolean
     IsComparableItemType = pIsComparable
 End Property
 
-'* 要素型が IStringable として扱われるか否か。
+'* Whether the element type is treated as IStringable.
 Public Property Get IsStringableItemType() As Boolean
     IsStringableItemType = pIsStringable
 End Property
 
-'* 要素型が IEquatable として扱われるか否か。
+'* Whether the element type is treated as IEquatable.
 Public Property Get IsEquatableItemType() As Boolean
     IsEquatableItemType = pIsEquatable
 End Property
 
-'* 要素型が IDuplicateCheckable として扱われるか否か。
+'* Whether the element type is treated as IDuplicateCheckable.
 Public Property Get IsDuplicateCheckableItemType() As Boolean
     IsDuplicateCheckableItemType = pIsDuplicateCheckable
 End Property
 
-'* 標準 For Each 用の列挙子を得ます。
+'* Gets the enumerator for standard For Each.
 '*
-'* @return 標準 For Each が使用する列挙子。
+'* @return Enumerator used by standard For Each.
 '*
 '* @details
-'* 列挙開始時点の要素スナップショットを列挙します。
-'* 標準 For Each の列挙中にこの集合を更新した場合、実行中の列挙の継続は保証されません。
-'* 更新や削除を伴う列挙では GetEnumerator を使用してください。
+'* Enumerates a snapshot of elements from the start of enumeration.
+'* If this set is updated during standard For Each enumeration, continuation of the running enumeration is not guaranteed.
+'* Use GetEnumerator for enumeration that updates or removes elements.
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
@@ -107,9 +107,9 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* このコレクションのインデクサ。読み取り専用です。指定されたインデックスにある要素を返します。要素は内部的にキーに基づいてアクセスされます。
+'* Indexer for this collection. Read-only. Returns the element at the specified index. Elements are accessed internally based on keys.
 '*
-'* @param ItemIndex 要素のインデックス。
+'* @param ItemIndex Element index.
 Public Property Get Item(ByVal ItemIndex As Long) As Variant
 Attribute Item.VB_UserMemId = 0
     If pIsObject Then
@@ -136,25 +136,25 @@ Private Sub Class_Initialize()
     Set pNewEnumSnapshot = Nothing
 End Sub
 
-'* 集合の要素型契約を初期化します。
+'* Initializes the element type contract of the set.
 '*
-'* @param ElementTypeName 要素型契約名。
-'* @param RequireComparable 要素に IComparable 実装を要求するか否か。
-'* @param ObjectKeyMode オブジェクトの同一性/重複判定モード。
+'* @param ElementTypeName Element type contract name.
+'* @param RequireComparable Whether elements must implement IComparable.
+'* @param ObjectKeyMode Object identity / duplicate check mode.
 '*
 '* @details
-'* オブジェクト型の要素だけを受け入れる集合として初期化します。
-'* ElementTypeName は、自己申告された ElementTypeKey または TypeName と比較されます。
+'* Initializes this as a set that accepts only object-type elements.
+'* ElementTypeName is compared with the self-reported ElementTypeKey or TypeName.
 Public Sub Initialize( _
         ByVal ElementTypeName As String, _
         Optional ByVal RequireComparable As Boolean = False, _
         Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE)
 
     If pDict.Count <> 0 Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.Initialize", "初期化済みの集合を再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.Initialize", "An initialized set cannot be reinitialized."
     End If
     If Not IsValidElementTypeKey(ElementTypeName) Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.Initialize", "ElementTypeName はクラス モジュール名に使用可能な文字で指定してください。(" & ElementTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.Initialize", "ElementTypeName must contain only characters allowed in class module names. (" & ElementTypeName & ")"
     End If
 
     Call pCheckObjectKeyMode(ObjectKeyMode)
@@ -169,15 +169,15 @@ Public Sub Initialize( _
     pIsDuplicateCheckable = (ObjectKeyMode = G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE)
 End Sub
 
-'* 他の集合と同じ要素型状態で初期化します。
+'* Initializes with the same element type state as another set.
 '*
-'* @param Other 初期化元の集合。
+'* @param Other Source set for initialization.
 '*
 '* @details
-'* 他の集合が管理している要素型状態をこの集合へ引き継ぎます。
+'* Inherits the element type state managed by another set into this set.
 Public Sub InitializeFromOther(ByVal Other As ObjectSet)
     If pDict.Count <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.InitializeFromOther", "初期化済みの集合を再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.InitializeFromOther", "An initialized set cannot be reinitialized."
     End If
 
     pTypeName = Other.ItemTypeName
@@ -192,15 +192,15 @@ Public Sub InitializeFromOther(ByVal Other As ObjectSet)
     pIsDuplicateCheckable = Other.IsDuplicateCheckableItemType
 End Sub
 
-'* 他のリストと同じ要素型状態で初期化します。
+'* Initializes with the same element type state as another list.
 '*
-'* @param OtherList 初期化元のリスト。
+'* @param OtherList Source list for initialization.
 '*
 '* @details
-'* 他のリストが管理している要素型状態をこの集合へ引き継ぎます。
+'* Inherits the element type state managed by another list into this set.
 Public Sub InitializeFromList(ByVal OtherList As ObjectList)
     If pDict.Count <> 0 Or pTypeName <> "" Or pHasItemTypeContract Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.InitializeFromList", "初期化済みの集合を再初期化することはできません。"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.InitializeFromList", "An initialized set cannot be reinitialized."
     End If
 
     pTypeName = OtherList.ItemTypeName
@@ -219,17 +219,17 @@ Private Sub pCheckObjectKeyMode(ByVal ObjectKeyMode As Long)
     Select Case ObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectKeyMode", "未対応のオブジェクト キー化モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectKeyMode", "Unsupported object key mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
-'* 指定されたインデックスの要素を新しいオブジェクトで更新します。
+'* Updates the element at the specified index with a new object.
 '*
-'* @param ItemIndex 更新する要素のインデックス。
-'* @param ItemObject 新しい要素。
+'* @param ItemIndex Index of the element to update.
+'* @param ItemObject New element.
 '*
 '* @details
-'* 指定されたインデックスの要素を新しいオブジェクトで更新します。キーが変更される場合はエラーが発生します。
+'* Updates the element at the specified index with a new object. Raises an error if the key changes.
 Public Sub Update(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
     Call pCheckItemType(ItemObject)
 
@@ -244,7 +244,7 @@ Public Sub Update(ByVal ItemIndex As Long, ByVal ItemObject As Variant)
     Call pGetKey(new_key, ItemObject)
 
     If Not pKeyEquals(old_key, new_key) Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.Update", "元のオブジェクトと、変更後のオブジェクトのキーが違います。変更が必要な場合は、元の要素を Remove 後に新しい要素を Add してください。(old_key: " & old_key & " / new_key: " & new_key & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.Update", "The original object key and updated object key differ. If this change is required, Remove the original element and then Add the new element. (old_key: " & old_key & " / new_key: " & new_key & ")"
         Exit Sub
     End If
 
@@ -263,12 +263,12 @@ Private Function pKeyEquals(ByVal ItemKey1 As Variant, ByVal ItemKey2 As Variant
     pKeyEquals = result_value
 End Function
 
-'* 集合を配列として返します。
+'* Returns the set as an array.
 '*
-'* @return 配列形式の要素。
+'* @return Elements in array form.
 '*
 '* @details
-'* 集合のすべての要素を配列形式で返します。要素数 0 の場合は、0 ベースの空配列を返します。
+'* Returns all elements of the set in array form. If the element count is 0, returns a 0-based empty array.
 Public Function ConvertToArray() As Variant()
     If pDict.Count < 1 Then
         ConvertToArray = EmptyVariantArray()
@@ -295,12 +295,12 @@ Public Function ConvertToArray() As Variant()
     ConvertToArray = result_value
 End Function
 
-'* 集合を文字列の配列として返します。
+'* Returns the set as a string array.
 '*
-'* @return 文字列形式の配列。
+'* @return Array in string form.
 '*
 '* @details
-'* 集合のすべての要素を文字列形式で配列にして返します。要素数 0 の場合は、0 ベースの空配列を返します。
+'* Returns all elements of the set as an array in string form. If the element count is 0, returns a 0-based empty array.
 Public Function ConvertToStringArray() As String()
     If pDict.Count < 1 Then
         ConvertToStringArray = EmptyStringArray()
@@ -344,14 +344,14 @@ Public Function ConvertToStringArray() As String()
     ConvertToStringArray = result_value
 End Function
 
-'* 新しい要素を集合に追加します。
+'* Adds a new element to the set.
 '*
-'* @param ItemObject 追加する要素。
-'* @param Optional ErrorIfExists 既に存在する場合にエラーを発生させるかどうか。
-'* @return 要素が追加されたかどうかを示すブール値。
+'* @param ItemObject Element to add.
+'* @param Optional ErrorIfExists Whether to raise an error if it already exists.
+'* @return Boolean value indicating whether the element was added.
 '*
 '* @details
-'* 新しい要素を集合に追加します。オプションで、要素が既に存在する場合の挙動を指定できます。
+'* Adds a new element to the set. Optionally specifies behavior when the element already exists.
 Public Function Add(ByVal ItemObject As Variant, Optional ByVal ErrorIfExists As Boolean = True) As Boolean
     If pTypeName = "" Then
         Call pInitializeItemType(ItemObject)
@@ -404,24 +404,24 @@ Private Sub pInitializeItemType(ByVal ItemObject As Variant)
         End If
     Else
         If pIsObject Then
-            Err.Raise vbObjectError + 1, "Class ObjectSet.pInitializeItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.pInitializeItemType", "The first element was an object, but the new element is not an object. (" & pTypeName & ")"
         Else
-            ' プリミティブ型
+            ' Primitive type.
             pTypeName = GetTypeString(ItemObject)
             pHasItemTypeContract = True
         End If
     End If
 End Sub
 
-'* 配列の各要素を集合に追加します。
+'* Adds each element of an array to the set.
 '*
-'* @param ItemArray 追加する要素の配列。
-'* @param Optional ErrorIfExists 既に存在する場合にエラーを発生させるかどうか。
+'* @param ItemArray Array of elements to add.
+'* @param Optional ErrorIfExists Whether to raise an error if an element already exists.
 '*
 '* @details
-'* 配列の各要素を集合に追加します。オプションで、要素が既に存在する場合の挙動を指定できます。
+'* Adds each element of an array to the set. Optionally specifies behavior when an element already exists.
 Public Sub AddArray(ByVal ItemArray As Variant, Optional ByVal ErrorIfExists As Boolean = True)
-    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectSet.AddArray", "引数が配列ではありません"
+    If Not IsArray(ItemArray) Then Err.Raise vbObjectError + 1, "Class ObjectSet.AddArray", "The argument is not an array."
     If IsEmptyArray(ItemArray) Then Exit Sub
 
     Dim key_var As Variant
@@ -433,13 +433,13 @@ Public Sub AddArray(ByVal ItemArray As Variant, Optional ByVal ErrorIfExists As 
     Next item_obj
 End Sub
 
-'* 他の集合の要素をこの集合に取り込みます。
+'* Imports elements from another set into this set.
 '*
-'* @param OtherSet 取り込む要素を持つ他の集合。
-'* @param Optional ErrorIfExists 既に存在する場合にエラーを発生させるかどうか。
+'* @param OtherSet Other set containing elements to import.
+'* @param Optional ErrorIfExists Whether to raise an error if an element already exists.
 '*
 '* @details
-'* 他の集合の要素をこの集合に取り込みます。オプションで、要素が既に存在する場合の挙動を指定できます。
+'* Imports elements from another set into this set. Optionally specifies behavior when an element already exists.
 Public Sub AddOther(ByVal OtherSet As ObjectSet, Optional ByVal ErrorIfExists As Boolean = True)
     If pTypeName = "" And OtherSet.HasItemTypeContract Then
         Call InitializeFromOther(OtherSet)
@@ -457,13 +457,13 @@ Public Sub AddOther(ByVal OtherSet As ObjectSet, Optional ByVal ErrorIfExists As
     Next item_idx
 End Sub
 
-'* 他のリストの要素をこの集合に取り込みます。
+'* Imports elements from another list into this set.
 '*
-'* @param OtherList 取り込む要素を持つ他のリスト。
-'* @param Optional ErrorIfExists 既に存在する場合にエラーを発生させるかどうか。
+'* @param OtherList Other list containing elements to import.
+'* @param Optional ErrorIfExists Whether to raise an error if an element already exists.
 '*
 '* @details
-'* 他のリストの要素をこの集合に取り込みます。オプションで、要素が既に存在する場合の挙動を指定できます。
+'* Imports elements from another list into this set. Optionally specifies behavior when an element already exists.
 Public Sub AddList(ByVal OtherList As ObjectList, Optional ByVal ErrorIfExists As Boolean = True)
     If pTypeName = "" And OtherList.HasItemTypeContract Then
         Call InitializeFromList(OtherList)
@@ -481,12 +481,12 @@ Public Sub AddList(ByVal OtherList As ObjectList, Optional ByVal ErrorIfExists A
     Next item_idx
 End Sub
 
-'* この集合の複製を作成します。
+'* Creates a duplicate of this set.
 '*
-'* @return 複製された新しい集合。
+'* @return New duplicated set.
 '*
 '* @details
-'* この集合の複製を作成します。
+'* Creates a duplicate of this set.
 Public Function CopySet() As ObjectSet
     Dim result_value As ObjectSet
     Set result_value = New ObjectSet
@@ -500,13 +500,13 @@ Public Function CopySet() As ObjectSet
     Set CopySet = result_value
 End Function
 
-'* 指定されたインデックスの要素を削除します。
+'* Removes the element at the specified index.
 '*
-'* @param Index 削除する要素のインデックス。
-'* @return 削除された要素。
+'* @param Index Index of the element to remove.
+'* @return Removed element.
 '*
 '* @details
-'* 指定されたインデックスの要素を削除します。
+'* Removes the element at the specified index.
 Public Function Remove(ByVal Index As Long) As Variant
     Dim old_key As Variant
     Dim old_obj As Variant
@@ -524,18 +524,18 @@ Public Function Remove(ByVal Index As Long) As Variant
     End If
 End Function
 
-'* 指定された要素を削除します。
+'* Removes the specified element.
 '*
-'* @param ItemObject 削除する要素。
-'* @param Optional IgnoreNotExists 存在しない場合に無視するかどうか。
-'* @return 削除された要素。
+'* @param ItemObject Element to remove.
+'* @param Optional IgnoreNotExists Whether to ignore when the element does not exist.
+'* @return Removed element.
 '*
 '* @details
-'* 指定された要素と重複と判断される要素を削除します。オプションで、要素が存在しない場合の挙動を指定できます。
+'* Removes the element judged duplicate of the specified element. Optionally specifies behavior when the element does not exist.
 Public Function RemoveItem(ByVal ItemObject As Variant, Optional ByVal IgnoreNotExists As Boolean = True) As Variant
     If Not pCanSearchItem(ItemObject) Then
         If Not IgnoreNotExists Then
-            Err.Raise vbObjectError + 1, "Class ObjectSet.RemoveItem", "存在しない要素を削除しようとしました。"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.RemoveItem", "Attempted to remove an element that does not exist."
         End If
         If pIsObject Or IsObject(ItemObject) Then
             Set RemoveItem = Nothing
@@ -551,7 +551,7 @@ Public Function RemoveItem(ByVal ItemObject As Variant, Optional ByVal IgnoreNot
 
     If Not pDict.Exists(key_var) Then
         If Not IgnoreNotExists Then
-            Err.Raise vbObjectError + 1, "Class ObjectSet.RemoveItem", "存在しない要素を削除しようとしました。"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.RemoveItem", "Attempted to remove an element that does not exist."
         End If
         If pIsObject Or IsObject(ItemObject) Then
             Set RemoveItem = Nothing
@@ -579,23 +579,23 @@ Public Function RemoveItem(ByVal ItemObject As Variant, Optional ByVal IgnoreNot
     RemoveItem = result_value
 End Function
 
-'* 集合のすべての要素を削除します。
+'* Removes all elements of the set.
 '*
 '* @details
-'* 集合のすべての要素を削除します。要素の型状態は保持します。
+'* Removes all elements of the set. Preserves the element type state.
 Public Sub RemoveAll()
     If pDict.Count = 0 Then Exit Sub
     Call pDict.RemoveAll
     Call pIncrementEnumerationVersion
 End Sub
 
-'* 引数の要素がすでに含まれているかを確認します。
+'* Checks whether the argument element is already included.
 '*
-'* @param ItemObject 確認する要素。
-'* @return 要素が含まれているかどうかを示すブール値。
+'* @param ItemObject Element to check.
+'* @return Boolean value indicating whether the element is included.
 '*
 '* @details
-'* 指定されたオブジェクトと重複している要素が含まれるかを確認します。
+'* Checks whether an element that duplicates the specified object is included.
 Public Function Exists(ByVal ItemObject As Variant) As Boolean
     Dim result_value As Boolean
     result_value = False
@@ -612,13 +612,13 @@ Public Function Exists(ByVal ItemObject As Variant) As Boolean
     Exists = result_value
 End Function
 
-'* 引数と重複するとみなされる要素を返します。
+'* Returns the element considered duplicate of the argument.
 '*
-'* @param ItemObject 確認する要素。
-'* @return 重複するとみなされる要素。
+'* @param ItemObject Element to check.
+'* @return Element considered duplicate.
 '*
 '* @details
-'* 引数と重複するとみなされる要素を返します。要素が存在しない場合は Nothing を返します。
+'* Returns the element considered duplicate of the argument. Returns Nothing when the element does not exist.
 Public Function FindItem(ByVal ItemObject As Variant) As Variant
     If Not pCanSearchItem(ItemObject) Then
         If pIsObject Or IsObject(ItemObject) Then
@@ -656,13 +656,13 @@ Public Function FindItem(ByVal ItemObject As Variant) As Variant
     FindItem = result_value
 End Function
 
-'* この集合の中身をソートします。
+'* Sorts the contents of this set.
 '*
-'* @param Optional Descending 降順にソートするかどうか。
+'* @param Optional Descending Whether to sort in descending order.
 '*
 '* @details
-'* この集合の中身をソートします。
-'* 内部的に ObjectList.Sort() を利用するため、挙動の詳細はそちらを参照してください。
+'* Sorts the contents of this set.
+'* Because this uses ObjectList.Sort() internally, see that method for behavior details.
 Public Sub Sort(Optional ByVal Descending As Boolean = False)
     Dim obj_list As ObjectList
     Set obj_list = New ObjectList
@@ -673,14 +673,14 @@ Public Sub Sort(Optional ByVal Descending As Boolean = False)
     Call Me.AddList(obj_list)
 End Sub
 
-'* この集合の列挙子を得ます。
+'* Gets the enumerator for this set.
 '*
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @param IsReadOnly [省略可] 読み取り専用にするか否か。
-'* @return 列挙子オブジェクト。
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @param IsReadOnly [Optional] Whether to make the enumerator read-only.
+'* @return Enumerator object.
 '*
 '* @details
-'* この集合の列挙子を得ます。
+'* Gets the enumerator for this set.
 Public Function GetEnumerator(Optional ByVal Descending As Boolean = False, Optional ByVal IsReadOnly As Boolean = False) As IEnumerator
     Dim result_value As Enumerator
     Set result_value = New Enumerator
@@ -725,7 +725,7 @@ Private Sub pPrepareToAddObjectContract( _
     If StrComp(pElementTypeName, SourceElementTypeName, vbTextCompare) <> 0 _
             Or pRequireComparable <> SourceRequireComparable _
             Or pObjectKeyMode <> SourceObjectKeyMode Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.pPrepareToAddObjectContract", "取り込み元と取り込み先の要素型契約が異なります。"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.pPrepareToAddObjectContract", "The source and destination element type contracts differ."
     End If
 End Sub
 
@@ -736,7 +736,7 @@ Private Function pGetElementTypeName(ByVal ItemObject As Object) As String
         Set element_type_provider = ItemObject
         result_value = element_type_provider.ElementTypeKey
         If Not IsValidElementTypeKey(result_value) Then
-            Err.Raise vbObjectError + 1, "Class ObjectSet.pGetElementTypeName", "ElementTypeKey はクラス モジュール名に使用可能な文字で指定してください。(" & result_value & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.pGetElementTypeName", "ElementTypeKey must contain only characters allowed in class module names. (" & result_value & ")"
         End If
     Else
         result_value = TypeName(ItemObject)
@@ -747,21 +747,21 @@ End Function
 
 Private Sub pCheckObjectItemAbilities(ByVal ItemObject As Object)
     If pRequireComparable And Not TypeOf ItemObject Is IComparable Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "IComparable ではないオブジェクトを RequireComparable=True の集合へ追加しようとしました。(" & pTypeName & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IComparable to a RequireComparable=True set. (" & pTypeName & ")"
     End If
 
     Select Case pObjectKeyMode
         Case G_OBJECT_KEY_MODE_REFERENCE
         Case G_OBJECT_KEY_MODE_I_EQUATABLE
             If Not TypeOf ItemObject Is IEquatable Then
-                Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "IEquatable ではないオブジェクトを IEquatable モードの集合へ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IEquatable to a set in IEquatable mode. (" & pTypeName & ")"
             End If
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             If Not TypeOf ItemObject Is IDuplicateCheckable Then
-                Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "IDuplicateCheckable ではないオブジェクトを IDuplicateCheckable モードの集合へ追加しようとしました。(" & pTypeName & ")"
+                Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "Attempted to add an object that does not implement IDuplicateCheckable to a set in IDuplicateCheckable mode. (" & pTypeName & ")"
             End If
         Case Else
-            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "未対応のオブジェクト キー化モードです。(" & CStr(pObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckObjectItemAbilities", "Unsupported object key mode. (" & CStr(pObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -802,7 +802,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
 
     If pIsObject Then
         If Not IsObject(ItemObject) Then
-            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckItemType", "最初の要素はオブジェクト型でしたが、新しい要素はオブジェクト型ではありません。(" & pTypeName & ")"
+            Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckItemType", "The first element was an object, but the new element is not an object. (" & pTypeName & ")"
         End If
         If ItemObject Is Nothing Then Exit Sub
     End If
@@ -815,7 +815,7 @@ Private Sub pCheckItemType(ByVal ItemObject As Variant)
     End If
 
     If StrComp(item_type_name, pTypeName, vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckItemType", "最初に設定された要素と型が異なります。(list: " & pTypeName & ", item: " & item_type_name & ")"
+        Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckItemType", "The item type differs from the initially set element type. (list: " & pTypeName & ", item: " & item_type_name & ")"
     End If
 
     If pIsObject Then
@@ -832,8 +832,8 @@ End Sub
 Private Sub pCheckUnsupportedSpecialValue(ByVal ItemObject As Variant)
     If IsObject(ItemObject) Then Exit Sub
     If IsArray(ItemObject) Then Exit Sub
-    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckUnsupportedSpecialValue", "Empty は要素として使用できません。"
-    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckUnsupportedSpecialValue", "Null は要素として使用できません。"
+    If IsEmpty(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckUnsupportedSpecialValue", "Empty cannot be used as an element."
+    If IsNull(ItemObject) Then Err.Raise vbObjectError + 1, "Class ObjectSet.pCheckUnsupportedSpecialValue", "Null cannot be used as an element."
 End Sub
 
 Private Function pErrorValuesEqual(ByVal ErrorValue1 As Variant, ByVal ErrorValue2 As Variant) As Boolean

@@ -14,13 +14,13 @@ Implements ITextFileEntity
 ' #############################################################################
 '!
 '! @brief
-'! テキスト ファイルのオープン、クローズ、書き込みなどを行うための lightweight fake です。
+'! Lightweight fake for opening, closing, and writing text files.
 '!
 '! @details
-'! ファイル実体は操作せず、初期化、open/read/write/close のライフサイクル状態だけを管理します。
-'! ReadLine は strict stub とし、読み取り行を Store に明示登録してください。
-'! OpenFile / WriteLine / CloseFile は Store.SetError による任意エラー注入を扱いません。
-'! ファイル open の任意失敗をテストする場合は TextFileServiceTestDouble.GetTextFileEntity 側でエラー設定するか、対象処理を分けてテストしてください。
+'! Does not operate on a real file; manages only initialization and open/read/write/close lifecycle state.
+'! ReadLine is a strict stub; explicitly register read lines in Store.
+'! OpenFile / WriteLine / CloseFile do not handle arbitrary error injection by Store.SetError.
+'! To test arbitrary file open failure, configure an error on TextFileServiceTestDouble.GetTextFileEntity or test the target process separately.
 '!
 ' #############################################################################
 
@@ -33,17 +33,17 @@ Private pAsAppend As Boolean
 Private pGetReadLock As Boolean
 Private pGetWriteLock As Boolean
 
-'* 読み取り回数。ReadLine によりインクリメントされ、CloseFile によりリセットされます。
+'* Read count. Incremented by ReadLine and reset by CloseFile.
 Public ReadCount As Long
 
-'* 書き込み回数。WriteLine によりインクリメントされます。リセットはされません。
+'* Write count. Incremented by WriteLine. Not reset.
 Public WriteCount As Long
 
-'* スタブ設定と正常に成立した呼び出し履歴。
-'* この lightweight fake の状態違反エラーは呼び出し履歴に残しません。
+'* Stub settings and history of successfully completed calls.
+'* State violation errors from this lightweight fake are not recorded in call history.
 Public Store As TestDoubleBehaviorStore
 
-'* ファイルのパス。
+'* File path.
 Public Property Get FilePath() As String
     Call pCheckInit
     FilePath = pFilePath
@@ -52,7 +52,7 @@ Private Property Get ITextFileEntity_FilePath() As String
     ITextFileEntity_FilePath = FilePath
 End Property
 
-'* 読み取り用か。(未オープンの場合は False)
+'* Whether opened for reading. (False when not open.)
 Public Property Get AsRead() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -65,7 +65,7 @@ Private Property Get ITextFileEntity_AsRead() As Boolean
     ITextFileEntity_AsRead = AsRead
 End Property
 
-'* 書き込み用か。(未オープンの場合は False)
+'* Whether opened for writing. (False when not open.)
 Public Property Get AsWrite() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -78,7 +78,7 @@ Private Property Get ITextFileEntity_AsWrite() As Boolean
     ITextFileEntity_AsWrite = AsWrite
 End Property
 
-'* 追記か。(未オープンの場合は False)
+'* Whether opened for appending. (False when not open.)
 Public Property Get AsAppend() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -91,7 +91,7 @@ Private Property Get ITextFileEntity_AsAppend() As Boolean
     ITextFileEntity_AsAppend = AsAppend
 End Property
 
-'* 読み取りロックを取得しているか。(未オープンの場合は False)
+'* Whether a read lock has been acquired. (False when not open.)
 Public Property Get GetReadLock() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -104,7 +104,7 @@ Private Property Get ITextFileEntity_GetReadLock() As Boolean
     ITextFileEntity_GetReadLock = GetReadLock
 End Property
 
-'* 書き込みロックを取得しているか。(未オープンの場合は False)
+'* Whether a write lock has been acquired. (False when not open.)
 Public Property Get GetWriteLock() As Boolean
     Call pCheckInit
     If pIsOpen Then
@@ -117,7 +117,7 @@ Private Property Get ITextFileEntity_GetWriteLock() As Boolean
     ITextFileEntity_GetWriteLock = GetWriteLock
 End Property
 
-'* 現在ファイルがオープンされているか。
+'* Whether the file is currently open.
 Public Property Get IsOpen() As Boolean
     Call pCheckInit
     IsOpen = pIsOpen
@@ -126,7 +126,7 @@ Private Property Get ITextFileEntity_IsOpen() As Boolean
     ITextFileEntity_IsOpen = IsOpen
 End Property
 
-' ファイルの最後か。(未オープンまたは書き込み/追記モードの場合は True)
+' Whether the file is at end of file. (True when not open or when in write/append mode.)
 Public Property Get IsEndOfFile() As Boolean
     Call pCheckInit
     If Not pIsOpen Or pAsWrite Then
@@ -143,25 +143,25 @@ Private Sub Class_Initialize()
     Set Store = New TestDoubleBehaviorStore
 End Sub
 
-'* Initialize の spy only です。初期化パスを記録します。
+'* spy only for Initialize. Records the initialization path.
 Public Sub Initialize(ByVal FilePath As String)
-    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "オープン中のファイルは再初期化できません。(" & pFilePath & ")"
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "すでに初期化されています。(" & pFilePath & ")"
+    If pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "An open file cannot be reinitialized. (" & pFilePath & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.Initialize", "The file has already been initialized. (" & pFilePath & ")"
 
     Call Store.RecordCall("Initialize", FilePath)
     pFilePath = FilePath
     pIsInitialized = True
 End Sub
 
-'* OpenFile の lightweight fake です。引数に基づいて状態を更新し、呼び出しを記録します。
+'* Lightweight fake for OpenFile. Updates state based on arguments and records the call.
 Public Sub OpenFile( _
         Optional ByVal AsWrite As Boolean = False, Optional ByVal AsAppend As Boolean = False, _
         Optional ByVal GetReadLock As Boolean = False, Optional ByVal GetWriteLock As Boolean = False, _
         Optional ByVal Force As Boolean = False)
 
     Call pCheckInit
-    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "ファイルは既に開かれています。(" & pFilePath & ")"
-    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "AsWrite が False のときに AsAppend が True となりました。"
+    If pIsOpen Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "The file is already open. (" & pFilePath & ")"
+    If AsAppend And Not AsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.OpenFile", "AsAppend cannot be True when AsWrite is False."
 
     Call Store.RecordCall("OpenFile", AsWrite, AsAppend, GetReadLock, GetWriteLock, Force)
 
@@ -180,13 +180,13 @@ Private Sub ITextFileEntity_OpenFile( _
     Call OpenFile(AsWrite:=AsWrite, AsAppend:=AsAppend, GetReadLock:=GetReadLock, GetWriteLock:=GetWriteLock, Force:=Force)
 End Sub
 
-'* ReadLine の strict stub です。読み取り行は Store に明示登録してください。
+'* Strict stub for ReadLine. Explicitly register read lines in Store.
 Public Function ReadLine() As String
     Call pCheckOpened
-    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.ReadLine", "書き込み用で開かれています。(" & pFilePath & ")"
+    If pAsWrite Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.ReadLine", "The file is open for writing. (" & pFilePath & ")"
 
     If Not Store.HasReturn("ReadLine", ReadCount) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntityTestDouble.ReadLine", Description:="読み取り行が登録されていません。(read_count: " & ReadCount & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class TextFileEntityTestDouble.ReadLine", Description:="No read line has been registered. (read_count: " & ReadCount & ")"
     End If
 
     Dim result_value As String
@@ -200,10 +200,10 @@ Private Function ITextFileEntity_ReadLine() As String
     ITextFileEntity_ReadLine = ReadLine()
 End Function
 
-'* WriteLine の spy only です。書き込み行を記録し、状態に基づいて WriteCount を更新します。
+'* spy only for WriteLine. Records written lines and updates WriteCount based on state.
 Public Sub WriteLine(ByVal Expression As String)
     Call pCheckOpened
-    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.WriteLine", "読み取り用で開かれています。(" & pFilePath & ")"
+    If pAsRead Then Err.Raise vbObjectError, "Class TextFileEntityTestDouble.WriteLine", "The file is open for reading. (" & pFilePath & ")"
 
     Call Store.RecordCall("WriteLine", Expression)
     WriteCount = WriteCount + 1
@@ -212,7 +212,7 @@ Private Sub ITextFileEntity_WriteLine(ByVal Expression As String)
     Call WriteLine(Expression)
 End Sub
 
-'* CloseFile の lightweight fake です。0 引数呼び出しとして記録し、open 状態なら状態をリセットします。
+'* Lightweight fake for CloseFile. Records it as a 0-argument call and resets state if open.
 Public Sub CloseFile()
     Call pCheckInit
     Call Store.RecordCall("CloseFile")
@@ -236,10 +236,10 @@ Private Sub pResetOpenState()
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckInit", "初期化前です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckInit", "The object is not initialized."
 End Sub
 
 Private Sub pCheckOpened()
     Call pCheckInit
-    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckOpened", "ファイルがオープンされていません。"
+    If Not pIsOpen Then Err.Raise vbObjectError + 1, "Class TextFileEntityTestDouble.pCheckOpened", "The file is not open."
 End Sub

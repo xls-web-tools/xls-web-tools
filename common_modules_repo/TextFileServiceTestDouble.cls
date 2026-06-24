@@ -14,23 +14,23 @@ Implements ITextFileService
 ' #############################################################################
 '!
 '! @brief
-'! TextFileEntity を生成するサービスのテストダブルです。
+'! Test double for the service that creates TextFileEntity objects.
 '!
 '! @details
-'! GetTextFileEntity は lightweight fake の入口です。未登録時は新しい初期化済み TextFileEntityTestDouble を返します。
-'! ファイル内容や open 失敗は自動再現しません。任意失敗は Store.SetError で GetTextFileEntity に設定してください。
+'! GetTextFileEntity is the entry point for lightweight fakes. When unregistered, returns a new initialized TextFileEntityTestDouble.
+'! File contents and open failures are not reproduced automatically. Configure arbitrary failures on GetTextFileEntity with Store.SetError.
 '!
 ' #############################################################################
 
-'* スタブ設定と正常に成立した呼び出し履歴。
-'* strict stub の未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
+'* Stub settings and history of successfully completed calls.
+'* Unregistered strict stub errors and explicit errors from SetError are not recorded in call history.
 Public Store As TestDoubleBehaviorStore
 
 Private Sub Class_Initialize()
     Set Store = New TestDoubleBehaviorStore
 End Sub
 
-'* GetTextFileEntity の lightweight fake です。未登録時は新しい初期化済み TextFileEntityTestDouble を生成します。
+'* Lightweight fake for GetTextFileEntity. When unregistered, creates a new initialized TextFileEntityTestDouble.
 Public Function GetTextFileEntity(ByVal FilePath As String) As ITextFileEntity
     Call Store.RaiseIfError("GetTextFileEntity", FilePath)
 
@@ -60,10 +60,10 @@ Private Sub pValidateEntityFilePath(ByVal TextFileEntity As ITextFileEntity, ByV
 
     On Error GoTo 0
     If actual_path <> ExpectedFilePath Then
-        Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "登録済み TextFileEntity の FilePath が一致しません。(expected: " & ExpectedFilePath & ", actual: " & actual_path & ")"
+        Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "The registered TextFileEntity FilePath does not match. (expected: " & ExpectedFilePath & ", actual: " & actual_path & ")"
     End If
     Exit Sub
 
 INVALID_ENTITY:
-    Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "登録済み TextFileEntity が指定パスで初期化されていません。(" & ExpectedFilePath & ")"
+    Err.Raise vbObjectError + 1, "Class TextFileServiceTestDouble.pValidateEntityFilePath", "The registered TextFileEntity has not been initialized with the specified path. (" & ExpectedFilePath & ")"
 End Sub

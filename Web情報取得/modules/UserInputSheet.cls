@@ -14,14 +14,14 @@ Implements IUserInputSheet
 ' #############################################################################
 '!
 '! @brief
-'! ユーザー インターフェイス用シートにアクセスするためのクラスです。
+'! Class for accessing a user interface sheet.
 '!
 ' #############################################################################
 
 Private pIsInitialized As Boolean
 Private pRangeBounds As WorksheetRangeBounds
 
-'* 入力シート内で項目名と値を読み取る対象範囲。
+'* Target range from which item names and values are read in the input sheet.
 Public Property Get InputArea() As WorksheetRangeBounds
     Call pCheckInit
     Set InputArea = pRangeBounds.CopyObject()
@@ -30,32 +30,32 @@ Private Property Get IUserInputSheet_InputArea() As WorksheetRangeBounds
     Set IUserInputSheet_InputArea = InputArea
 End Property
 
-'* 各プロパティを設定します。
+'* Sets each property.
 '*
-'* @param InputArea 入力シート内で項目名と値を読み取る対象範囲。
+'* @param InputArea Target range from which item names and values are read in the input sheet.
 '*
 '* @details
-'* 各プロパティを設定します。
+'* Sets each property.
 Public Sub Initialize(ByVal InputArea As WorksheetRangeBounds)
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "すでに初期化済みです。"
-    If InputArea Is Nothing Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "入力領域が指定されていません。"
-    If InputArea.IsEmpty Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "入力領域が空範囲です。"
-    If Not WbSrv.WorksheetExists(InputArea.WorksheetName, Book:=InputArea.WorkbookName) Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "対象シートが見つかりません。(" & InputArea.WorksheetName & "@" & InputArea.WorkbookName & ")"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "The object is already initialized."
+    If InputArea Is Nothing Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "InputArea is not specified."
+    If InputArea.IsEmpty Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "InputArea is an empty range."
+    If Not WbSrv.WorksheetExists(InputArea.WorksheetName, Book:=InputArea.WorkbookName) Then Err.Raise vbObjectError + 1, "Class UserInputSheet.Initialize", "The target sheet was not found. (" & InputArea.WorksheetName & "@" & InputArea.WorkbookName & ")"
 
     Set pRangeBounds = InputArea.CopyObject()
     pIsInitialized = True
 End Sub
 
-'* 指定された項目名に対応する項目値の範囲を取得します。
+'* Gets the range of the item value that corresponds to the specified item name.
 '*
-'* @param FirstItemName 第一項目名
-'* @param SecondItemName 第二項目名 (省略可能)
-'* @return 対応する項目値の範囲 (Range オブジェクト)
+'* @param FirstItemName First item name.
+'* @param SecondItemName Second item name (optional).
+'* @return Corresponding item value range (Range object).
 '*
 '* @details
-'* 第一項目名の位置を基準に、行または列の範囲を取得します。
-'* 第二項目名が省略されている場合、第一項目名の行全体の範囲を返します。
-'* 第二項目名が指定されている場合、その列に対応する範囲を返します。
+'* Gets the row or column range based on the position of the first item name.
+'* If the second item name is omitted, returns the entire row range for the first item name.
+'* If the second item name is specified, returns the range corresponding to that column.
 Public Function GetItemRange( _
         ByVal FirstItemName As String, _
         Optional ByVal SecondItemName As String = "") As WorksheetRangeBounds
@@ -65,37 +65,37 @@ Public Function GetItemRange( _
     Dim used_range As WorksheetRangeBounds
     Set used_range = WsSrv.GetUsedRangeBounds(pRangeBounds)
 
-    ' 1 列目を第一項目名の列とし、残りと分割する
+    ' Treat the first column as the first item name column and split off the rest.
     Dim first_col As WorksheetRangeBounds
     Set first_col = used_range.TransformAbsolute(FinishColumn:=used_range.Column)
 
     Dim remain_range As WorksheetRangeBounds
     Set remain_range = used_range.TransformAbsolute(Column:=used_range.Column + 1)
 
-    ' 第一項目名の列を名前で検索する
+    ' Search the first item name column by name.
     Dim found_cells As ObjectList
     Set found_cells = WsSrv.Find(FirstItemName, first_col)
 
-    ' もし空のリストが返ってきたら、見つからなかったということなので Nothingで終了
+    ' If an empty list is returned, the item was not found, so end with Nothing.
     If found_cells.Count = 0 Then
         Set GetItemRange = Nothing
         Exit Function
     End If
 
-    ' 見つかった第一項目の右横の行
+    ' Row immediately to the right of the found first item.
     Dim second_row As WorksheetRangeBounds
     Dim first_found_cell As WorksheetRangeBounds
     Set first_found_cell = found_cells.Item(0)
 
     Set second_row = remain_range.TransformAbsolute(Row:=first_found_cell.Row, FinishRow:=first_found_cell.Row)
 
-    ' 切り詰める
+    ' Trim the range.
     Set second_row = WsSrv.GetUsedRangeBounds(second_row)
 
-    ' 第二項目名が指定されていないときは、second_row は値
+    ' When no second item name is specified, second_row is the value range.
     If SecondItemName = "" Then
         If second_row.IsEmpty Then
-            ' 空範囲の時は、1 セルにして返す。
+            ' For an empty range, return it as one cell.
             Set GetItemRange = second_row.TransformAbsolute(FinishRow:=second_row.Row, FinishColumn:=second_row.Column)
         Else
             Set GetItemRange = second_row
@@ -103,16 +103,16 @@ Public Function GetItemRange( _
         Exit Function
     End If
 
-    ' 第二項目名を探す。
+    ' Search for the second item name.
     Set found_cells = WsSrv.Find(SecondItemName, second_row)
 
-    ' もし空のリストが返ってきたら、見つからなかったということなので Nothing で終了
+    ' If an empty list is returned, the item was not found, so end with Nothing.
     If found_cells.Count = 0 Then
         Set GetItemRange = Nothing
         Exit Function
     End If
 
-    ' 次の第一項目を見つけ、第二項目の値の行数を算出
+    ' Find the next first item and calculate the row count for the second item's values.
     Dim first_remain_col As WorksheetRangeBounds
     Dim second_found_cell As WorksheetRangeBounds
     Set second_found_cell = found_cells.Item(0)
@@ -133,7 +133,7 @@ Public Function GetItemRange( _
     Loop
     finish_row_idx = MinLng(finish_row_idx, used_range.FinishRow)
 
-    ' 結果の範囲を生成
+    ' Build the result range.
     Dim result_value As WorksheetRangeBounds
     Set result_value = remain_range.TransformAbsolute(Row:=second_found_cell.Row + 1, Column:=second_found_cell.Column, FinishRow:=finish_row_idx, FinishColumn:=second_found_cell.Column)
     Set result_value = WsSrv.GetUsedRangeBounds(result_value, IgnoreEmpty:=True)
@@ -147,5 +147,5 @@ Private Function IUserInputSheet_GetItemRange( _
 End Function
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class UserInputSheet.pCheckInit", "The object is not initialized."
 End Sub

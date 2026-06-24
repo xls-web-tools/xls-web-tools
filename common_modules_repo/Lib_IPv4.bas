@@ -6,8 +6,8 @@ Option Private Module
 ' #############################################################################
 '!
 '! @brief
-'! IPv4 関連の関数などを集めた標準モジュールです。
-'! 他のツールとも共用されるため、このツールで使用しないものも含まれます。
+'! Standard module that groups IPv4-related functions and helpers.
+'! It also contains members not used by this tool because they are shared with other tools.
 '!
 ' #############################################################################
 
@@ -16,30 +16,30 @@ Private Const C_OCTET_SEP As String = "."
 Private Const C_MASK_SEP As String = "/"
 Private Const C_MASK_SEP_RE As String = "[/_]"
 
-'* IPv4 アドレス文字列の 1 オクテットを表す正規表現
+'* Regular expression representing one octet of an IPv4 address string.
 '*
-'* @note 10 進表現のみです。
+'* @note Decimal notation only.
 Public Const G_IPV4_OCTET_RE As String = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
 
-'* IPv4 マスク文字列の 1 オクテットを表す正規表現
+'* Regular expression representing one octet of an IPv4 mask string.
 '*
-'* @note 10 進表現のみです。
+'* @note Decimal notation only.
 Public Const G_IPV4_MOCTET_RE As String = "(0|128|192|224|240|248|252|254|255)"
 
-'* IPv4 アドレス文字列のマスク長を表す正規表現
+'* Regular expression representing the mask length of an IPv4 address string.
 Public Const G_IPV4_MASKLEN_RE As String = "(3[0-2]|[1-2][0-9]|[0-9])"
 
-'* IPv4 アドレス文字列全体を表す正規表現 (ex. 192.168.1.2)
+'* Regular expression representing the entire IPv4 address string (ex. 192.168.1.2).
 '*
 '* @details
-'* 「(第 1)\.(第 2)\.(第 3)\.(第4)」となっています。サブマッチを使うときの参考にしてください。
+'* The structure is "(1st)\.(2nd)\.(3rd)\.(4th)". Use this as a reference when using submatches.
 Public Const G_IPV4_ADDR_RE As String = G_IPV4_OCTET_RE & C_OCTET_SEP_RE & G_IPV4_OCTET_RE & C_OCTET_SEP_RE & G_IPV4_OCTET_RE & C_OCTET_SEP_RE & G_IPV4_OCTET_RE
 
-'* IPv4 マスク文字列全体を表す正規表現 (ex. 255.255.255.0)
+'* Regular expression representing the entire IPv4 mask string (ex. 255.255.255.0).
 '*
 '* @details
-'* 「((第 1 が 0 ～ 254、あとは 0)|(最初は 255、第 2 が 0 ～ 254、あとは 0)|(255 が連なり、第 3 が 0 ～ 254、あとは 0)|(255 が連なり最後が 0 ～ 255))」
-'* となっています｡サブマッチを使うときの参考にしてください｡
+'* The structure is "((1st is 0-254, rest are 0)|(1st is 255, 2nd is 0-254, rest are 0)|(255 continues and 3rd is 0-254, rest are 0)|(255 continues and last is 0-255))".
+'* Use this as a reference when using submatches.
 Public Const G_IPV4_MASK_RE As String = "(" & _
         "(0|128|192|224|240|248|252|254)" & C_OCTET_SEP_RE & "(0)" & C_OCTET_SEP_RE & "(0)" & C_OCTET_SEP_RE & "(0)" & "|" & _
         "(255)" & C_OCTET_SEP_RE & "(0|128|192|224|240|248|252|254)" & C_OCTET_SEP_RE & "(0)" & C_OCTET_SEP_RE & "(0)" & "|" & _
@@ -47,34 +47,34 @@ Public Const G_IPV4_MASK_RE As String = "(" & _
         "(255)" & C_OCTET_SEP_RE & "(255)" & C_OCTET_SEP_RE & "(255)" & C_OCTET_SEP_RE & "(0|128|192|224|240|248|252|254|255)" & _
         ")"
 
-'* IPv4 ネットワーク アドレス文字列を表す正規表現 (ex. 192.168.1.0/255.255.255.0 や 192.168.1.0/24)
+'* Regular expression representing an IPv4 network address string (ex. 192.168.1.0/255.255.255.0 or 192.168.1.0/24).
 '*
 '* @details
 '* 「G_IPV4_ADDR_RE & "(|" & C_MASK_SEP_RE & G_IPV4_MASK_RE & "|" & C_MASK_SEP_RE & G_IPV4_MASKLEN_RE & ")"」
-'* となっています｡サブマッチを使うときの参考にしてください｡
+'* Use this as a reference when using submatches.
 Public Const G_IPV4_NW_RE As String = G_IPV4_ADDR_RE & "(|" & C_MASK_SEP_RE & G_IPV4_MASK_RE & "|" & C_MASK_SEP_RE & G_IPV4_MASKLEN_RE & ")"
 
-'* より広い (マスク長が 1 短い) ネットワークアドレスを取得します。
+'* Gets the broader network address (mask length shorter by 1).
 '*
-'* @param NetworkAddressValue ネットワークアドレスの値
-'* @param MaskLength 現在のマスク長
-'* @return より広いネットワークアドレスの値
+'* @param NetworkAddressValue Network address value.
+'* @param MaskLength Current mask length.
+'* @return Broader network address value.
 '*
 '* @details
-'* 指定されたネットワークアドレスとマスク長を基に、マスク長が 1 短いネットワークアドレスを計算します。
-'* マスク長が 0 の場合や、指定されたアドレスがネットワークアドレスでない場合はエラーとなります。
+'* Calculates a network address whose mask length is shorter by 1 based on the specified network address and mask length.
+'* Raises an error when the mask length is 0 or the specified address is not a network address.
 Public Function ExpandNetwork(ByVal NetworkAddressValue As Long, ByVal MaskLength As Integer) As Long
     Dim result_value As Long
     Dim mask_value As Long
 
     If MaskLength = 0 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function ExpandNetwork", Description:="これ以上広げられません。(" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function ExpandNetwork", Description:="Cannot expand the network any further. (" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
         Exit Function
     End If
 
     mask_value = ConvertFromMaskLength(MaskLength)
     If Not IsNetwork(NetworkAddressValue, mask_value) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function ExpandNetwork", Description:="ネットワーク アドレスではありません。(" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function ExpandNetwork", Description:="The value is not a network address. (" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
         Exit Function
     End If
 
@@ -84,28 +84,28 @@ Public Function ExpandNetwork(ByVal NetworkAddressValue As Long, ByVal MaskLengt
     ExpandNetwork = result_value
 End Function
 
-'* より狭い (マスク長が 1 長い) ネットワークアドレス (サブネット) を取得します。
+'* Gets narrower network addresses (subnets with mask length longer by 1).
 '*
-'* @param NetworkAddressValue ネットワークアドレスの値
-'* @param MaskLength 現在のマスク長
-'* @return 2 つのサブネットアドレスの配列
+'* @param NetworkAddressValue Network address value.
+'* @param MaskLength Current mask length.
+'* @return Array of two subnet addresses.
 '*
 '* @details
-'* 指定されたネットワークアドレスとマスク長を基に、マスク長が 1 長い 2 つのサブネットアドレスを計算します。
-'* マスク長が 32 に達している場合や、指定されたアドレスがネットワークアドレスでない場合はエラーとなります。
+'* Calculates two subnet addresses whose mask length is longer by 1 based on the specified network address and mask length.
+'* Raises an error when the mask length has reached 32 or the specified address is not a network address.
 Public Function NarrowNetwork(ByVal NetworkAddressValue As Long, ByVal MaskLength As Integer) As Long()
     Dim result_value() As Long
     ReDim result_value(0 To 1) As Long
     Dim mask_value As Long
 
     If 29 < MaskLength And MaskLength < 33 Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function NarrowNetwork", Description:="これ以上狭くできません。(" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function NarrowNetwork", Description:="Cannot narrow the network any further. (" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
         Exit Function
     End If
 
     mask_value = ConvertFromMaskLength(MaskLength)
     If Not IsNetwork(NetworkAddressValue, mask_value) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function NarrowNetwork", Description:="ネットワーク アドレスではありません。(" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function NarrowNetwork", Description:="The value is not a network address. (" & ConvertToIpAddress(NetworkAddressValue) & "/" & MaskLength & ")"
         Exit Function
     End If
 
@@ -115,19 +115,19 @@ Public Function NarrowNetwork(ByVal NetworkAddressValue As Long, ByVal MaskLengt
     NarrowNetwork = result_value
 End Function
 
-'* IP アドレスまたはネットワークアドレスを適切な形式に整形します。
+'* Formats an IP address or network address into the appropriate form.
 '*
-'* @param AddressLike 整形する対象の文字列。IP アドレス形式を想定しています。
-'* @return 整形後のアドレス文字列。
+'* @param AddressLike String to format. IP address format is assumed.
+'* @return Formatted address string.
 '*
 '* @details
-'* この関数は、入力されたアドレス文字列の特定の文字（アンダースコア）をスラッシュに置換し、
-'* 標準的な CIDR 表記に整形します。入力されたアドレスがネットワークマスクを含まない場合、
-'* "/32" が末尾に追加されます。これにより、個々の IP アドレスを表す形式になります。
+'* This function replaces specific characters (underscores) in the input address string with slashes,
+'* and formats it as standard CIDR notation. If the input address does not include a network mask,
+'* "/32" is appended to the end, producing a form that represents an individual IP address.
 '*
-'* 具体的には、入力された文字列内の "_" を "/" に置換し、さらに入力形式が単一の IP アドレスの場合には
-'* 末尾に "/32" を追加して、CIDR ノーテーションに準拠した形式に整形します。ネットワークマスクが既に
-'* 指定されている場合は、そのままの形式を返します。
+'* Specifically, it replaces "_" in the input string with "/" and, when the input form is a single IP address,
+'* appends "/32" to format it in CIDR notation. If a network mask is already specified,
+'* returns the form as is.
 Public Function WellFormedAddress(ByVal AddressLike As String) As String
     Dim result_value As String
 
@@ -140,17 +140,17 @@ Public Function WellFormedAddress(ByVal AddressLike As String) As String
     WellFormedAddress = result_value
 End Function
 
-'* 「IP アドレス/マスク」という形式の文字列を解析し、値に変換します。
+'* Parses a string in "IP address/mask" format and converts it to values.
 '*
-'* @param IpAddressValue [出力] 解析された IP アドレスの値
-'* @param MaskValue [出力] 解析されたマスクの値
-'* @param MaskLength [出力] 解析されたマスク長
-'* @param IpAddressAndMask 解析する「IP アドレス/マスク」形式の文字列
+'* @param IpAddressValue [Output] Parsed IP address value.
+'* @param MaskValue [Output] Parsed mask value.
+'* @param MaskLength [Output] Parsed mask length.
+'* @param IpAddressAndMask String in "IP address/mask" format to parse.
 '*
 '* @details
-'* 「IP アドレス/マスク」という形式の文字列を解析し、IP アドレス値、マスク値、およびマスク長に変換します。
-'* マスク部分は、CIDR 表記とドットデシマル形式の両方を受け付けます。
-'* 不正な形式の文字列が渡された場合はエラーが発生します。
+'* Parses a string in "IP address/mask" format and converts it to IP address value, mask value, and mask length.
+'* The mask part accepts both CIDR notation and dotted-decimal format.
+'* Raises an error if a string with an invalid format is passed.
 Public Sub ParseIpAddressAndMask(ByRef IpAddressValue As Long, ByRef MaskValue As Long, ByRef MaskLength As Integer, ByVal IpAddressAndMask As String)
     Dim ip_arr() As String
     Dim ip_addr_value As Long
@@ -160,7 +160,7 @@ Public Sub ParseIpAddressAndMask(ByRef IpAddressValue As Long, ByRef MaskValue A
     ip_arr = Split(IpAddressAndMask, C_MASK_SEP)
 
     If 1 < UBound(ip_arr) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Sub ParseIpAddressAndMask", Description:="正しい形式ではありません。(" & IpAddressAndMask & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Sub ParseIpAddressAndMask", Description:="The format is invalid. (" & IpAddressAndMask & ")"
     End If
 
     ip_addr_value = ConvertFromIpAddress(ip_arr(0))
@@ -169,7 +169,7 @@ Public Sub ParseIpAddressAndMask(ByRef IpAddressValue As Long, ByRef MaskValue A
     If Not IsInteger(ip_arr(1)) Then
         mask_value = ConvertFromIpAddress(ip_arr(1))
         If Not IsValidMaskValue(mask_value) Then
-            Err.Raise Number:=vbObjectError + 1, Source:="Sub ParseIpAddressAndMask", Description:="正しい形式ではありません。(" & IpAddressAndMask & ")"
+            Err.Raise Number:=vbObjectError + 1, Source:="Sub ParseIpAddressAndMask", Description:="The format is invalid. (" & IpAddressAndMask & ")"
             Exit Sub
         End If
         mask_length = ConvertToMaskLength(mask_value)
@@ -183,14 +183,14 @@ Public Sub ParseIpAddressAndMask(ByRef IpAddressValue As Long, ByRef MaskValue A
     MaskLength = mask_length
 End Sub
 
-'* 与えられた IP アドレス値が、ネットワークアドレスかどうかを確認します。
+'* Checks whether the given IP address value is a network address.
 '*
-'* @param IpAddressValue 確認する IP アドレスの値
-'* @param MaskValue 確認に使用するマスクの値
-'* @return ネットワークアドレスであれば True、それ以外の場合は False
+'* @param IpAddressValue IP address value to check.
+'* @param MaskValue Mask value to use for checking.
+'* @return True if it is a network address; otherwise, False.
 '*
 '* @details
-'* 指定された IP アドレス値とマスク値を基に、ネットワークアドレスであるかを確認します。
+'* Checks whether it is a network address based on the specified IP address value and mask value.
 Public Function IsNetwork(ByVal IpAddressValue As Long, ByVal MaskValue As Long) As Boolean
     Dim result_value As Boolean
     Dim host_addr As Long
@@ -205,7 +205,7 @@ Public Function IsNetwork(ByVal IpAddressValue As Long, ByVal MaskValue As Long)
 End Function
 
 ''
-'' IP アドレスの形式を満たしているか (ドットデシマル形式になっているか) を確認します。
+'' Checks whether the value satisfies the IP address format (dotted decimal notation).
 ''
 'Function IsIpAddress(IpAddress As String) As Long
 '    Dim regex_obj As New RegExp
@@ -222,82 +222,82 @@ End Function
 '    End If
 'End Function
 
-'* マスクが先頭から連続して 1 かを確認します。
+'* Checks whether the mask consists of contiguous 1 bits from the beginning.
 '*
-'* @param MaskValue 確認するマスク値
-'* @return マスクが先頭から連続して 1 であれば True、それ以外は False
+'* @param MaskValue Mask value to check.
+'* @return True if the mask consists of contiguous 1 bits from the beginning; otherwise, False.
 '*
 '* @details
-'* 指定されたマスク値が、先頭から連続して 1 となっている有効なマスクであるかを確認します。
-'* 無効なマスク (途中に 0 を含む場合) では False を返します。
+'* Checks whether the specified mask value is a valid mask consisting of contiguous 1 bits from the beginning.
+'* Returns False for an invalid mask (when it contains 0 in the middle).
 Public Function IsValidMaskValue(ByVal MaskValue As Long) As Boolean
     Dim found_zero As Boolean
     Dim item_idx As Integer
 
     If MaskValue > 0 Then
-        ' 正の数は、先頭が 0 で、それ以降に 1 がある。
+        ' Positive numbers have a leading 0, followed by at least one 1.
         IsValidMaskValue = False
         Exit Function
     End If
 
     If MaskValue = 0 Then
-        ' 桁があふれるので固定値で返す
-        ' すべて 0
+        ' Return a fixed value because the digit would overflow.
+        ' All zeros.
         IsValidMaskValue = True
         Exit Function
     End If
 
-    ' 32ビットすべてをチェック
+    ' Check all 32 bits.
     For item_idx = 30 To 0 Step -1
         If (MaskValue And (2& ^ item_idx)) <> 0 Then
-            ' ビットが立っていたら
+            ' If the bit is set.
             If found_zero Then
-                ' すでに 0 が見つかっていたら
+                ' If a 0 has already been found.
                 IsValidMaskValue = False
                 Exit Function
             End If
         Else
-            ' 初めて 0 が見つかった
+            ' The first 0 was found.
             found_zero = True
         End If
     Next item_idx
 
-    ' すべて 1
+    ' All ones.
     IsValidMaskValue = True
 End Function
 
-'* IP アドレスのホスト部を取得します。
+'* Gets the host part of an IP address.
 '*
-'* @param IpAddressValue 対象の IP アドレス値
-'* @param MaskValue 使用するネットマスク値
-'* @return ホスト部を示す値
+'* @param IpAddressValue Target IP address value.
+'* @param MaskValue Netmask value to use.
+'* @return Value indicating the host part.
 '*
 '* @details
-'* 指定された IP アドレス値にネットマスク値を適用して、ホスト部を抽出します。
+'* Applies the netmask value to the specified IP address value and extracts the host part.
 Public Function GetHostAddress(ByVal IpAddressValue As Long, ByVal MaskValue As Long) As Long
     GetHostAddress = IpAddressValue And Not MaskValue
 End Function
 
-'* IP アドレスのネットワーク部を取得します。
+'* Gets the network part of an IP address.
 '*
-'* @param IpAddressValue 対象の IP アドレス値
-'* @param MaskValue 使用するネットマスク値
-'* @return ネットワーク部を示す値
+'* @param IpAddressValue Target IP address value.
+'* @param MaskValue Netmask value to use.
+'* @return Value indicating the network part.
 '*
 '* @details
-'* 指定された IP アドレス値にネットマスク値を適用して、ネットワーク部を抽出します。
+'* Applies the netmask value to the specified IP address value and extracts the network part.
 Public Function GetNetworkAddress(ByVal IpAddressValue As Long, ByVal MaskValue As Long) As Long
     GetNetworkAddress = IpAddressValue And MaskValue
 End Function
 
-'* IP アドレス文字列を IP アドレス値に変換します。
+'* Converts an IP address string to an IP address value.
 '*
-'* @param IpAddress 変換対象の IP アドレス文字列
-'* @return 対応する IP アドレス値
+'* @param IpAddress IP address string to convert.
+'* @return Corresponding IP address value.
 '*
 '* @details
-'* ドットデシマル形式の IP アドレス文字列を、Long 型の IP アドレス値に変換します。
-'* 不正な形式の場合、エラーが発生します。
+'* Converts a dotted-decimal IP address string to a Long IP address value.
+'* Raises an error for invalid formats.
 Public Function ConvertFromIpAddress(ByVal IpAddress As String) As Long
     Dim regex_obj As RegExp
     Dim match_collection As MatchCollection
@@ -320,7 +320,7 @@ Public Function ConvertFromIpAddress(ByVal IpAddress As String) As Long
         If match_item.SubMatches.Count = 4 Then
             octet_value = CInt(match_item.SubMatches(0))
 
-            ' 桁あふれを防ぐ処置
+            ' Prevent overflow.
             If octet_value < 128 Then
                 high_bit = 0
             Else
@@ -330,34 +330,34 @@ Public Function ConvertFromIpAddress(ByVal IpAddress As String) As Long
 
             result_value = high_bit Or (octet_value * 16777216 + CLng(match_item.SubMatches(1)) * 65536 + CLng(match_item.SubMatches(2)) * 256 + CLng(match_item.SubMatches(3)))
 
-            ' 正常終了したら抜ける。
+            ' Exit after successful completion.
             ConvertFromIpAddress = result_value
             Exit Function
         End If
     End If
 
-    ' 正常終了しなかったらエラー
-    Err.Raise Number:=vbObjectError + 1, Source:="Function ConvertFromIpAddress", Description:="アドレスの形式が不正です。(" & IpAddress & ")"
+    ' Raise an error if completion was not successful.
+    Err.Raise Number:=vbObjectError + 1, Source:="Function ConvertFromIpAddress", Description:="The address format is invalid. (" & IpAddress & ")"
 End Function
 
-'* IP アドレス値を IP アドレス文字列に変換します。
+'* Converts an IP address value to an IP address string.
 '*
-'* @param IpAddressValue 変換対象の IP アドレス値
-'* @return 対応する IP アドレス文字列
+'* @param IpAddressValue IP address value to convert.
+'* @return Corresponding IP address string.
 '*
 '* @details
-'* 指定された Long 型の IP アドレス値を、ドットデシマル形式の文字列に変換します。
+'* Converts the specified Long IP address value to a dotted-decimal string.
 Public Function ConvertToIpAddress(ByVal IpAddressValue As Long) As String
     Dim result_value As String
     Dim ip_value As Long
     Dim mask_value As Long
     Dim high_bit As Long
 
-    ' 下位 8 ビットだけ抜き出すマスクを作成する
+    ' Create a mask that extracts only the lower 8 bits.
     mask_value = GetMaskValue(24, 32)
     'mask_value = BitRight(&HFFFFFFFF, 24)
 
-    ' 最上位ビットだけ別処理
+    ' Handle only the most significant bit separately.
     If 0 <= IpAddressValue Then
         ip_value = IpAddressValue
         high_bit = 0
@@ -366,46 +366,46 @@ Public Function ConvertToIpAddress(ByVal IpAddressValue As Long) As String
         high_bit = &H80
     End If
 
-    ' 第 4 オクテット
+    ' Fourth octet.
     result_value = ip_value And mask_value
     ip_value = ip_value \ 256
 
-    ' 第 3 オクテット
+    ' Third octet.
     result_value = "" & (ip_value And mask_value) & C_OCTET_SEP & result_value
     ip_value = ip_value \ 256
 
-    ' 第 2 オクテット
+    ' Second octet.
     result_value = "" & (ip_value And mask_value) & C_OCTET_SEP & result_value
     ip_value = ip_value \ 256
 
-    ' 第 1 オクテット
+    ' First octet.
     result_value = "" & (high_bit Or ip_value) & C_OCTET_SEP & result_value
 
     ConvertToIpAddress = result_value
 End Function
 
-'* マスク値を反転します。
+'* Inverts a mask value.
 '*
-'* @param MaskValue 反転対象のマスク値
-'* @return 反転後のマスク値
+'* @param MaskValue Mask value to invert.
+'* @return Inverted mask value.
 '*
 '* @details
-'* 指定されたマスク値をビット単位で反転します。
+'* Inverts the specified mask value bit by bit.
 Public Function InvertMaskValue(ByVal MaskValue As Long) As Long
     InvertMaskValue = Not MaskValue
 End Function
 
-'* マスク長からマスク値に変換します。
+'* Converts a mask length to a mask value.
 '*
-'* @param MaskLength 変換対象のマスク長 (0 ～ 32 の範囲内)
-'* @return 対応するマスク値
+'* @param MaskLength Mask length to convert (within the range 0 to 32).
+'* @return Corresponding mask value.
 '*
 '* @details
-'* 指定されたマスク長を 32 ビットのマスク値に変換します。
-'* 無効なマスク長 (範囲外) の場合はエラーを発生させます。
+'* Converts the specified mask length to a 32-bit mask value.
+'* Raises an error for invalid mask lengths (out of range).
 Public Function ConvertFromMaskLength(ByVal MaskLength As Integer) As Long
     If MaskLength < 0 Or 32 < MaskLength Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Function ConvertFromMaskLength", Description:="マスク長が範囲外です。(" & MaskLength & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Function ConvertFromMaskLength", Description:="Mask length is out of range. (" & MaskLength & ")"
         Exit Function
     End If
 
@@ -413,36 +413,36 @@ Public Function ConvertFromMaskLength(ByVal MaskLength As Integer) As Long
     'ConvertFromMaskLength = BitLeft(&HFFFFFFFF, (32 - MaskLength))
 End Function
 
-'* マスク値からマスク長に変換します。
+'* Converts a mask value to a mask length.
 '*
-'* @param MaskValue 変換対象のマスク値
-'* @return 対応するマスク長
+'* @param MaskValue Mask value to convert.
+'* @return Corresponding mask length.
 '*
 '* @details
-'* 指定されたマスク値をマスク長に変換します。
-'* 無効なマスク値 (連続した 1 ではない場合) の場合はエラーを発生させます。
+'* Converts the specified mask value to a mask length.
+'* Raises an error for invalid mask values (when they are not contiguous 1 bits).
 Public Function ConvertToMaskLength(ByVal MaskValue As Long) As Integer
     Dim found_zero As Boolean
     Dim mask_length As Integer
     Dim item_idx As Integer
 
     If MaskValue > 0 Then
-        Err.Raise vbObjectError + 1, Source:="Function ConvertToMaskLength", Description:="不正なマスク値です。(" & MaskValue & ")"
+        Err.Raise vbObjectError + 1, Source:="Function ConvertToMaskLength", Description:="Invalid mask value. (" & MaskValue & ")"
         Exit Function
     End If
 
     If MaskValue = 0 Then
-        ' 桁があふれるので固定値で返す
+        ' Return a fixed value because the digit would overflow.
         ConvertToMaskLength = 0
         Exit Function
     End If
 
-    ' 32ビットすべてをチェック
+    ' Check all 32 bits.
     mask_length = 1
     For item_idx = 30 To 0 Step -1
         If (MaskValue And (2& ^ item_idx)) <> 0 Then
             If found_zero Then
-                Err.Raise vbObjectError + 1, Source:="ConvertToMaskLength", Description:="不正なマスク値です。(" & MaskValue & ")"
+                Err.Raise vbObjectError + 1, Source:="ConvertToMaskLength", Description:="Invalid mask value. (" & MaskValue & ")"
             End If
             mask_length = mask_length + 1
         Else
@@ -453,15 +453,15 @@ Public Function ConvertToMaskLength(ByVal MaskValue As Long) As Integer
     ConvertToMaskLength = mask_length
 End Function
 
-'* 指定したビット範囲を 1 にしたマスクを作成します。
+'* Creates a mask with the specified bit range set to 1.
 '*
-'* @param Start 開始ビット (0 オリジン、含む)
-'* @param Finish 終了ビット (0 オリジン、含まない)。省略時は Start + 1。
-'* @return 作成したマスク値
+'* @param Start Start bit (0-origin, inclusive).
+'* @param Finish Finish bit (0-origin, exclusive). If omitted, Start + 1.
+'* @return Created mask value.
 '*
 '* @details
-'* 開始ビットから終了ビットまでを 1 にし、それ以外を 0 にした 32 ビットのマスク値を作成します。
-'* 範囲外のビット指定の場合はエラーを発生させます。
+'* Creates a 32-bit mask value with bits from the start bit through the finish bit set to 1 and all other bits set to 0.
+'* Raises an error for out-of-range bit specifications.
 Public Function GetMaskValue(ByVal Start As Integer, Optional ByVal Finish As Integer = -1) As Long
     Dim result_value As Long
     Dim start_idx As Long
@@ -473,11 +473,11 @@ Public Function GetMaskValue(ByVal Start As Integer, Optional ByVal Finish As In
     End If
 
     If Finish < Start Or Start < 0 Or 32 < Finish Then
-        Err.Raise vbObjectError + 1, Source:="Function GenerateMask", Description:="マスクの開始位置と終了位置が不正です。(" & Start & ", " & Finish & ")"
+        Err.Raise vbObjectError + 1, Source:="Function GenerateMask", Description:="The mask start and finish positions are invalid. (" & Start & ", " & Finish & ")"
     End If
 
 
-    ' 最上位ビットの処理
+    ' Process the most significant bit.
     If Start = 0 And Start <> Finish Then
         high_bit = &H80000000
         start_idx = 1

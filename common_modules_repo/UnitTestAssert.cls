@@ -12,7 +12,7 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! ユニット テストの assert です。
+'! Assert class for unit tests.
 '!
 ' #############################################################################
 
@@ -24,17 +24,17 @@ Private pCallCount As Long
 Private pIsFailed As Boolean
 Private pResultMessage As String
 
-'* assert と異なっていたか
+'* Whether it differed from the assertion.
 Public Property Get IsFailed() As Boolean
     IsFailed = pIsFailed
 End Property
 
-'* assert と異なっていた場合の詳細
+'* Details when it differed from the assertion.
 Public Property Get ResultMessage() As String
     ResultMessage = pResultMessage
 End Property
 
-'* 実行された assert の件数
+'* Number of assertions executed.
 Public Property Get AssertionCount() As Long
     AssertionCount = pCallCount
 End Property
@@ -45,17 +45,17 @@ Private Sub Class_Initialize()
     pResultMessage = ""
 End Sub
 
-'* 予測された値と実際の値が等しい。
+'* Expected value and actual value are equal.
 '*
-'* @param ExpectedValue 予測された値。
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected value.
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された値と実際の値が等しいことを示します。
-'* 値の比較だけでなく、型の比較も行います。
+'* Indicates that the expected value and actual value are equal.
+'* Compares not only values but also types.
 Public Sub Equals(ByVal ExpectedValue As Variant, ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasArrayArgument(ExpectedValue, ActualValue) Then
@@ -74,21 +74,21 @@ Public Sub Equals(ByVal ExpectedValue As Variant, ByVal ActualValue As Variant, 
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測された値と実際の値が等くない。
+'* Expected value and actual value are not equal.
 '*
-'* @param ExpectedValue 予測された値。
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected value.
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された値と実際の値が異なることを示します。
-'* 値の比較だけでなく、型の比較も行います。
+'* Indicates that the expected value and actual value differ.
+'* Compares not only values but also types.
 Public Sub NotEquals(ByVal ExpectedValue As Variant, ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasArrayArgument(ExpectedValue, ActualValue) Then
@@ -107,22 +107,22 @@ Public Sub NotEquals(ByVal ExpectedValue As Variant, ByVal ActualValue As Varian
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測された数値と実際の数値が等しい。
+'* Expected number and actual number are equal.
 '*
-'* @param ExpectedValue 予測された値。
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected value.
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された数値と実際の数値が等しいことを示します。
-'* 数値であれば、型はチェックしません。
-'* 注意: Currency と Decimal は現時点では型無視の数値比較対象に含めません。
+'* Indicates that the expected number and actual number are equal.
+'* Does not check type as long as the values are numeric.
+'* Note: Currency and Decimal are not currently included in type-ignoring numeric comparison targets.
 Public Sub EqualsNumeric(ByVal ExpectedValue As Variant, ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasArrayArgument(ExpectedValue, ActualValue) Then
@@ -146,22 +146,22 @@ Public Sub EqualsNumeric(ByVal ExpectedValue As Variant, ByVal ActualValue As Va
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測された数値と実際の数値が等くない。
+'* Expected number and actual number are not equal.
 '*
-'* @param ExpectedValue 予測された値。
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected value.
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された数値と実際の数値が等しくないことを示します。
-'* 数値であれば、型はチェックしません。
-'* 注意: Currency と Decimal は現時点では型無視の数値比較対象に含めません。
+'* Indicates that the expected number and actual number are not equal.
+'* Does not check type as long as the values are numeric.
+'* Note: Currency and Decimal are not currently included in type-ignoring numeric comparison targets.
 Public Sub NotEqualsNumeric(ByVal ExpectedValue As Variant, ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasArrayArgument(ExpectedValue, ActualValue) Then
@@ -185,21 +185,21 @@ Public Sub NotEqualsNumeric(ByVal ExpectedValue As Variant, ByVal ActualValue As
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測されたオブジェクトと実際のオブジェクトが、指定された ObjectKeyMode で等しい。
+'* Expected object and actual object are equal under the specified ObjectKeyMode.
 '*
-'* @param ExpectedObject 予測されたオブジェクト。
-'* @param ActualObject 実際のオブジェクト。
-'* @param ObjectKeyMode オブジェクトの比較方法。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedObject Expected object.
+'* @param ActualObject Actual object.
+'* @param ObjectKeyMode Object comparison method.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* ObjectKeyMode に `G_OBJECT_KEY_MODE_REFERENCE`、`G_OBJECT_KEY_MODE_I_EQUATABLE`、`G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE` のいずれかを指定して比較します。
+'* Compares with ObjectKeyMode specified as one of `G_OBJECT_KEY_MODE_REFERENCE`, `G_OBJECT_KEY_MODE_I_EQUATABLE`, or `G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE`.
 Public Sub EqualsObject(ByVal ExpectedObject As Object, ByVal ActualObject As Object, Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     Dim expected_str As String
@@ -213,21 +213,21 @@ Public Sub EqualsObject(ByVal ExpectedObject As Object, ByVal ActualObject As Ob
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測されたオブジェクトと実際のオブジェクトが、指定された ObjectKeyMode で等しくない。
+'* Expected object and actual object are not equal under the specified ObjectKeyMode.
 '*
-'* @param ExpectedObject 予測されたオブジェクト。
-'* @param ActualObject 実際のオブジェクト。
-'* @param ObjectKeyMode オブジェクトの比較方法。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedObject Expected object.
+'* @param ActualObject Actual object.
+'* @param ObjectKeyMode Object comparison method.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* ObjectKeyMode に `G_OBJECT_KEY_MODE_REFERENCE`、`G_OBJECT_KEY_MODE_I_EQUATABLE`、`G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE` のいずれかを指定して比較します。
+'* Compares with ObjectKeyMode specified as one of `G_OBJECT_KEY_MODE_REFERENCE`, `G_OBJECT_KEY_MODE_I_EQUATABLE`, or `G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE`.
 Public Sub NotEqualsObject(ByVal ExpectedObject As Object, ByVal ActualObject As Object, Optional ByVal ObjectKeyMode As Long = G_OBJECT_KEY_MODE_REFERENCE, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     Dim expected_str As String
@@ -241,93 +241,93 @@ Public Sub NotEqualsObject(ByVal ExpectedObject As Object, ByVal ActualObject As
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* True が予測される。
+'* True is expected.
 '*
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 結果が真であることを示します。
+'* Indicates that the result is true.
 Public Sub IsTrue(ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
     Call Equals(True, ActualValue, CaseName:=CaseName)
 End Sub
 
-'* False が予測される。
+'* False is expected.
 '*
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 結果が偽であることを示します。
+'* Indicates that the result is false.
 Public Sub IsFalse(ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
     Call Equals(False, ActualValue, CaseName:=CaseName)
 End Sub
 
-'* 予測された型と実際の型が等しい。
+'* Expected type and actual type are equal.
 '*
-'* @param ExpectedTypeName 予測された型名の文字列。
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedTypeName String of the expected type name.
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された型と実際の型が等しいことを示します。
-'* 型が一致するかをチェックするのであり、キャスト可能であるかをチェックするのではありません。
+'* Indicates that the expected type and actual type are equal.
+'* Checks whether the types match, not whether casting is possible.
 Public Sub IsTypeOf(ByVal ExpectedTypeName As String, ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If TypeName(ActualValue) <> ExpectedTypeName Then
         Call pSetResultMessage("<" & ExpectedTypeName & ">", "<" & TypeName(ActualValue) & ">", CaseName:=CaseName)
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* Nothing が予測される。
+'* Nothing is expected.
 '*
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* Nothing が予測される。
-'* IsTypeOf("Nothing", ActualValue) と同じです。
+'* Nothing is expected.
+'* Same as IsTypeOf("Nothing", ActualValue).
 Public Sub IsNothing(ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
     Call IsTypeOf("Nothing", ActualValue, CaseName:=CaseName)
 End Sub
 
-'* Empty が予測される。
+'* Empty is expected.
 '*
-'* @param ActualValue 実際の値。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ActualValue Actual value.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* Empty が予測される。
-'* IsTypeOf("Empty", ActualValue) と同じです。
+'* Empty is expected.
+'* Same as IsTypeOf("Empty", ActualValue).
 Public Sub IsEmpty(ByVal ActualValue As Variant, Optional ByVal CaseName As String = "")
     Call IsTypeOf("Empty", ActualValue, CaseName:=CaseName)
 End Sub
 
-'* 指定されたエラーが発生することが予測される。
+'* The specified error is expected to occur.
 '*
-'* @param ExpectedCode 予測されるエラーコード。0 を渡した場合、すべてのエラーが対象となります
-'* @param ActualCodeCode 実際のエラーコード。Err.Number を渡してください。
-'* @param ErrorSource 実際のエラー発生元。Err.Source を渡してください。
-'* @param ErrorDescription 実際のエラー詳細。Err.Description を渡してください。
-'* @param CaseName 失敗時に表示するケース名。
-'* @param ClearAfterAssert True の場合、検査後に Err.Clear を実行します。
-'* @return エラーが発生したかどうか。
+'* @param ExpectedCode Expected error code. Passing 0 targets all errors.
+'* @param ActualCodeCode Actual error code. Pass Err.Number.
+'* @param ErrorSource Actual error source. Pass Err.Source.
+'* @param ErrorDescription Actual error details. Pass Err.Description.
+'* @param CaseName Case name to display on failure.
+'* @param ClearAfterAssert When True, runs Err.Clear after inspection.
+'* @return Whether an error occurred.
 '*
 '* @details
-'* 指定されたエラーが発生することが予測されることを示します。
-'* ExpectedCode として 0 が指定された場合、なんらかのエラーが発生することを示します。
-'* 0 以外が指定された場合、そのエラーが発生することを示します (他のエラーが発生しても無視します)。
+'* Indicates that the specified error is expected to occur.
+'* When 0 is specified as ExpectedCode, indicates that some error is expected to occur.
+'* When a nonzero value is specified, indicates that that error is expected to occur (other errors are ignored).
 Public Function ErrorRaised(ByVal ExpectedCode As Long, ByVal ActualCode As Long, ByVal ErrorSource As String, ByVal ErrorDescription As String, Optional ByVal CaseName As String = "", Optional ByVal ClearAfterAssert As Boolean = False) As Boolean
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Function
 
     Dim expected_str As String
@@ -343,27 +343,27 @@ Public Function ErrorRaised(ByVal ExpectedCode As Long, ByVal ActualCode As Long
         ErrorRaised = False
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
     If ClearAfterAssert Then Err.Clear
 End Function
 
-'* 指定されたエラーが発生しないことが予測される。
+'* The specified error is expected not to occur.
 '*
-'* @param ExpectedCode 予測されるエラーコード。0 を渡した場合、すべてのエラーが対象となります
-'* @param ActualCodeCode 実際のエラーコード。Err.Number を渡してください。
-'* @param ErrorSource 実際のエラー発生元。Err.Source を渡してください。
-'* @param ErrorDescription 実際のエラー詳細。Err.Description を渡してください。
-'* @param CaseName 失敗時に表示するケース名。
-'* @param ClearAfterAssert True の場合、検査後に Err.Clear を実行します。
-'* @return エラーが発生しなかったかどうか。
+'* @param ExpectedCode Expected error code. Passing 0 targets all errors.
+'* @param ActualCodeCode Actual error code. Pass Err.Number.
+'* @param ErrorSource Actual error source. Pass Err.Source.
+'* @param ErrorDescription Actual error details. Pass Err.Description.
+'* @param CaseName Case name to display on failure.
+'* @param ClearAfterAssert When True, runs Err.Clear after inspection.
+'* @return Whether an error did not occur.
 '*
 '* @details
-'* 指定されたエラーが発生しないことが予測されることを示します。
-'* ExpectedCode として 0 が指定された場合、どのようなエラーも発生しないことを示します。
-'* 0 以外が指定された場合、そのエラーが発生しない (他のエラーは発生するかもしれない) ことを示します。
+'* Indicates that the specified error is expected not to occur.
+'* When 0 is specified as ExpectedCode, indicates that no error of any kind is expected to occur.
+'* When a nonzero value is specified, indicates that that error is not expected to occur (other errors may occur).
 Public Function ErrorNotRaised(ByVal ExpectedCode As Long, ByVal ActualCode As Long, ByVal ErrorSource As String, ByVal ErrorDescription As String, Optional ByVal CaseName As String = "", Optional ByVal ClearAfterAssert As Boolean = False) As Boolean
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Function
 
     Dim expected_str As String
@@ -379,22 +379,22 @@ Public Function ErrorNotRaised(ByVal ExpectedCode As Long, ByVal ActualCode As L
         ErrorNotRaised = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
     If ClearAfterAssert Then Err.Clear
 End Function
 
-'* 予測された配列と実際の配列が等しい。
+'* Expected array and actual array are equal.
 '*
-'* @param ExpectedValue 予測された配列。
-'* @param ActualValue 実際の配列。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected array.
+'* @param ActualValue Actual array.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された配列と実際の配列が等しいことを示します。
-'* 値の比較だけでなく、型の比較も行います。
+'* Indicates that the expected array and actual array are equal.
+'* Compares not only values but also types.
 Public Sub EqualsArray(ByVal ExpectedArray As Variant, ByVal ActualArray As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasNonArrayArgument(ExpectedArray, ActualArray) Then
@@ -414,21 +414,21 @@ Public Sub EqualsArray(ByVal ExpectedArray As Variant, ByVal ActualArray As Vari
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
-'* 予測された配列と実際の配列が等しくない。
+'* Expected array and actual array are not equal.
 '*
-'* @param ExpectedValue 予測された配列。
-'* @param ActualValue 実際の配列。
-'* @param CaseName 失敗時に表示するケース名。
+'* @param ExpectedValue Expected array.
+'* @param ActualValue Actual array.
+'* @param CaseName Case name to display on failure.
 '*
 '* @details
-'* 予測された配列と実際の配列が異なることを示します。
-'* 値の比較だけでなく、型の比較も行います。
+'* Indicates that the expected array and actual array differ.
+'* Compares not only values but also types.
 Public Sub NotEqualsArray(ByVal ExpectedArray As Variant, ByVal ActualArray As Variant, Optional ByVal CaseName As String = "")
-    ' すでに失敗済みの時は処理をしない
+    ' Do nothing if the assertion has already failed.
     If pIsFailed Then Exit Sub
 
     If pHasNonArrayArgument(ExpectedArray, ActualArray) Then
@@ -448,7 +448,7 @@ Public Sub NotEqualsArray(ByVal ExpectedArray As Variant, ByVal ActualArray As V
         pIsFailed = True
     End If
 
-    ' 常に行う処理
+    ' Processing that always runs.
     pCallCount = pCallCount + 1
 End Sub
 
@@ -504,7 +504,7 @@ Private Sub pValidateObjectAssertionMode(ByVal ObjectKeyMode As Long)
         Case G_OBJECT_KEY_MODE_REFERENCE, G_OBJECT_KEY_MODE_I_EQUATABLE, G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             Exit Sub
         Case Else
-            Err.Raise vbObjectError + 1, "Class UnitTestAssert.pValidateObjectAssertionMode", "未対応のオブジェクト比較モードです。(" & CStr(ObjectKeyMode) & ")"
+            Err.Raise vbObjectError + 1, "Class UnitTestAssert.pValidateObjectAssertionMode", "Unsupported object comparison mode. (" & CStr(ObjectKeyMode) & ")"
     End Select
 End Sub
 
@@ -514,12 +514,12 @@ Private Sub pRaiseIfObjectKeyModeInterfaceMissing(ByVal TargetObject As Object, 
     Select Case ObjectKeyMode
         Case G_OBJECT_KEY_MODE_I_EQUATABLE
             If Not TypeOf TargetObject Is IEquatable Then
-                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " は IEquatable ではありません。(" & TypeName(TargetObject) & ")"
+                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " is not IEquatable. (" & TypeName(TargetObject) & ")"
             End If
 
         Case G_OBJECT_KEY_MODE_DUPLICATE_CHECKABLE
             If Not TypeOf TargetObject Is IDuplicateCheckable Then
-                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " は IDuplicateCheckable ではありません。(" & TypeName(TargetObject) & ")"
+                Err.Raise vbObjectError + 1, "Class UnitTestAssert.pRaiseIfObjectKeyModeInterfaceMissing", TargetName & " is not IDuplicateCheckable. (" & TypeName(TargetObject) & ")"
             End If
     End Select
 End Sub
@@ -554,10 +554,10 @@ Private Sub pEqualsCore( _
         Exit Sub
     End If
 
-    ' ここまでで、片方がプリミティブ型で、片方がオブジェクト型の場合は早期リターンされている
+    ' By this point, cases where one side is primitive and the other is an object have already returned early.
 
     If actual_is_object Then
-        ' 両方オブジェクト型
+        ' Both are object types.
 
         Dim actual_is_nothing As Boolean
         Dim expected_is_nothing As Boolean
@@ -586,7 +586,7 @@ Private Sub pEqualsCore( _
             Exit Sub
         End If
 
-        ' ここまでで、どちらかが、あるいはどちらも Nothing の場合は早期リターンされている
+        ' By this point, cases where either side or both sides are Nothing have already returned early.
 
         If Not ExpectedValue Is ActualValue Then
             CheckResult = False
@@ -594,7 +594,7 @@ Private Sub pEqualsCore( _
             CheckResult = True
         End If
     Else
-        ' 両方プリミティブ型
+        ' Both are primitive types.
         If IgnoreNumericType Then
             Call pEqualsPrimitiveNumericCore(CheckResult, ExpectedValueString, ActualValueString, ExpectedValue, ActualValue)
         Else
@@ -789,7 +789,7 @@ Private Sub pErrorRaisedCore( _
         End If
     Else
         If ExpectedCode = 0 Then
-            ' 予測コード 0 の時は何らかのエラーが挙がったら OK。
+            ' When the expected code is 0, any raised error is OK.
             If AsNotRaised Then
                 ExpectedValueString = "Any error is not raised."
                 ActualValueString = "The error [0x" & Hex(ActualCode) & "]@<" & ErrorSource & "> """ & ErrorDescription & """ is raised."
@@ -823,13 +823,13 @@ Private Sub pEqualsArrayCore( _
     ExpectedValueString = TypeName(ExpectedArray)
     ActualValueString = TypeName(ActualArray)
 
-    ' 型が違う場合は失敗
+    ' Fail if the types differ.
     If ExpectedValueString <> ActualValueString Then
         CheckResult = False
         Exit Sub
     End If
 
-    ' どちらかが配列でなければ失敗
+    ' Fail if either value is not an array.
     If Not IsArray(ExpectedArray) Or Not IsArray(ActualArray) Then
         CheckResult = False
         Exit Sub
@@ -854,7 +854,7 @@ Private Sub pEqualsArrayCore( _
         Exit Sub
     End If
 
-    ' 配列の LBound および UBound を得る
+    ' Get the array LBound and UBound values.
     Dim expect_lb_arr() As Long
     Dim expect_ub_arr() As Long
     Call GetArrayBounds(expect_lb_arr, expect_ub_arr, ExpectedArray)
@@ -863,14 +863,14 @@ Private Sub pEqualsArrayCore( _
     Dim actual_ub_arr() As Long
     Call GetArrayBounds(actual_lb_arr, actual_ub_arr, ActualArray)
 
-    ' 配列の次元数を算出
+    ' Calculate the number of array dimensions.
     Dim expect_dimension As Long
     expect_dimension = UBound(expect_lb_arr) - LBound(expect_lb_arr) + 1
 
     Dim actual_dimension As Long
     actual_dimension = UBound(actual_lb_arr) - LBound(actual_lb_arr) + 1
 
-    ' 配列の次元数を比較
+    ' Compare the number of array dimensions.
     If expect_dimension <> actual_dimension Then
         ExpectedValueString = "dimension is " & expect_dimension
         ActualValueString = "dimension is " & actual_dimension
@@ -878,7 +878,7 @@ Private Sub pEqualsArrayCore( _
         Exit Sub
     End If
 
-    ' 次元ごとの LBound および UBound を比較
+    ' Compare LBound and UBound for each dimension.
     Dim item_idx As Long
     For item_idx = LBound(expect_lb_arr) To UBound(expect_lb_arr)
         If expect_lb_arr(item_idx) <> actual_lb_arr(item_idx) Then
@@ -896,7 +896,7 @@ Private Sub pEqualsArrayCore( _
         End If
     Next item_idx
 
-    ' expect を 1 次元配列にする
+    ' Convert expect to a one-dimensional array.
     Dim expect_item As Variant
     Dim expect_arr() As Variant
     item_idx = 0
@@ -910,8 +910,8 @@ Private Sub pEqualsArrayCore( _
         item_idx = item_idx + 1
     Next expect_item
 
-    ' すべての要素を Equals で比較
-    ' 注意: 配列比較は型も含めて厳密一致とするため、IgnoreNumericType にかかわらず要素比較では数値型差を無視しない。
+    ' Compare all elements with Equals.
+    ' Note: array comparison requires an exact match including types, so element comparison does not ignore numeric type differences regardless of IgnoreNumericType.
     Dim actual_item As Variant
     item_idx = 0
     For Each actual_item In ActualArray

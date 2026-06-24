@@ -15,7 +15,7 @@ Implements IEnumerator
 ' #############################################################################
 '!
 '! @brief
-'! WorksheetVirtualTable の行を列挙するための列挙子のクラスです。
+'! Enumerator class for enumerating rows of WorksheetVirtualTable.
 '!
 ' #############################################################################
 
@@ -25,7 +25,7 @@ Private pTable As WorksheetVirtualTable
 Private pLength As Long
 Private pIndex As Long
 
-'* 逆順で列挙するかどうか
+'* Whether to enumerate in reverse order.
 Public Property Get Descending() As Boolean
     Call pCheckInit
     Descending = pDescending
@@ -34,7 +34,7 @@ Private Property Get IEnumerator_Descending() As Boolean
     IEnumerator_Descending = Descending
 End Property
 
-'* 読み取り専用かどうか
+'* Whether this enumerator is read-only.
 Public Property Get IsReadOnly() As Boolean
     Call pCheckInit
     IsReadOnly = True
@@ -43,7 +43,7 @@ Private Property Get IEnumerator_IsReadOnly() As Boolean
     IEnumerator_IsReadOnly = IsReadOnly
 End Property
 
-'* 現在位置の行 ObjectDictionary
+'* Row ObjectDictionary at the current position.
 Public Property Get Current() As Variant
     Call pCheckInit
     Call pCheckEndOfList
@@ -54,7 +54,7 @@ Private Property Get IEnumerator_Current() As Variant
     Set IEnumerator_Current = Current
 End Property
 
-'* 現在位置の 0-based index
+'* 0-based index of the current position.
 Public Property Get Index() As Long
     Call pCheckInit
     Index = pIndex
@@ -63,7 +63,7 @@ Private Property Get IEnumerator_Index() As Long
     IEnumerator_Index = Index
 End Property
 
-'* 列挙対象の仮想表
+'* Virtual table being enumerated.
 Public Property Get Target() As Variant
     Call pCheckInit
     Set Target = pTable
@@ -72,19 +72,19 @@ Private Property Get IEnumerator_Target() As Variant
     Set IEnumerator_Target = Target
 End Property
 
-'* この列挙子を初期化します。
+'* Initializes this enumerator.
 '*
-'* @param TargetTable 列挙対象の `WorksheetVirtualTable`。
-'* @param Descending [省略可] 降順で列挙するか否か。
+'* @param TargetTable `WorksheetVirtualTable` to enumerate.
+'* @param Descending [Optional] Whether to enumerate in descending order.
 '*
 '* @details
-'* `TargetTable` が Nothing の場合、または初期化済みの列挙子を再初期化した場合はエラーになります。
+'* Raises an error when `TargetTable` is Nothing or when an initialized enumerator is reinitialized.
 Public Sub Initialize( _
         ByVal TargetTable As WorksheetVirtualTable, _
         Optional ByVal Descending As Boolean = False)
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "初期化済みです。"
-    If TargetTable Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "列挙対象が Nothing です。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "The object is already initialized."
+    If TargetTable Is Nothing Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Initialize", "The enumeration target is Nothing."
 
     Set pTable = TargetTable
     pLength = TargetTable.RowCount
@@ -94,12 +94,12 @@ Public Sub Initialize( _
     Call Reset
 End Sub
 
-'* 次の要素に移動します。
+'* Moves to the next element.
 '*
-'* @return 次の要素が存在する場合は True、それ以外は False。
+'* @return True if the next element exists; otherwise, False.
 '*
 '* @details
-'* 初期位置は先頭の 1 つ前です。降順の場合は末尾の 1 つ後から開始します。
+'* The initial position is one before the first element. In descending order, starts one after the last element.
 Public Function MoveNext() As Boolean
     Call pCheckInit
     If Descending Then
@@ -124,10 +124,10 @@ Private Function IEnumerator_MoveNext() As Boolean
     IEnumerator_MoveNext = MoveNext()
 End Function
 
-'* 列挙をリセットします。
+'* Resets enumeration.
 '*
 '* @details
-'* 現在位置を、昇順では先頭の 1 つ前、降順では末尾の 1 つ後へ戻します。
+'* Returns the current position to one before the first element for ascending order, or one after the last element for descending order.
 Public Sub Reset()
     Call pCheckInit
     If Descending Then
@@ -140,19 +140,19 @@ Private Sub IEnumerator_Reset()
     Call Reset
 End Sub
 
-'* 指定した 0-based index までスキップします。
+'* Skips to the specified 0-based index.
 '*
-'* @param TargetIndex 移動先の 0-based index。
+'* @param TargetIndex Destination 0-based index.
 '*
 '* @details
-'* 範囲外の index、または現在位置より前へ戻る index を指定した場合はエラーになります。
+'* Raises an error when an out-of-range index or an index before the current position is specified.
 Public Sub SkipTo(ByVal TargetIndex As Long)
     Call pCheckInit
-    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "移動先が範囲外です。(min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
+    If TargetIndex < 0 Or pLength <= TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "The destination is outside the valid range. (min: 0 / max: " & (pLength - 1) & " / target: " & TargetIndex & ")"
     If Descending Then
-        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If pIndex < TargetIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "Cannot move to a position before the current position. (current: " & pIndex & " / target: " & TargetIndex & ")"
     Else
-        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "現在の位置より前には移動できません。(current: " & pIndex & " / target: " & TargetIndex & ")"
+        If TargetIndex < pIndex Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.SkipTo", "Cannot move to a position before the current position. (current: " & pIndex & " / target: " & TargetIndex & ")"
     End If
     pIndex = TargetIndex
 End Sub
@@ -160,38 +160,38 @@ Private Sub IEnumerator_SkipTo(ByVal TargetIndex As Long)
     Call SkipTo(TargetIndex)
 End Sub
 
-'* 現在の要素の削除を試行します。
+'* Attempts to remove the current element.
 '*
-'* @return 削除された要素。
+'* @return Removed element.
 '*
 '* @details
-'* `WorksheetVirtualTableEnumerator` は読み取り専用のため、常にエラーになります。
+'* `WorksheetVirtualTableEnumerator` is read-only, so this always raises an error.
 Public Function Remove() As Variant
-    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Remove", "このコレクションは読み取り専用です。要素の削除に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Remove", "This collection is read-only and does not support removing elements."
 End Function
 Private Function IEnumerator_Remove() As Variant
     Set IEnumerator_Remove = Remove()
 End Function
 
-'* 現在の要素の更新を試行します。
+'* Attempts to update the current element.
 '*
-'* @param ItemObject 更新する要素。
+'* @param ItemObject Element to update.
 '*
 '* @details
-'* `WorksheetVirtualTableEnumerator` は読み取り専用のため、常にエラーになります。
+'* `WorksheetVirtualTableEnumerator` is read-only, so this always raises an error.
 Public Sub Update(ByVal ItemObject As Variant)
-    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Update", "このコレクションは読み取り専用です。要素の更新に対応していません。"
+    Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.Update", "This collection is read-only and does not support updating elements."
 End Sub
 Private Sub IEnumerator_Update(ByVal ItemObject As Variant)
     Call Update(ItemObject)
 End Sub
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckInit", "The object is not initialized."
 End Sub
 
 Private Sub pCheckEndOfList()
     If pIndex < 0 Or pLength <= pIndex Then
-        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckEndOfList", "現在の要素がありません。(index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetVirtualTableEnumerator.pCheckEndOfList", "There is no current element. (index: " & pIndex & " / min: 0 / max: " & (pLength - 1) & ")"
     End If
 End Sub

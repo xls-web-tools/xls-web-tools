@@ -15,7 +15,7 @@ Implements IEquatable
 ' #############################################################################
 '!
 '! @brief
-'! Excel の範囲情報を保持するクラス モジュールです。
+'! Class module that holds Excel range information.
 '!
 ' #############################################################################
 
@@ -28,43 +28,43 @@ Private pWorkbookName As String
 Private pWorksheetName As String
 Private pNewEnumSnapshot As Collection
 
-'* 行番号
+'* Row number.
 Public Property Get Row() As Long
     Call pCheckInit
     Row = pRow
 End Property
 
-'* 列番号
+'* Column number.
 Public Property Get Column() As Long
     Call pCheckInit
     Column = pColumn
 End Property
 
-'* 最後の行番号
+'* Last row number.
 Public Property Get FinishRow() As Long
     Call pCheckInit
     FinishRow = pFinishRow
 End Property
 
-'* 最後の列番号
+'* Last column number.
 Public Property Get FinishColumn() As Long
     Call pCheckInit
     FinishColumn = pFinishColumn
 End Property
 
-'* ワークシート名
+'* Worksheet name.
 Public Property Get WorksheetName() As String
     Call pCheckInit
     WorksheetName = pWorksheetName
 End Property
 
-'* ワークブック名
+'* Workbook name.
 Public Property Get WorkbookName() As String
     Call pCheckInit
     WorkbookName = pWorkbookName
 End Property
 
-'* 行数
+'* Row count.
 Public Property Get RowCount() As Long
     Call pCheckInit
     Dim result_value As Long
@@ -76,7 +76,7 @@ Public Property Get RowCount() As Long
     End If
 End Property
 
-'* 列数
+'* Column count.
 Public Property Get ColumnCount() As Long
     Call pCheckInit
     Dim result_value As Long
@@ -88,7 +88,7 @@ Public Property Get ColumnCount() As Long
     End If
 End Property
 
-'* セル数
+'* Cell count.
 Public Property Get Count() As Long
     Call pCheckInit
 
@@ -105,7 +105,7 @@ Public Property Get Count() As Long
 '    End If
 End Property
 
-'* 空かどうか
+'* Whether the range is empty.
 Public Property Get IsEmpty() As Boolean
     Call pCheckInit
     If pFinishRow < pRow Or pFinishColumn < pColumn Then
@@ -115,7 +115,7 @@ Public Property Get IsEmpty() As Boolean
     End If
 End Property
 
-'* シート全体かどうか
+'* Whether the range is the entire sheet.
 Public Property Get IsEntireSheet() As Boolean
     Call pCheckInit
     If IsEntireRow And IsEntireColumn Then
@@ -125,7 +125,7 @@ Public Property Get IsEntireSheet() As Boolean
     End If
 End Property
 
-'* 行全体 (1:2 のような範囲) かどうか
+'* Whether the range is an entire row (range such as 1:2).
 Public Property Get IsEntireRow() As Boolean
     Call pCheckInit
     If pColumn = 1 And pFinishColumn = G_COL_MAX Then
@@ -135,7 +135,7 @@ Public Property Get IsEntireRow() As Boolean
     End If
 End Property
 
-'* 列全体 (A:B のような範囲) かどうか
+'* Whether the range is an entire column (range such as A:B).
 Public Property Get IsEntireColumn() As Boolean
     Call pCheckInit
     If pRow = 1 And pFinishRow = G_ROW_MAX Then
@@ -145,7 +145,7 @@ Public Property Get IsEntireColumn() As Boolean
     End If
 End Property
 
-'* 単一セルかどうか。Area でない非空範囲と同義です。
+'* Whether the range is a single cell. Equivalent to a non-empty range that is not an Area.
 Public Property Get IsCell() As Boolean
     Call pCheckInit
     If Not IsEmpty And pRow = pFinishRow And pColumn = pFinishColumn Then
@@ -155,7 +155,7 @@ Public Property Get IsCell() As Boolean
     End If
 End Property
 
-'* Area かどうか。単一セルを除く、連続した複数セル範囲を Area として扱います。
+'* Whether the range is an Area. A contiguous multi-cell range excluding a single cell is treated as an Area.
 Public Property Get IsArea() As Boolean
     Call pCheckInit
     If Not IsEmpty And Not IsCell() Then
@@ -165,7 +165,7 @@ Public Property Get IsArea() As Boolean
     End If
 End Property
 
-'* 幅が 1 行の範囲 (1:1 や A1:B1) かどうか。単一セルも True となります。
+'* Whether the range has a width of one row (such as 1:1 or A1:B1). A single cell is also True.
 Public Property Get IsOneRow() As Boolean
     Call pCheckInit
     If IsEmpty Then
@@ -180,7 +180,7 @@ Public Property Get IsOneRow() As Boolean
     End If
 End Property
 
-'* 幅が 1 列の範囲 (A:A や A1:A2) かどうか。単一セルも True となります。
+'* Whether the range has a width of one column (such as A:A or A1:A2). A single cell is also True.
 Public Property Get IsOneColumn() As Boolean
     Call pCheckInit
     If IsEmpty Then
@@ -195,7 +195,7 @@ Public Property Get IsOneColumn() As Boolean
     End If
 End Property
 
-'* 1 行だけで構成される Area かどうか。単一セルは False となります。
+'* Whether the range is an Area consisting of only one row. A single cell is False.
 Public Property Get IsOneRowArea() As Boolean
     Call pCheckInit
     If IsArea And IsOneRow Then
@@ -205,7 +205,7 @@ Public Property Get IsOneRowArea() As Boolean
     End If
 End Property
 
-'* 1 列だけで構成される Area かどうか。単一セルは False となります。
+'* Whether the range is an Area consisting of only one column. A single cell is False.
 Public Property Get IsOneColumnArea() As Boolean
     Call pCheckInit
     If IsArea And IsOneColumn Then
@@ -215,13 +215,13 @@ Public Property Get IsOneColumnArea() As Boolean
     End If
 End Property
 
-'* 標準 For Each 用の列挙子を得ます。
+'* Gets the enumerator for standard For Each.
 '*
-'* @return 標準 For Each が使用する列挙子。
+'* @return Enumerator used by standard For Each.
 '*
 '* @details
-'* 列挙開始時点のセル要素スナップショットを、行方向かつ昇順で列挙します。
-'* 標準 For Each の列挙方式は固定であり、GetEnumerator の引数指定とは独立しています。
+'* Enumerates a snapshot of cell elements from the start of enumeration, in row-major and ascending order.
+'* The enumeration mode for standard For Each is fixed and independent of arguments specified for GetEnumerator.
 Public Property Get NewEnum() As IUnknown
 Attribute NewEnum.VB_UserMemId = -4
 Attribute NewEnum.VB_MemberFlags = "40"
@@ -232,15 +232,15 @@ Attribute NewEnum.VB_MemberFlags = "40"
     Set NewEnum = pNewEnumSnapshot.[_NewEnum]
 End Property
 
-'* このコレクションのインデクサ。読み取り専用です。番号を指定してセル範囲を取得します。
+'* Indexer for this collection. Read-only. Gets a cell range by number.
 '*
-'* @param ItemIndex 番号。
-'* @param ColumnDirection [省略可] 列 (縦) 方向に走査するか。デフォルトは False で、行 (横) 方向に走査します。
+'* @param ItemIndex Number.
+'* @param ColumnDirection [Optional] Whether to scan in the column (vertical) direction. Default is False, scanning in the row (horizontal) direction.
 Public Property Get Item(ByVal ItemIndex As Long, Optional ByVal ColumnDirection As Boolean = False) As WorksheetRangeBounds
 Attribute Item.VB_UserMemId = 0
     Call pCheckInit
     If ItemIndex < 0 Then
-        Err.Raise vbObjectError, "Class WorksheetRangeBounds.Item", "インデックスが範囲外です。"
+        Err.Raise vbObjectError, "Class WorksheetRangeBounds.Item", "Index is out of range."
     End If
 
     If ColumnDirection Then
@@ -252,7 +252,7 @@ End Property
 
 Private Function pGetCellVertical(ByVal ItemIndex As Long) As WorksheetRangeBounds
     If IsEmpty Then
-        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellVertical", "範囲が空です。"
+        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellVertical", "The range is empty."
     End If
 
     Dim row_count As Long, row_idx As Long, col_idx As Long
@@ -263,13 +263,13 @@ Private Function pGetCellVertical(ByVal ItemIndex As Long) As WorksheetRangeBoun
     If col_idx < ColumnCount Then
         Set pGetCellVertical = GetCell(row_idx + 1, col_idx + 1)
     Else
-        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellVertical", "インデックスが範囲外です。"
+        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellVertical", "Index is out of range."
     End If
 End Function
 
 Private Function pGetCellHorizontal(ByVal ItemIndex As Long) As WorksheetRangeBounds
     If IsEmpty Then
-        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellHorizontal", "範囲が空です。"
+        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellHorizontal", "The range is empty."
     End If
 
     Dim col_count As Long, row_idx As Long, col_idx As Long
@@ -280,40 +280,40 @@ Private Function pGetCellHorizontal(ByVal ItemIndex As Long) As WorksheetRangeBo
     If row_idx < RowCount Then
         Set pGetCellHorizontal = GetCell(row_idx + 1, col_idx + 1)
     Else
-        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellHorizontal", "インデックスが範囲外です。"
+        Err.Raise vbObjectError, "Class WorksheetRangeBounds.pGetCellHorizontal", "Index is out of range."
     End If
 End Function
 
-'* 各値を設定します。
+'* Sets each value.
 '*
-'* @param RowIndex 行番号。
-'* @param ColumnIndex 列番号。
-'* @param FinishRowIndex 最後の行番号。
-'* @param FinishColumnIndex 最後の列番号。
-'* @param SheetName ワークシート名。
-'* @param BookName ワークブック名。
+'* @param RowIndex Row number.
+'* @param ColumnIndex Column number.
+'* @param FinishRowIndex Last row number.
+'* @param FinishColumnIndex Last column number.
+'* @param SheetName Worksheet name.
+'* @param BookName Workbook name.
 '*
 '* @details
-'* 各値を設定します。
+'* Sets each value.
 '*
-'* 使用例:
+'* Usage example:
 '* @code
-'* ' 1 セル (B5)
+'* ' One cell (B5).
 '* Dim cell_bounds As WorksheetRangeBounds
 '* Set cell_bounds = New WorksheetRangeBounds
 '* Call cell_bounds.Initialize(Row:=5, Column:=2)
 '*
-'* ' 1 行全体 (5:5)
+'* ' Entire row (5:5).
 '* Dim row_bounds As WorksheetRangeBounds
 '* Set row_bounds = New WorksheetRangeBounds
 '* Call row_bounds.Initialize(Row:=5)
 '*
-'* ' 2 列全体 (B:C)
+'* ' Two entire columns (B:C).
 '* Dim two_columns_bounds As WorksheetRangeBounds
 '* Set two_columns_bounds = New WorksheetRangeBounds
 '* Call two_columns_bounds.Initialize(Column:=2, FinishColumn:=3)
 '*
-'* ' 表全体 (B2:E20)
+'* ' Entire table (B2:E20).
 '* Dim table_bounds As WorksheetRangeBounds
 '* Set table_bounds = New WorksheetRangeBounds
 '* Call table_bounds.Initialize(Row:=2, Column:=2, FinishRow:=20, FinishColumn:=5)
@@ -326,20 +326,20 @@ Public Sub Initialize( _
         Optional ByVal Sheet As String = "Sheet1", _
         Optional ByVal Book As String = "")
 
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Initialize", "すでに初期化済みです。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Initialize", "The object is already initialized."
 
 '    If 0 < FinishRow <> G_OMIT_CELL_INDEX And FinishRow < Row Then
-'        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds", "開始行と終了行が逆転しています。(" & Row & ", " & FinishRow & ")"
+'        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds", "The start row and finish row are reversed. (" & Row & ", " & FinishRow & ")"
 '        Exit Sub
 '    End If
 '
 '    If 0 < FinishColumn And FinishColumn < Column Then
-'        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds", "開始列と終了列が逆転しています。(" & Column & ", " & FinishColumn & ")"
+'        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds", "The start column and finish column are reversed. (" & Column & ", " & FinishColumn & ")"
 '        Exit Sub
 '    End If
 
     If Sheet = "" Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Initialize", "ワークシート名は省略できません。"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Initialize", "Worksheet name cannot be omitted."
         Exit Sub
     End If
 
@@ -359,14 +359,14 @@ Public Sub Initialize( _
     pIsInitialized = True
 End Sub
 
-'* Excel アドレス文字列から初期化します。
+'* Initializes from an Excel address string.
 '*
-'* @param AddressString 初期化に使用する Excel アドレス文字列。
+'* @param AddressString Excel address string to use for initialization.
 '*
 '* @details
-'* A1 形式の単一矩形範囲だけを扱います。複数範囲は WorksheetRangeBounds で表現できないためエラーになります。
+'* Handles only A1-format single rectangular ranges. Multiple ranges cannot be represented by WorksheetRangeBounds and are errors.
 Public Sub InitializeFromAddress(ByVal AddressString As String)
-    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.InitializeFromAddress", "すでに初期化済みです。"
+    If pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.InitializeFromAddress", "The object is already initialized."
 
     Dim folder_path As String
     Dim book_name As String
@@ -375,7 +375,7 @@ Public Sub InitializeFromAddress(ByVal AddressString As String)
     Call SplitExcelAddress(folder_path, book_name, sheet_name, cell_address, AddressString)
 
     If folder_path <> "" Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WorksheetRangeBounds.InitializeFromAddress", Description:="フォルダパス付きアドレスは扱えません。(" & AddressString & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WorksheetRangeBounds.InitializeFromAddress", Description:="Addresses with folder paths are not supported. (" & AddressString & ")"
     End If
 
     Dim start_row As Long
@@ -409,9 +409,9 @@ Private Sub pWellFormBounds(ByRef Row As Long, ByRef Column As Long, ByRef Finis
             FinishRow = G_ROW_MAX
         End If
     ElseIf Row < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "開始行は 1 以上を指定してください。(" & Row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Start row must be 1 or greater. (" & Row & ")"
     ElseIf G_ROW_MAX < Row Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "開始行が " & G_ROW_MAX & " を超過しています。(" & Row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Start row exceeds " & G_ROW_MAX & ". (" & Row & ")"
     End If
 
     If Column = G_OMIT_CELL_INDEX Then
@@ -420,15 +420,15 @@ Private Sub pWellFormBounds(ByRef Row As Long, ByRef Column As Long, ByRef Finis
             FinishColumn = G_COL_MAX
         End If
     ElseIf Column < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "開始列は 1 以上を指定してください。(" & Column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Start column must be 1 or greater. (" & Column & ")"
     ElseIf G_COL_MAX < Column Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "開始列が " & G_COL_MAX & " を超過しています。(" & Column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Start column exceeds " & G_COL_MAX & ". (" & Column & ")"
     End If
 
     If FinishRow = G_OMIT_CELL_INDEX Then
         FinishRow = Row
     ElseIf FinishRow < 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "終了行に負数は指定できません。(" & FinishRow & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Finish row cannot be negative. (" & FinishRow & ")"
     ElseIf FinishRow < Row Then
         FinishRow = 0
     End If
@@ -436,7 +436,7 @@ Private Sub pWellFormBounds(ByRef Row As Long, ByRef Column As Long, ByRef Finis
     If FinishColumn = G_OMIT_CELL_INDEX Then
         FinishColumn = Column
     ElseIf FinishColumn < 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "終了列に負数は指定できません。(" & FinishColumn & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pWellFormBounds", "Finish column cannot be negative. (" & FinishColumn & ")"
     ElseIf FinishColumn < Column Then
         FinishColumn = 0
     End If
@@ -450,13 +450,13 @@ Private Sub pWellFormBounds(ByRef Row As Long, ByRef Column As Long, ByRef Finis
 '    End If
 End Sub
 
-'* 最上部の行からの行インデックスを指定して、1 行の範囲を得ます。
+'* Gets a one-row range by specifying a row index from the top row.
 '*
-'* @param RowIndex 行インデックス。正数は上からの 1 オリジン、負数は下からの 1 オリジン。0 は範囲外エラー。
-'* @return 指定された範囲 (1 行)
+'* @param RowIndex Row index. Positive numbers are 1-origin from the top; negative numbers are 1-origin from the bottom. 0 is an out-of-range error.
+'* @return Specified range (one row).
 '*
 '* @details
-'* 正数では最上部、負数では最下部から見た行インデックスを指定して、1 行の範囲を得ます。
+'* Gets a one-row range by specifying a row index from the top for positive numbers or from the bottom for negative numbers.
 Public Function GetRow(ByVal RowIndex As Long) As WorksheetRangeBounds
     Call pCheckInit
     Dim target_row As Long: target_row = pGetTargetRow(RowIndex)
@@ -466,13 +466,13 @@ Public Function GetRow(ByVal RowIndex As Long) As WorksheetRangeBounds
     Set GetRow = result_value
 End Function
 
-'* 最も左の列からの列インデックスを指定して、1 列の範囲を得ます。
+'* Gets a one-column range by specifying a column index from the leftmost column.
 '*
-'* @param ColumnIndex 列インデックス。正数は左からの 1 オリジン、負数は右からの 1 オリジン。0 は範囲外エラー。
-'* @return 指定された範囲 (1 列)
+'* @param ColumnIndex Column index. Positive numbers are 1-origin from the left; negative numbers are 1-origin from the right. 0 is an out-of-range error.
+'* @return Specified range (one column).
 '*
 '* @details
-'* 正数では最も左、負数では最も右から見た列インデックスを指定して、1 列の範囲を得ます。
+'* Gets a one-column range by specifying a column index from the leftmost side for positive numbers or from the rightmost side for negative numbers.
 Public Function GetColumn(ByVal ColumnIndex As Long) As WorksheetRangeBounds
     Call pCheckInit
     Dim target_col As Long: target_col = pGetTargetColumn(ColumnIndex)
@@ -482,14 +482,14 @@ Public Function GetColumn(ByVal ColumnIndex As Long) As WorksheetRangeBounds
     Set GetColumn = result_value
 End Function
 
-'* 最も左上のセルからの行インデックスおよび列インデックスを指定して、1 セルの範囲を得ます。
+'* Gets a one-cell range by specifying row and column indexes from the upper-left cell.
 '*
-'* @param RowIndex 行インデックス。正数は上からの 1 オリジン、負数は下からの 1 オリジン。0 は範囲外エラー。
-'* @param ColumnIndex 列インデックス。正数は左からの 1 オリジン、負数は右からの 1 オリジン。0 は範囲外エラー。
-'* @return 指定された範囲 (1 セル)
+'* @param RowIndex Row index. Positive numbers are 1-origin from the top; negative numbers are 1-origin from the bottom. 0 is an out-of-range error.
+'* @param ColumnIndex Column index. Positive numbers are 1-origin from the left; negative numbers are 1-origin from the right. 0 is an out-of-range error.
+'* @return Specified range (one cell).
 '*
 '* @details
-'* 正数では左上、負数では右下を基準にした行インデックスおよび列インデックスを指定して、1 セルの範囲を得ます。
+'* Gets a one-cell range by specifying row and column indexes based on the upper-left for positive numbers and the lower-right for negative numbers.
 Public Function GetCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long) As WorksheetRangeBounds
     Call pCheckInit
     Dim target_row As Long: target_row = pGetTargetRow(RowIndex)
@@ -500,38 +500,38 @@ Public Function GetCell(ByVal RowIndex As Long, ByVal ColumnIndex As Long) As Wo
     Set GetCell = result_value
 End Function
 
-'* この範囲を 1 行単位で分割した一覧を得ます。
+'* Gets a list created by splitting this range into one-row units.
 '*
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @return 1 行範囲の WorksheetRangeBounds を格納した ObjectList。
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @return ObjectList storing one-row WorksheetRangeBounds ranges.
 '*
 '* @details
-'* この範囲を 1 行単位の WorksheetRangeBounds に分割し、型付き ObjectList として返します。
+'* Splits this range into one-row WorksheetRangeBounds units and returns them as a typed ObjectList.
 Public Function GetRows(Optional ByVal Descending As Boolean = False) As ObjectList
     Set GetRows = pGetBoundsList(EnumerationMode:=G_RANGE_ENUM_MODE_ROWS, Descending:=Descending)
 End Function
 
-'* この範囲を 1 列単位で分割した一覧を得ます。
+'* Gets a list created by splitting this range into one-column units.
 '*
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @return 1 列範囲の WorksheetRangeBounds を格納した ObjectList。
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @return ObjectList storing one-column WorksheetRangeBounds ranges.
 '*
 '* @details
-'* この範囲を 1 列単位の WorksheetRangeBounds に分割し、型付き ObjectList として返します。
+'* Splits this range into one-column WorksheetRangeBounds units and returns them as a typed ObjectList.
 Public Function GetColumns(Optional ByVal Descending As Boolean = False) As ObjectList
     Set GetColumns = pGetBoundsList(EnumerationMode:=G_RANGE_ENUM_MODE_COLUMNS, Descending:=Descending)
 End Function
 
-'* この範囲を変形した新しい範囲を得ます。
+'* Gets a new range transformed from this range.
 '*
-'* @param Row 行番号。
-'* @param Column 列番号。
-'* @param FinishRow 最後の行番号。
-'* @param FinishColumn 最後の列番号。
-'* @return 変形した新しいオブジェクト
+'* @param Row Row number.
+'* @param Column Column number.
+'* @param FinishRow Last row number.
+'* @param FinishColumn Last column number.
+'* @return New transformed object.
 '*
 '* @details
-'* この範囲を変形した新しい範囲を得ます。
+'* Gets a new range transformed from this range.
 Public Function TransformAbsolute( _
         Optional ByVal Row As Long = G_OMIT_CELL_INDEX, _
         Optional ByVal Column As Long = G_OMIT_CELL_INDEX, _
@@ -545,9 +545,9 @@ Public Function TransformAbsolute( _
     If Row = G_OMIT_CELL_INDEX Then
         s_row = pRow
     ElseIf Row < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "開始行は 1 以上を指定してください。(" & Row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Start row must be 1 or greater. (" & Row & ")"
     ElseIf G_ROW_MAX < Row Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "開始行が " & G_ROW_MAX & " を超過しています。(" & Row & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Start row exceeds " & G_ROW_MAX & ". (" & Row & ")"
     Else
         s_row = Row
     End If
@@ -555,7 +555,7 @@ Public Function TransformAbsolute( _
     If FinishRow = G_OMIT_CELL_INDEX Then
         f_row = pFinishRow
     ElseIf FinishRow < 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "終了行に負数は指定できません。(" & FinishRow & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Finish row cannot be negative. (" & FinishRow & ")"
     Else
         f_row = FinishRow
     End If
@@ -563,9 +563,9 @@ Public Function TransformAbsolute( _
     If Column = G_OMIT_CELL_INDEX Then
         s_col = pColumn
     ElseIf Column < 1 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "開始列は 1 以上を指定してください。(" & Column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Start column must be 1 or greater. (" & Column & ")"
     ElseIf G_COL_MAX < Column Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "開始列が " & G_COL_MAX & " を超過しています。(" & Column & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Start column exceeds " & G_COL_MAX & ". (" & Column & ")"
     Else
         s_col = Column
     End If
@@ -573,7 +573,7 @@ Public Function TransformAbsolute( _
     If FinishColumn = G_OMIT_CELL_INDEX Then
         f_col = pFinishColumn
     ElseIf FinishColumn < 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "終了列に負数は指定できません。(" & FinishColumn & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.TransformAbsolute", "Finish column cannot be negative. (" & FinishColumn & ")"
     Else
         f_col = FinishColumn
     End If
@@ -583,14 +583,14 @@ Public Function TransformAbsolute( _
     Set TransformAbsolute = result_value
 End Function
 
-'* この範囲を変形した新しい範囲を得ます。
+'* Gets a new range transformed from this range.
 '*
-'* @param AddRow 追加する行数。
-'* @param AddColumn 追加する列数。
-'* @return 変形した新しいオブジェクト
+'* @param AddRow Number of rows to add.
+'* @param AddColumn Number of columns to add.
+'* @return New transformed object.
 '*
 '* @details
-'* この範囲の開始位置を維持したまま、行数と列数を増減した新しい範囲を得ます。
+'* Gets a new range whose row count and column count are increased or decreased while preserving the start position of this range.
 Public Function Transform( _
         Optional ByVal AddRow As Long = 0, _
         Optional ByVal AddColumn As Long = 0) As WorksheetRangeBounds
@@ -607,7 +607,7 @@ Public Function Transform( _
             If new_finish_row_value < 0# Then
                 new_finish_row = 0
             ElseIf G_ROW_MAX < new_finish_row_value Then
-                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "変形後の行が、" & G_ROW_MAX & " を超過します。(row: " & pRow & ", add: " & AddRow & ")"
+                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "The transformed row exceeds " & G_ROW_MAX & ". (row: " & pRow & ", add: " & AddRow & ")"
             Else
                 new_finish_row = CLng(new_finish_row_value)
             End If
@@ -616,7 +616,7 @@ Public Function Transform( _
             If new_finish_row_value < 0# Then
                 new_finish_row = 0
             ElseIf G_ROW_MAX < new_finish_row_value Then
-                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "変形後の行が、" & G_ROW_MAX & " を超過します。(row: " & pFinishRow & ", add: " & AddRow & ")"
+                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "The transformed row exceeds " & G_ROW_MAX & ". (row: " & pFinishRow & ", add: " & AddRow & ")"
             Else
                 new_finish_row = CLng(new_finish_row_value)
             End If
@@ -632,7 +632,7 @@ Public Function Transform( _
             If new_finish_col_value < 0# Then
                 new_finish_col = 0
             ElseIf G_COL_MAX < new_finish_col_value Then
-                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "変形後の列が、" & G_COL_MAX & " を超過します。(col: " & pColumn & ", add: " & AddColumn & ")"
+                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "The transformed column exceeds " & G_COL_MAX & ". (col: " & pColumn & ", add: " & AddColumn & ")"
             Else
                 new_finish_col = CLng(new_finish_col_value)
             End If
@@ -641,7 +641,7 @@ Public Function Transform( _
             If new_finish_col_value < 0# Then
                 new_finish_col = 0
             ElseIf G_COL_MAX < new_finish_col_value Then
-                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "変形後の列が、" & G_COL_MAX & " を超過します。(col: " & pFinishColumn & ", add: " & AddColumn & ")"
+                Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Transform", "The transformed column exceeds " & G_COL_MAX & ". (col: " & pFinishColumn & ", add: " & AddColumn & ")"
             Else
                 new_finish_col = CLng(new_finish_col_value)
             End If
@@ -653,15 +653,15 @@ Public Function Transform( _
     Set Transform = result_value
 End Function
 
-'* この範囲をシフトした新しい範囲を得ます。
+'* Gets a new range shifted from this range.
 '*
-'* @param ShiftRow 行シフト
-'* @param ShiftColumn 列シフト
-'* @return シフトした新しいオブジェクト。
+'* @param ShiftRow Row shift.
+'* @param ShiftColumn Column shift.
+'* @return New shifted object.
 '*
 '* @details
-'* このオブジェクトの複製を生成します。
-'* この範囲をシフトした新しい範囲を得ます。
+'* Creates a duplicate of this object.
+'* Gets a new range shifted from this range.
 Public Function Shift(Optional ByVal Row As Long = 0, Optional ByVal Column As Long = 0) As WorksheetRangeBounds
     Call pCheckInit
     Dim new_s_row As Long, new_s_col As Long
@@ -682,14 +682,14 @@ Public Function Shift(Optional ByVal Row As Long = 0, Optional ByVal Column As L
         new_f_col_value = CDbl(pFinishColumn) + CDbl(Column)
     End If
 
-    If new_s_row_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の行が、1 未満になります。(row: " & pRow & ", shift: " & Row & ")"
-    If new_s_col_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の列が、1 未満になります。(col: " & pColumn & ", shift: " & Column & ")"
-    If new_f_row_value <> 0# And new_f_row_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の行が、1 未満になります。(row: " & pFinishRow & ", shift: " & Row & ")"
-    If new_f_col_value <> 0# And new_f_col_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の列が、1 未満になります。(col: " & pFinishColumn & ", shift: " & Column & ")"
-    If G_ROW_MAX < new_s_row_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の行が、" & G_ROW_MAX & " を超過します。(row: " & pRow & ", shift: " & Row & ")"
-    If G_ROW_MAX < new_f_row_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の行が、" & G_ROW_MAX & " を超過します。(row: " & pFinishRow & ", shift: " & Row & ")"
-    If G_COL_MAX < new_s_col_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の列が、" & G_COL_MAX & " を超過します。(col: " & pColumn & ", shift: " & Column & ")"
-    If G_COL_MAX < new_f_col_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "シフト後の列が、" & G_COL_MAX & " を超過します。(col: " & pFinishColumn & ", shift: " & Column & ")"
+    If new_s_row_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The row after shifting would be less than 1. (row: " & pRow & ", shift: " & Row & ")"
+    If new_s_col_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The column after shifting would be less than 1. (col: " & pColumn & ", shift: " & Column & ")"
+    If new_f_row_value <> 0# And new_f_row_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The row after shifting would be less than 1. (row: " & pFinishRow & ", shift: " & Row & ")"
+    If new_f_col_value <> 0# And new_f_col_value < 1# Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The column after shifting would be less than 1. (col: " & pFinishColumn & ", shift: " & Column & ")"
+    If G_ROW_MAX < new_s_row_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The row after shifting exceeds " & G_ROW_MAX & ". (row: " & pRow & ", shift: " & Row & ")"
+    If G_ROW_MAX < new_f_row_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The row after shifting exceeds " & G_ROW_MAX & ". (row: " & pFinishRow & ", shift: " & Row & ")"
+    If G_COL_MAX < new_s_col_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The column after shifting exceeds " & G_COL_MAX & ". (col: " & pColumn & ", shift: " & Column & ")"
+    If G_COL_MAX < new_f_col_value Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Shift", "The column after shifting exceeds " & G_COL_MAX & ". (col: " & pFinishColumn & ", shift: " & Column & ")"
 
     new_s_row = CLng(new_s_row_value)
     new_s_col = CLng(new_s_col_value)
@@ -709,19 +709,19 @@ Public Function Shift(Optional ByVal Row As Long = 0, Optional ByVal Column As L
     Set Shift = result_value
 End Function
 
-'* 2 つの範囲が重なる範囲を返します。
+'* Returns the range where two ranges overlap.
 '*
-'* @param 他の範囲。
-'* @return 重なる範囲。
+'* @param OtherRangeBounds Other range.
+'* @return Overlapping range.
 '*
 '* @details
-'* この範囲と他の範囲が重なる範囲を示す、新たなオブジェクトを返します。
-'* 同じワークシート内の範囲でない場合は、エラーになります。
+'* Returns a new object indicating the range where this range and another range overlap.
+'* Raises an error if the ranges are not in the same worksheet.
 Public Function Intersect(ByVal OtherRangeBounds As WorksheetRangeBounds) As WorksheetRangeBounds
     Call pCheckInit
 
     If StrComp(pWorksheetName, OtherRangeBounds.WorksheetName, vbTextCompare) <> 0 Or StrComp(pWorkbookName, OtherRangeBounds.WorkbookName, vbTextCompare) <> 0 Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Intersect", "ワークシートが異なります。(this: " & pWorksheetName & "@" & pWorkbookName & " / other: " & OtherRangeBounds.WorksheetName & "@" & OtherRangeBounds.WorkbookName & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.Intersect", "Worksheets are different. (this: " & pWorksheetName & "@" & pWorkbookName & " / other: " & OtherRangeBounds.WorksheetName & "@" & OtherRangeBounds.WorkbookName & ")"
     End If
 
     Dim s_row As Long, f_row As Long
@@ -743,12 +743,12 @@ Public Function Intersect(ByVal OtherRangeBounds As WorksheetRangeBounds) As Wor
 '    End If
 End Function
 
-'* このオブジェクトの複製を生成します。
+'* Creates a duplicate of this object.
 '*
-'* @return 複製された新しいオブジェクト。
+'* @return New duplicated object.
 '*
 '* @details
-'* このオブジェクトの複製を生成します。
+'* Creates a duplicate of this object.
 Public Function CopyObject() As WorksheetRangeBounds
     Call pCheckInit
     Dim result_value As WorksheetRangeBounds
@@ -757,17 +757,17 @@ Public Function CopyObject() As WorksheetRangeBounds
     Set CopyObject = result_value
 End Function
 
-'* アドレス表記文字列を得ます。
+'* Gets an address notation string.
 '*
-'* @param IsAbsoluteStartRow 開始行を絶対参照とする場合は True (既定値は False)
-'* @param IsAbsoluteStartColumn 開始列を絶対参照とする場合は True (既定値は False)
-'* @param IsAbsoluteFinishRow 終了行を絶対参照とする場合は True (既定値は False)
-'* @param IsAbsoluteFinishColumn 終了列を絶対参照とする場合は True (既定値は False)
-'* @param AddressType アドレス形式 ("A1" または "R1C1") (既定値は "A1")
-'* @return アドレス文字列
+'* @param IsAbsoluteStartRow True to make the start row an absolute reference (default is False).
+'* @param IsAbsoluteStartColumn True to make the start column an absolute reference (default is False).
+'* @param IsAbsoluteFinishRow True to make the finish row an absolute reference (default is False).
+'* @param IsAbsoluteFinishColumn True to make the finish column an absolute reference (default is False).
+'* @param AddressType Address format ("A1" or "R1C1") (default is "A1").
+'* @return Address string.
 '*
 '* @details
-'* この範囲のアドレス表記文字列で生成します。
+'* Generates from the address notation string of this range.
 Public Function ToString( _
         Optional ByVal IsAbsoluteStartRow As Boolean = False, _
         Optional ByVal IsAbsoluteStartColumn As Boolean = False, _
@@ -882,7 +882,7 @@ Private Function IStringable_ToString() As String
 End Function
 
 '
-' このオブジェクトと他のオブジェクトが等しいかを返します。
+' Returns whether this object and another object are equal.
 '
 Public Function Equals(ByVal OtherObject As Object) As Boolean
     Call pCheckInit
@@ -905,7 +905,7 @@ Private Function IEquatable_Equals(ByVal OtherObject As Object) As Boolean
 End Function
 
 '
-' このオブジェクトの同一性を判断するための文字列表現を返します。
+' Returns a string representation used to determine the identity of this object.
 '
 Public Function GetIdentityString() As String
     Call pCheckInit
@@ -915,14 +915,14 @@ Private Function IEquatable_GetIdentityString() As String
     IEquatable_GetIdentityString = GetIdentityString()
 End Function
 
-'* この範囲の列挙子を得ます。
+'* Gets the enumerator for this range.
 '*
-'* @param EnumerationMode [省略可] 列挙方式。既定値は行単位です。
-'* @param Descending [省略可] 降順で列挙するか否か。
-'* @return 列挙子オブジェクト。
+'* @param EnumerationMode [Optional] Enumeration mode. Default is row-by-row.
+'* @param Descending [Optional] Whether to enumerate in descending order.
+'* @return Enumerator object.
 '*
 '* @details
-'* この範囲の列挙子を得ます。列挙方式はこの呼び出しに指定した引数だけで決まります。
+'* Gets the enumerator for this range. The enumeration mode is determined only by the arguments specified on this call.
 Public Function GetEnumerator( _
         Optional ByVal EnumerationMode As Long = G_RANGE_ENUM_MODE_ROWS, _
         Optional ByVal Descending As Boolean = False) As IEnumerator
@@ -949,7 +949,7 @@ Private Function pGetBoundsList(ByVal EnumerationMode As Long, ByVal Descending 
 End Function
 
 Private Sub pCheckInit()
-    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pCheckInit", "未初期化状態です。"
+    If Not pIsInitialized Then Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pCheckInit", "The object is not initialized."
 End Sub
 
 Private Function pGetTargetRow(ByVal RowIndex As Long) As Long
@@ -957,7 +957,7 @@ Private Function pGetTargetRow(ByVal RowIndex As Long) As Long
     row_count_value = RowCount
 
     If RowIndex = 0 Or row_count_value < RowIndex Or RowIndex < -row_count_value Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pGetTargetRow", "行範囲を超えています。(index:" & RowIndex & ", start: " & pRow & ", finish: " & pFinishRow & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pGetTargetRow", "The row index is outside the row range. (index:" & RowIndex & ", start: " & pRow & ", finish: " & pFinishRow & ")"
     End If
 
     Dim target_row_value As Double
@@ -978,7 +978,7 @@ Private Function pGetTargetColumn(ByVal ColumnIndex As Long) As Long
     column_count_value = ColumnCount
 
     If ColumnIndex = 0 Or column_count_value < ColumnIndex Or ColumnIndex < -column_count_value Then
-        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pGetTargetColumn", "列範囲を超えています。(index:" & ColumnIndex & ", start: " & pColumn & ", finish: " & pFinishColumn & ")"
+        Err.Raise vbObjectError + 1, "Class WorksheetRangeBounds.pGetTargetColumn", "The column index is outside the column range. (index:" & ColumnIndex & ", start: " & pColumn & ", finish: " & pFinishColumn & ")"
     End If
 
     Dim target_column_value As Double
@@ -996,7 +996,7 @@ End Function
 
 Private Sub pRequireWorkbookService(ByVal MethodName As String)
     If WbSrv Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class WorksheetRangeBounds" & "." & MethodName, Description:="InitializeCommonService が呼ばれていません。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class WorksheetRangeBounds" & "." & MethodName, Description:="InitializeCommonService has not been called."
     End If
 End Sub
 

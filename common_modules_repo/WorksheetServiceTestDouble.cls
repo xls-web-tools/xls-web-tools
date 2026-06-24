@@ -14,17 +14,17 @@ Implements IWorksheetService
 ' #############################################################################
 '!
 '! @brief
-'! ワークシートへのアクセスを管理するサービスのテストダブルです。
+'! Test double for the service that manages worksheet access.
 '!
 '! @details
-'! 戻り値が必要で Excel 状態や親リソースに依存するものは strict stub とします。戻り値なしの操作は spy only として正常呼び出しだけを記録します。
-'! strict stub の未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
+'! Members that need return values and depend on Excel state or parent resources are strict stubs. Operations without return values are spy only and record only successful calls.
+'! Unregistered strict stub errors and explicit errors from SetError are not recorded in call history.
 '!
 ' #############################################################################
 
-'* スタブ設定と正常に成立した呼び出し履歴。
-'* strict stub の未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
-'* spy only は、元メソッド定義の順序で呼び出し引数を記録します。
+'* Stub settings and history of successfully completed calls.
+'* Unregistered strict stub errors and explicit errors from SetError are not recorded in call history.
+'* spy only records call arguments in the order of the original method definition.
 Public Store As TestDoubleBehaviorStore
 
 Private Sub Class_Initialize()
@@ -32,7 +32,7 @@ Private Sub Class_Initialize()
     Store.DefaultObjectKeyMode = G_OBJECT_KEY_MODE_I_EQUATABLE
 End Sub
 
-'* Find の strict stub です。検索結果なしを表す空 ObjectList も明示登録してください。
+'* Strict stub for Find. Explicitly register an empty ObjectList as well to represent no search results.
 Public Function Find( _
         ByVal What As String, _
         ByVal RangeBounds As WorksheetRangeBounds, _
@@ -65,7 +65,7 @@ Private Function IWorksheetService_Find( _
             MatchByte:=MatchByte)
 End Function
 
-'* Sort の spy only です。SortKeyAndOrder を記録値として残します。
+'* spy only for Sort. Leaves SortKeyAndOrder as the recorded value.
 Public Sub Sort(ByVal RangeBounds As WorksheetRangeBounds, ParamArray SortKeyAndOrder() As Variant)
     Call pSortCore(RangeBounds, SortKeyAndOrder)
 End Sub
@@ -78,7 +78,7 @@ Private Sub pSortCore(ByVal RangeBounds As WorksheetRangeBounds, ByVal SortKeyAn
     Call Store.RecordCallWithKeyArgs("Sort", Array(RangeBounds), RangeBounds, SortKeyAndOrder)
 End Sub
 
-'* ActivateRange の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for ActivateRange. Records the call; inject failures with Store.SetError.
 Public Sub ActivateRange(ByVal RangeBounds As WorksheetRangeBounds)
     Call Store.RaiseIfError("ActivateRange", RangeBounds)
     Call Store.RecordCall("ActivateRange", RangeBounds)
@@ -87,7 +87,7 @@ Private Sub IWorksheetService_ActivateRange(ByVal RangeBounds As WorksheetRangeB
     Call ActivateRange(RangeBounds)
 End Sub
 
-'* WriteCell の spy only です。書き込み値とオプションを記録値として残します。
+'* spy only for WriteCell. Leaves the written value and options as recorded values.
 Public Sub WriteCell( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         ByVal Expression As String, _
@@ -119,7 +119,7 @@ Private Sub IWorksheetService_WriteCell( _
             TypeConvert:=TypeConvert)
 End Sub
 
-'* WriteRange の spy only です。書き込み配列を記録値として残します。
+'* spy only for WriteRange. Leaves the written array as the recorded value.
 Public Sub WriteRange(ByVal RangeBounds As WorksheetRangeBounds, ByVal ValuesArray As Variant)
     Call Store.RaiseIfError("WriteRange", RangeBounds)
     Call Store.RecordCallWithKeyArgs("WriteRange", Array(RangeBounds), RangeBounds, ValuesArray)
@@ -128,7 +128,7 @@ Private Sub IWorksheetService_WriteRange(ByVal RangeBounds As WorksheetRangeBoun
     Call WriteRange(RangeBounds, ValuesArray)
 End Sub
 
-'* WriteArrayFormula の spy only です。配列数式を記録値として残します。
+'* spy only for WriteArrayFormula. Leaves the array formula as the recorded value.
 Public Sub WriteArrayFormula(ByVal RangeBounds As WorksheetRangeBounds, ByVal FormulaArray As String)
     Call Store.RaiseIfError("WriteArrayFormula", RangeBounds)
     Call Store.RecordCallWithKeyArgs("WriteArrayFormula", Array(RangeBounds), RangeBounds, FormulaArray)
@@ -137,7 +137,7 @@ Private Sub IWorksheetService_WriteArrayFormula(ByVal RangeBounds As WorksheetRa
     Call WriteArrayFormula(RangeBounds, FormulaArray)
 End Sub
 
-'* ReadCell の strict stub です。戻り値は Store に明示登録し、ByRef 出力値は Store の Output 設定または既定値から返します。
+'* Strict stub for ReadCell. Register the return value explicitly in Store, and ByRef output values are returned from Store Output settings or defaults.
 Public Function ReadCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByRef Expression As String = "", Optional ByRef NumberFormat As String = "", Optional ByVal GetText As Boolean = False) As String
     Call Store.RaiseIfError("ReadCell", RangeBounds, GetText)
 
@@ -153,7 +153,7 @@ Private Function IWorksheetService_ReadCell(ByVal RangeBounds As WorksheetRangeB
     IWorksheetService_ReadCell = ReadCell(RangeBounds, Expression, NumberFormat:=NumberFormat, GetText:=GetText)
 End Function
 
-'* ReadRange の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for ReadRange. Register the return value explicitly in Store.
 Public Function ReadRange(ByVal RangeBounds As WorksheetRangeBounds) As Variant()
     Call Store.RaiseIfError("ReadRange", RangeBounds)
 
@@ -167,7 +167,7 @@ Private Function IWorksheetService_ReadRange(ByVal RangeBounds As WorksheetRange
     IWorksheetService_ReadRange = ReadRange(RangeBounds)
 End Function
 
-'* EvaluateFormula の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for EvaluateFormula. Register the return value explicitly in Store.
 Public Function EvaluateFormula(ByVal ContextRangeBounds As WorksheetRangeBounds, ByVal Formula As String) As Variant
     Call Store.RaiseIfError("EvaluateFormula", ContextRangeBounds, Formula)
 
@@ -183,7 +183,7 @@ Private Function IWorksheetService_EvaluateFormula(ByVal ContextRangeBounds As W
     IWorksheetService_EvaluateFormula = EvaluateFormula(ContextRangeBounds, Formula)
 End Function
 
-'* XLookup の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for XLookup. Register the return value explicitly in Store.
 Public Function XLookup( _
         ByVal LookupValue As Variant, _
         ByVal LookupRangeBounds As WorksheetRangeBounds, _
@@ -219,7 +219,7 @@ Private Function IWorksheetService_XLookup( _
             SearchMode:=SearchMode)
 End Function
 
-'* CopyCell の spy only です。コピー元とオプションを記録値として残します。
+'* spy only for CopyCell. Leaves the source and options as recorded values.
 Public Sub CopyCell( _
         ByVal SourceRangeBounds As WorksheetRangeBounds, _
         ByVal DestinationRangeBounds As WorksheetRangeBounds, _
@@ -242,7 +242,7 @@ Private Sub IWorksheetService_CopyCell( _
             CopyNumberFormat:=CopyNumberFormat)
 End Sub
 
-'* CopyRange の spy only です。コピー元とオプションを記録値として残します。
+'* spy only for CopyRange. Leaves the source and options as recorded values.
 Public Sub CopyRange( _
         ByVal SourceRangeBounds As WorksheetRangeBounds, _
         ByVal DestinationRangeBounds As WorksheetRangeBounds, _
@@ -265,7 +265,7 @@ Private Sub IWorksheetService_CopyRange( _
             CopyNumberFormat:=CopyNumberFormat)
 End Sub
 
-'* IsEmptyCell の strict stub です。セル状態に依存する戻り値は Store に明示登録してください。
+'* Strict stub for IsEmptyCell. Explicitly register return values that depend on cell state in Store.
 Public Function IsEmptyCell(ByVal RangeBounds As WorksheetRangeBounds, Optional ByVal IgnoreEmptyString As Boolean = False) As Boolean
     Call Store.RaiseIfError("IsEmptyCell", RangeBounds, IgnoreEmptyString)
 
@@ -279,7 +279,7 @@ Private Function IWorksheetService_IsEmptyCell(ByVal RangeBounds As WorksheetRan
     IWorksheetService_IsEmptyCell = IsEmptyCell(RangeBounds, IgnoreEmptyString:=IgnoreEmptyString)
 End Function
 
-'* HasFormula の strict stub です。セル状態に依存する戻り値は Store に明示登録してください。
+'* Strict stub for HasFormula. Explicitly register return values that depend on cell state in Store.
 Public Function HasFormula(ByVal RangeBounds As WorksheetRangeBounds) As Boolean
     Call Store.RaiseIfError("HasFormula", RangeBounds)
 
@@ -293,7 +293,7 @@ Private Function IWorksheetService_HasFormula(ByVal RangeBounds As WorksheetRang
     IWorksheetService_HasFormula = HasFormula(RangeBounds)
 End Function
 
-'* GetUsedRangeBounds の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetUsedRangeBounds. Register the return value explicitly in Store.
 Public Function GetUsedRangeBounds( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         Optional ByVal IgnoreEmpty As Boolean = True, _
@@ -324,7 +324,7 @@ Private Function IWorksheetService_GetUsedRangeBounds( _
             GetRawRange:=GetRawRange)
 End Function
 
-'* ClearRange の spy only です。クリア設定を記録値として残します。
+'* spy only for ClearRange. Leaves the clear settings as recorded values.
 Public Sub ClearRange( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         Optional ByVal ClearAll As Boolean = False, _
@@ -356,7 +356,7 @@ Private Sub IWorksheetService_ClearRange( _
             ClearHyperlinks:=ClearHyperlinks)
 End Sub
 
-'* RemoveDuplicates の spy only です。重複列指定を記録値として残します。
+'* spy only for RemoveDuplicates. Leaves duplicate column specifications as recorded values.
 Public Sub RemoveDuplicates(ByVal RangeBounds As WorksheetRangeBounds, ByVal DuplicateColumns As Variant)
     Call Store.RaiseIfError("RemoveDuplicates", RangeBounds)
     Call Store.RecordCallWithKeyArgs("RemoveDuplicates", Array(RangeBounds), RangeBounds, DuplicateColumns)
@@ -365,7 +365,7 @@ Private Sub IWorksheetService_RemoveDuplicates(ByVal RangeBounds As WorksheetRan
     Call RemoveDuplicates(RangeBounds, DuplicateColumns)
 End Sub
 
-'* InsertRows の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for InsertRows. Records the call; inject failures with Store.SetError.
 Public Sub InsertRows(ByVal RangeBounds As WorksheetRangeBounds)
     Call Store.RaiseIfError("InsertRows", RangeBounds)
     Call Store.RecordCall("InsertRows", RangeBounds)
@@ -374,7 +374,7 @@ Private Sub IWorksheetService_InsertRows(ByVal RangeBounds As WorksheetRangeBoun
     Call InsertRows(RangeBounds)
 End Sub
 
-'* DeleteRows の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for DeleteRows. Records the call; inject failures with Store.SetError.
 Public Sub DeleteRows(ByVal RangeBounds As WorksheetRangeBounds)
     Call Store.RaiseIfError("DeleteRows", RangeBounds)
     Call Store.RecordCall("DeleteRows", RangeBounds)
@@ -383,7 +383,7 @@ Private Sub IWorksheetService_DeleteRows(ByVal RangeBounds As WorksheetRangeBoun
     Call DeleteRows(RangeBounds)
 End Sub
 
-'* SetAllDataVisible の spy only です。呼び出しを記録し、失敗は Store.SetError で注入します。
+'* spy only for SetAllDataVisible. Records the call; inject failures with Store.SetError.
 Public Sub SetAllDataVisible(ByVal RangeBounds As WorksheetRangeBounds)
     Call Store.RaiseIfError("SetAllDataVisible", RangeBounds)
     Call Store.RecordCall("SetAllDataVisible", RangeBounds)
@@ -392,7 +392,7 @@ Private Sub IWorksheetService_SetAllDataVisible(ByVal RangeBounds As WorksheetRa
     Call SetAllDataVisible(RangeBounds)
 End Sub
 
-'* SetSheetOutlineLevel の spy only です。アウトライン設定を記録値として残します。
+'* spy only for SetSheetOutlineLevel. Leaves outline settings as recorded values.
 Public Sub SetSheetOutlineLevel(ByVal RangeBounds As WorksheetRangeBounds, Optional ByVal RowLevels As Long = 0, Optional ByVal ColumnLevels As Long = 0)
     Call Store.RaiseIfError("SetSheetOutlineLevel", RangeBounds)
     Call Store.RecordCallWithKeyArgs("SetSheetOutlineLevel", Array(RangeBounds), RangeBounds, RowLevels, ColumnLevels)
@@ -401,7 +401,7 @@ Private Sub IWorksheetService_SetSheetOutlineLevel(ByVal RangeBounds As Workshee
     Call SetSheetOutlineLevel(RangeBounds, RowLevels:=RowLevels, ColumnLevels:=ColumnLevels)
 End Sub
 
-'* SetSheetTabColor の spy only です。タブ色設定を記録値として残します。
+'* spy only for SetSheetTabColor. Leaves tab color settings as recorded values.
 Public Sub SetSheetTabColor( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         Optional ByVal TabColorIndex As Long = xlColorIndexNone, _
@@ -421,7 +421,7 @@ Private Sub IWorksheetService_SetSheetTabColor( _
             TabColor:=TabColor)
 End Sub
 
-'* SetRangeColor の spy only です。範囲色設定を記録値として残します。
+'* spy only for SetRangeColor. Leaves range color settings as recorded values.
 Public Sub SetRangeColor( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         Optional ByVal FontColorIndex As Long = 0, _
@@ -447,7 +447,7 @@ Private Sub IWorksheetService_SetRangeColor( _
         InteriorColor:=InteriorColor)
 End Sub
 
-'* SetWrapText の spy only です。折り返し設定を記録値として残します。
+'* spy only for SetWrapText. Leaves wrap setting as the recorded value.
 Public Sub SetWrapText(ByVal RangeBounds As WorksheetRangeBounds, ByVal WrapText As Boolean)
     Call Store.RaiseIfError("SetWrapText", RangeBounds)
     Call Store.RecordCallWithKeyArgs("SetWrapText", Array(RangeBounds), RangeBounds, WrapText)
@@ -456,7 +456,7 @@ Private Sub IWorksheetService_SetWrapText(ByVal RangeBounds As WorksheetRangeBou
     Call SetWrapText(RangeBounds, WrapText)
 End Sub
 
-'* SetShrinkToFit の spy only です。縮小表示設定を記録値として残します。
+'* spy only for SetShrinkToFit. Leaves shrink-to-fit setting as the recorded value.
 Public Sub SetShrinkToFit(ByVal RangeBounds As WorksheetRangeBounds, ByVal ShrinkToFit As Boolean)
     Call Store.RaiseIfError("SetShrinkToFit", RangeBounds)
     Call Store.RecordCallWithKeyArgs("SetShrinkToFit", Array(RangeBounds), RangeBounds, ShrinkToFit)
@@ -465,7 +465,7 @@ Private Sub IWorksheetService_SetShrinkToFit(ByVal RangeBounds As WorksheetRange
     Call SetShrinkToFit(RangeBounds, ShrinkToFit)
 End Sub
 
-'* SetAlignment の spy only です。配置設定を記録値として残します。
+'* spy only for SetAlignment. Leaves alignment settings as recorded values.
 Public Sub SetAlignment( _
         ByVal RangeBounds As WorksheetRangeBounds, _
         Optional ByVal HorizontalAlignment As Long = G_ALIGNMENT_NO_CHANGE, _

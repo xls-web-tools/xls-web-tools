@@ -14,17 +14,17 @@ Implements IUserInputSheet
 ' #############################################################################
 '!
 '! @brief
-'! 入力シートにアクセスするためのテストダブルです。
+'! Test double for accessing an input sheet.
 '!
 '! @details
-'! GetItemRange は strict stub とし、戻り値未登録エラーおよび SetError による明示エラーは呼び出し履歴に残しません。
+'! GetItemRange is a strict stub, and unregistered return value errors and explicit errors from SetError are not recorded in call history.
 '!
 ' #############################################################################
 
-'* スタブ設定と正常に成立した呼び出し履歴。
+'* Stub settings and history of successfully completed calls.
 Public Store As TestDoubleBehaviorStore
 
-'* 入力領域の safe default です。未登録時は InputSheet シート全体を返します。
+'* Safe default for the input area. Returns the entire InputSheet sheet when unregistered.
 Public Property Get InputArea() As WorksheetRangeBounds
     Dim default_area As WorksheetRangeBounds
     Set default_area = New_RangeBounds(Sheet:="InputSheet", Book:="ThisWorkbook.xlsm")
@@ -38,7 +38,7 @@ Private Sub Class_Initialize()
     Set Store = New TestDoubleBehaviorStore
 End Sub
 
-'* GetItemRange の strict stub です。戻り値は Store に明示登録してください。
+'* Strict stub for GetItemRange. Register the return value explicitly in Store.
 Public Function GetItemRange( _
         ByVal FirstItemName As String, _
         Optional ByVal SecondItemName As String = "") As WorksheetRangeBounds

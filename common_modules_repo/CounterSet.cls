@@ -13,7 +13,7 @@ Option Base 0
 ' #############################################################################
 '!
 '! @brief
-'! Counter をまとめるクラスです。
+'! Class that groups Counter objects.
 '!
 ' #############################################################################
 
@@ -23,39 +23,39 @@ Private Sub Class_Initialize()
     Set pDict = New Dictionary
 End Sub
 
-'* 名前を指定してカウンターを取得します。
+'* Gets a counter by name.
 '*
-'* @param CounterObjectName カウンターオブジェクトの名前。
-'* @return Counter 指定された名前に対応するカウンターオブジェクト。
+'* @param CounterObjectName The name of the counter object.
+'* @return Counter The counter object that corresponds to the specified name.
 '* @details
-'* 指定された名前のカウンターオブジェクトを取得します。
+'* Gets the counter object with the specified name.
 Public Function GetCounter(ByVal CounterObjectName As String) As Counter
     Call pCheckExists(CounterObjectName)
     Set GetCounter = pDict(CounterObjectName)
 End Function
 
-'* 名前を指定してカウンターを追加します。
+'* Adds a counter by name.
 '*
-'* @param CounterObjectName カウンターオブジェクトの名前。
-'* @param CounterObject 追加するカウンターオブジェクト。
+'* @param CounterObjectName The name of the counter object.
+'* @param CounterObject The counter object to add.
 '* @details
-'* 名前とカウンターオブジェクトを指定してセットに追加します。
+'* Adds the specified name and counter object to the set.
 Public Sub AddCounter(ByVal CounterObjectName As String, ByVal CounterObject As Counter)
     If CounterObject Is Nothing Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.AddCounter", Description:="CounterObject が Nothing です。"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.AddCounter", Description:="CounterObject is Nothing."
     End If
 
     Call pDict.Add(CounterObjectName, CounterObject)
 End Sub
 
-'* 名前と初期値を指定して、新しいカウンターを生成し、セットに追加します。
+'* Creates a new counter with the specified name and initial value, and adds it to the set.
 '*
-'* @param CounterObjectName カウンターオブジェクトの名前。
-'* @param InitialCount カウンターの初期値 (デフォルトは 0)。
-'* @param CountStep カウンターの間隔 (デフォルトは 1)。
-'* @return Counter 生成されたカウンターオブジェクト。
+'* @param CounterObjectName The name of the counter object.
+'* @param InitialCount Initial value of the counter (default is 0).
+'* @param CountStep Count interval of the counter (default is 1).
+'* @return Counter The created counter object.
 '* @details
-'* 名前、初期値、間隔を指定して新しいカウンターを生成し、セットに追加します。
+'* Creates a new counter with the specified name, initial value, and interval, and adds it to the set.
 Public Function AddNewCounter(ByVal CounterObjectName As String, Optional ByVal InitialCount As Long = 0, Optional ByVal CountStep As Long = 1) As Counter
     Dim count_obj As Counter
     Set count_obj = New Counter
@@ -64,12 +64,12 @@ Public Function AddNewCounter(ByVal CounterObjectName As String, Optional ByVal 
     Set AddNewCounter = count_obj
 End Function
 
-'* 名前を指定してカウンターを削除します。
+'* Removes a counter by name.
 '*
-'* @param CounterObjectName カウンターオブジェクトの名前。
-'* @return Counter 削除されたカウンターオブジェクト。
+'* @param CounterObjectName The name of the counter object.
+'* @return Counter The removed counter object.
 '* @details
-'* 指定された名前のカウンターを削除し、削除されたカウンターオブジェクトを返します。
+'* Removes the counter with the specified name and returns the removed counter object.
 Public Function RemoveCounter(ByVal CounterObjectName As String) As Counter
     Call pCheckExists(CounterObjectName)
 
@@ -81,6 +81,6 @@ End Function
 
 Private Sub pCheckExists(ByVal CounterObjectName As String)
     If Not pDict.Exists(CounterObjectName) Then
-        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.pCheckExists", Description:="Counter が存在しません。(" & CounterObjectName & ")"
+        Err.Raise Number:=vbObjectError + 1, Source:="Class CounterSet.pCheckExists", Description:="Counter does not exist. (" & CounterObjectName & ")"
     End If
 End Sub

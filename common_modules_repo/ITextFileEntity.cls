@@ -14,83 +14,83 @@ Option Explicit
 ' #############################################################################
 '!
 '! @brief
-'! テキスト ファイルのオープン、クローズ、書き込みなどを行うためのインターフェイスです。
+'! Interface for opening, closing, and writing text files.
 '!
 ' #############################################################################
 
 Private Sub Class_Initialize()
-    Err.Raise Number:=vbObjectError + 1, Source:="Interface ITextFileEntity", Description:="このクラスはインターフェイス用です。"
+    Err.Raise Number:=vbObjectError + 1, Source:="Interface ITextFileEntity", Description:="This class is intended for interfaces."
 End Sub
 
-'* ファイルのパス。
+'* File path.
 Public Property Get FilePath() As String
 End Property
 
-'* 読み取り用か。(未オープンの場合は False)
+'* Whether the file is opened for reading. (False when not open.)
 Public Property Get AsRead() As Boolean
 End Property
 
-'* 書き込み用か。(未オープンの場合は False)
+'* Whether the file is opened for writing. (False when not open.)
 Public Property Get AsWrite() As Boolean
 End Property
 
-'* 追記か。(未オープンの場合は False)
+'* Whether the file is opened for appending. (False when not open.)
 Public Property Get AsAppend() As Boolean
 End Property
 
-'* 読み取りロックを取得しているか。(未オープンの場合は False)
+'* Whether a read lock has been acquired. (False when not open.)
 Public Property Get GetReadLock() As Boolean
 End Property
 
-'* 書き込みロックを取得しているか。(未オープンの場合は False)
+'* Whether a write lock has been acquired. (False when not open.)
 Public Property Get GetWriteLock() As Boolean
 End Property
 
-'* 現在ファイルがオープンされているか。
+'* Whether the file is currently open.
 Public Property Get IsOpen() As Boolean
 End Property
 
-'* ファイルの最後か。(未オープンまたは書き込み/追記モードの場合は True)
+'* Whether the file is at end of file. (True when not open or when in write/append mode.)
 Public Property Get IsEndOfFile() As Boolean
 End Property
 
-'* ファイルをオープンします。
+'* Opens a file.
 '*
-'* @param FilePath ファイルのパス。
-'* @param AsWrite [省略可] 書き込み用として開くかどうか。デフォルトは False であり、読み取り用として開きます。
-'* @param AsAppend [省略可] 追記として開くかどうか。AsWrite が False のときに AsAppend を True にすると失敗します。
-'* @param GetReadLock [省略可] ファイルの読み取りロックを取得するか。
-'* @param GetWriteLock [省略可] ファイルの書き込みロックを取得するか。
+'* @param FilePath File path.
+'* @param AsWrite [Optional] Whether to open for writing. The default is False, which opens for reading.
+'* @param AsAppend [Optional] Whether to open for appending. Setting AsAppend to True when AsWrite is False fails.
+'* @param GetReadLock [Optional] Whether to acquire a read lock on the file.
+'* @param GetWriteLock [Optional] Whether to acquire a write lock on the file.
 '*
 '* @details
-'* ファイルをオープンします。
+'* Opens a file.
 Public Sub OpenFile( _
         Optional ByVal AsWrite As Boolean = False, Optional ByVal AsAppend As Boolean = False, _
         Optional ByVal GetReadLock As Boolean = False, Optional ByVal GetWriteLock As Boolean = False, _
         Optional ByVal Force As Boolean = False)
 End Sub
 
-'* ファイルから 1 行読み取ります。
+'* Reads one line from the file.
 '*
-'* @return 読み取った文字列。
+'* @return String that was read.
 '*
 '* @details
-'* ファイルから文字列を 1 行分読み取ります。
+'* Reads one line of text from the file.
 Public Function ReadLine() As String
 End Function
 
-'* 文字列をファイルに書き込みます。
+'* Writes a string to the file.
 '*
-'* @param Expression 書き込む文字列。
+'* @param Expression String to write.
 '*
 '* @details
-'* 文字列をファイルに書き込みます。末尾に改行記号が自動で付与されます。
+'* Writes a string to the file. A newline character is automatically appended to the end.
 Public Sub WriteLine(ByVal Expression As String)
 End Sub
 
-'* ファイルをクローズします。
+'* Closes the file.
 '*
 '* @details
-'* ファイルをクローズします。未オープンの場合は何もしません。
+'* Closes the file. Does nothing if the file is not open.
 Public Sub CloseFile()
 End Sub
