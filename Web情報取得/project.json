@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "projectName": "Web\u60c5\u5831\u53d6\u5f97",
+  "primaryDocument": "Web\u60c5\u5831\u53d6\u5f97",
+  "documents": {
+    "Web\u60c5\u5831\u53d6\u5f97": {
+      "kind": "excel",
+      "sourcePath": "src/Web\u60c5\u5831\u53d6\u5f97",
+      "templatePath": "src/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
+      "binPath": "bin/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
+      "publishPath": "publish/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
+      "commonModules": [
+        {
+          "name": "ApplicationScreenUpdateManager",
+          "requested": true
+        },
+        {
+          "name": "ArrayObject",
+          "requested": true
+        },
+        {
+          "name": "CommonRunStateManager",
+          "requested": true
+        },
+        {
+          "name": "DebugInformation",
+          "requested": true
+        },
+        {
+          "name": "Enumerator",
+          "requested": true
+        },
+        {
+          "name": "Fx_Common",
+          "requested": true
+        },
+        {
+          "name": "IComparable",
+          "requested": true
+        },
+        {
+          "name": "IDuplicateCheckable",
+          "requested": true
+        },
+        {
+          "name": "IElementTypeProvider",
+          "requested": true
+        },
+        {
+          "name": "IEnumerator",
+          "requested": true
+        },
+        {
+          "name": "IEquatable",
+          "requested": true
+        },
+        {
+          "name": "IStringable",
+          "requested": true
+        },
+        {
+          "name": "IWorkbookService",
+          "requested": true
+        },
+        {
+          "name": "IWorksheetService",
+          "requested": true
+        },
+        {
+          "name": "Lib_Common",
+          "requested": true
+        },
+        {
+          "name": "Lib_CommonConstructor",
+          "requested": true
+        },
+        {
+          "name": "ObjectDictionary",
+          "requested": true
+        },
+        {
+          "name": "ObjectList",
+          "requested": true
+        },
+        {
+          "name": "ObjectSet",
+          "requested": true
+        },
+        {
+          "name": "WorkbookService",
+          "requested": true
+        },
+        {
+          "name": "WorksheetRangeBounds",
+          "requested": true
+        },
+        {
+          "name": "WorksheetRangeBoundsEnumerator",
+          "requested": true
+        },
+        {
+          "name": "WorksheetService",
+          "requested": true
+        },
+        {
+          "name": "WorksheetVirtualTable",
+          "requested": true
+        },
+        {
+          "name": "WorksheetVirtualTableEnumerator",
+          "requested": true
+        },
+        {
+          "name": "IFileSystemService",
+          "requested": true
+        },
+        {
+          "name": "IUserInputSheet",
+          "requested": true
+        },
+        {
+          "name": "Lib_FileSystem",
+          "requested": true
+        },
+        {
+          "name": "Lib_InputSheet",
+          "requested": true
+        },
+        {
+          "name": "FileSystemService",
+          "requested": true
+        },
+        {
+          "name": "ProgressStatus",
+          "requested": true
+        },
+        {
+          "name": "UserInputSheet",
+          "requested": true
+        },
+        {
+          "name": "Lib_UnitTest",
+          "requested": true
+        },
+        {
+          "name": "UnitTestAssert",
+          "requested": true
+        },
+        {
+          "name": "TestDoubleBehaviorStore",
+          "requested": true
+        },
+        {
+          "name": "TestDoubleCallRecord",
+          "requested": true
+        },
+        {
+          "name": "TestDoubleVariantKeyBuilder",
+          "requested": true
+        },
+        {
+          "name": "FileSystemServiceTestDouble",
+          "requested": true
+        },
+        {
+          "name": "UserInputSheetTestDouble",
+          "requested": true
+        },
+        {
+          "name": "WorkbookServiceTestDouble",
+          "requested": true
+        },
+        {
+          "name": "WorksheetServiceTestDouble",
+          "requested": true
+        }
+      ],
+      "references": [
+        {
+          "name": "Visual Basic For Applications"
+        },
+        {
+          "name": "Microsoft Excel 16.0 Object Library"
+        },
+        {
+          "name": "OLE Automation"
+        },
+        {
+          "name": "Microsoft Office 16.0 Object Library"
+        },
+        {
+          "name": "Microsoft Scripting Runtime"
+        },
+        {
+          "name": "Microsoft VBScript Regular Expressions 5.5"
+        }
+      ]
+    }
+  },
+  "commonModulesRepository": "../common_modules_repo",
+  "commandDefaults": {
+    "test": {
+      "format": "text"
+    }
+  }
+}

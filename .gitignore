@@ -1,4 +1,4 @@
-~$*.xls?
+﻿~$*.xls?
 *.lnk
 
 # Web Driverの実行ファイルやブラウザのプロファイルは追跡しない。
@@ -8,3 +8,7 @@
 
 # ドキュメントはコードから生成するため、追跡しない。
 **/docs/api-reference/
+
+# vba-dev generated workbooks
+**/bin/
+**/publish/
