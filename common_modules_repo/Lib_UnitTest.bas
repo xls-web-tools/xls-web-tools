@@ -52,7 +52,9 @@ Private pRuntimeRunnerModuleName As String
 '*     Assert.Equals 0, actual_value)
 '* End Sub
 '* @endcode
-Public Sub UnitTestMain()
+Public Sub UnitTestMain( _
+        Optional ByVal TestModuleName As String = "", _
+        Optional ByVal TestSubName As String = "")
     Dim app_state As ApplicationScreenUpdateManager
     Set app_state = New ApplicationScreenUpdateManager
 
@@ -63,38 +65,47 @@ Public Sub UnitTestMain()
     Call pInitializeRuntimeRunnerModuleName
     Call pEnsureRuntimeRunnerModule
 
+    Dim result_sheet As Worksheet
+
     ' Get the test number.
     Dim test_idx As Long: test_idx = 0
 
-    Dim caller_str As String
-
-    On Error Resume Next
-    caller_str = CStr(Application.Caller)
-    If Err.Number <> 0 Then
-        Err.Clear
-        caller_str = ""
+    If TestModuleName = "" And TestSubName <> "" Then
+        Err.Raise vbObjectError + 2, "Module Lib_UnitTest", "TestModuleName is required when TestSubName is specified."
     End If
-    On Error GoTo ON_ERROR
 
-    If IsNumeric(caller_str) Then
-        test_idx = CLng(caller_str)
-    Else
-        test_idx = 0
+    If TestModuleName = "" Then
+        Dim caller_str As String
+
+        On Error Resume Next
+        caller_str = CStr(Application.Caller)
+        If Err.Number <> 0 Then
+            Err.Clear
+            caller_str = ""
+        End If
+        On Error GoTo ON_ERROR
+
+        If IsNumeric(caller_str) Then
+            test_idx = CLng(caller_str)
+        Else
+            test_idx = 0
+        End If
     End If
 
     ' Prepare the output destination for test results.
-    Dim result_sheet As Worksheet
     Set result_sheet = pPrepareResultSheet(test_idx)
 
     ' Run tests.
-    If test_idx = 0 Then
+    If TestModuleName <> "" Then
+        Call pRunSelectedTest(result_sheet, TestModuleName, TestSubName)
+    ElseIf test_idx = 0 Then
         Call pRunAllTest(result_sheet)
     Else
         Call pRunTestCore(result_sheet, result_sheet.Cells(test_idx, C_COL_MOD), result_sheet.Cells(test_idx, C_COL_SUB), test_idx)
     End If
 
     Call pRemoveRuntimeRunnerModule
-    Call result_sheet.Activate
+    If Not result_sheet Is Nothing Then Call result_sheet.Activate
     Call app_state.Restore
     On Error GoTo 0
     Exit Sub
@@ -109,7 +120,7 @@ ON_ERROR:
 
     On Error Resume Next
     Call pRemoveRuntimeRunnerModule
-    Call result_sheet.Activate
+    If Not result_sheet Is Nothing Then Call result_sheet.Activate
     Call app_state.Restore
     On Error GoTo 0
 
@@ -180,6 +191,81 @@ Private Sub pRunAllTest(ByVal ResultSheet As Worksheet)
         End If
     Next vb_comp
 End Sub
+
+Private Sub pRunSelectedTest(ByVal ResultSheet As Worksheet, ByVal TestModuleName As String, ByVal TestSubName As String)
+    Dim vb_comp As Object
+    Set vb_comp = pGetSelectedTestModule(TestModuleName)
+
+    Dim sub_re As RegExp
+    Set sub_re = New RegExp
+    sub_re.Pattern = "^\s*(?:Public\s+)?Sub\s+(Test_[^\s(]+)\s*\(\s*(?:ByVal\s+|ByRef\s+)?[^\s,()]+\s+As\s+UnitTestAssert\s*(?:,\s*Optional\s+[^,)]+)*\).*$"
+
+    Dim found_module_test As Boolean: found_module_test = False
+    Dim found_selected_test As Boolean: found_selected_test = False
+    Dim row_idx As Long: row_idx = 2
+
+    Dim vb_comp_code As Object
+    Set vb_comp_code = vb_comp.CodeModule
+
+    Dim line_idx As Long
+    line_idx = 1
+    Do While line_idx <= vb_comp_code.CountOfLines
+        Dim code_line As String
+        code_line = pReadLogicalLine(vb_comp_code, line_idx)
+
+        Dim match_result As MatchCollection
+        Set match_result = sub_re.Execute(code_line)
+
+        If 0 < match_result.Count Then
+            found_module_test = True
+
+            Dim sub_name As String
+            sub_name = match_result.Item(0).SubMatches(0)
+
+            If TestSubName = "" Or StrComp(sub_name, TestSubName, vbTextCompare) = 0 Then
+                Call pRunTestCore(ResultSheet, vb_comp.Name, sub_name, row_idx)
+                Call AddButton(ResultSheet, row_idx, C_COL_BTN, "Run Again", pBuildWorkbookMacroName(C_SUB_MAIN), row_idx)
+
+                found_selected_test = True
+                row_idx = row_idx + 1
+
+                If TestSubName <> "" Then Exit Do
+            End If
+        End If
+        line_idx = line_idx + 1
+    Loop
+
+    If Not found_module_test Then
+        Err.Raise vbObjectError + 2, "Module Lib_UnitTest", "Discoverable unit tests were not found in module: " & TestModuleName
+    End If
+
+    If TestSubName <> "" And Not found_selected_test Then
+        Err.Raise vbObjectError + 2, "Module Lib_UnitTest", "Discoverable test procedure was not found: " & TestModuleName & "." & TestSubName
+    End If
+End Sub
+
+Private Function pGetSelectedTestModule(ByVal TestModuleName As String) As Object
+    Dim vb_proj As Object: Set vb_proj = ThisWorkbook.VBProject
+    Dim vb_comp As Object
+
+    On Error Resume Next
+    Set vb_comp = vb_proj.VBComponents.Item(TestModuleName)
+    If Err.Number <> 0 Then
+        Err.Clear
+        Set vb_comp = Nothing
+    End If
+    On Error GoTo 0
+
+    If vb_comp Is Nothing Then
+        Err.Raise vbObjectError + 2, "Module Lib_UnitTest", "Test module was not found: " & TestModuleName
+    End If
+
+    If vb_comp.Type <> C_VBEXT_CT_STDMODULE Then
+        Err.Raise vbObjectError + 2, "Module Lib_UnitTest", "Test module must be a standard module: " & TestModuleName
+    End If
+
+    Set pGetSelectedTestModule = vb_comp
+End Function
 
 Private Sub pRunTestCore(ByVal ResultSheet As Worksheet, ByVal TestModName As String, ByVal TestSubName As String, ByVal RowIndex As Long)
     Dim assert_obj As UnitTestAssert: Set assert_obj = New UnitTestAssert
