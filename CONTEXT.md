@@ -195,7 +195,7 @@ _Avoid_: xls-web-tools 固有モジュール
 - `common_modules_repo` に含まれるファイルを直接原本として編集しません。共通モジュール変更は `xls-common-modules/CommonModules/src/CommonModules` から始めます。
 - 取得対象、取得設定、シート名、列番号、業務文言を共通モジュールへ混入させません。
 - 外部 Web へのアクセスを伴う処理は、通常の単体テストではテストダブルまたは固定テストデータへ切り出し、ネットワーク状態に依存しない検証を優先します。
-- Excel への import/export や UnitTestMain 実行は Excel COM と VBIDE アクセスを使うため、実行前に対象 `.xlsm` が閉じていることを確認します。
+- Excel への反映、抽出、ユニットテスト実行は `vba-dev build/test/import/export` または `xls-common-modules\tools` の wrapper から行います。`vba-dev` の内側では Excel COM と VBIDE アクセスを使うため、実行前に対象 `.xlsm` が閉じていることを確認します。
 
 ## Example Dialogue
 
