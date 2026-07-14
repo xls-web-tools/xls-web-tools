@@ -7,8 +7,8 @@
       "kind": "excel",
       "sourcePath": "src/Web\u60c5\u5831\u53d6\u5f97",
       "templatePath": "src/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
-      "binPath": "bin/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
-      "publishPath": "publish/Web\u60c5\u5831\u53d6\u5f97/Web\u60c5\u5831\u53d6\u5f97.xlsm",
+      "binPath": "bin/Web\u60c5\u5831\u53d6\u5f97.xlsm",
+      "publishPath": "publish/Web\u60c5\u5831\u53d6\u5f97.xlsm",
       "commonModules": [
         {
           "name": "ApplicationScreenUpdateManager",
