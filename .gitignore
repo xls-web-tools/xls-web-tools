@@ -12,3 +12,7 @@
 # vba-dev generated workbooks
 **/bin/
 **/publish/
+/.agents
+/.codex*
+/.tmp
+/.old
