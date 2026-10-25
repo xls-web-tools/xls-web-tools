@@ -1,0 +1,19 @@
+﻿~$*.xls?
+*.lnk
+
+# Web Driverの実行ファイルやブラウザのプロファイルは追跡しない。
+**/msedgedriver.exe
+**/Driver_Notes/
+**/browser-profile/
+
+# ドキュメントはコードから生成するため、追跡しない。
+**/docs/api-reference/
+
+/AGENTS.md
+/docs/agents/
+**/bin/
+**/publish/
+/.agents
+/.codex*
+/.tmp
+/.old
